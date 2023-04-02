@@ -346,7 +346,7 @@ class ModelManager:
             return success
         if self.compvis is not None and model_name in self.compvis.models:
             success = self.compvis.load(
-                model_name=model_name, half_precision=half_precision, gpu_id=gpu_id, cpu_only=cpu_only, voodoo=voodoo
+                model_name=model_name, output_vae=True, output_clip=True,
             )
             if success:
                 self.loaded_models.update({model_name: self.compvis.loaded_models[model_name]})
