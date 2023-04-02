@@ -5,6 +5,7 @@ import os
 
 import comfy
 from hordelib import model_manager
+from loguru import logger
 
 
 class HordeCheckpointLoader:
