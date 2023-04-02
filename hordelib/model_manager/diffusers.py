@@ -5,7 +5,7 @@ import torch
 from diffusers.pipelines import StableDiffusionDepth2ImgPipeline, StableDiffusionInpaintPipeline
 
 from hordelib.cache import get_cache_directory
-from model_manager.base import BaseModelManager
+from hordelib.model_manager.base import BaseModelManager
 from loguru import logger
 # from nataili.util.voodoo import push_diffusers_pipeline_to_plasma
 

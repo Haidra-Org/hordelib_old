@@ -24,61 +24,61 @@ class ModelManager:
     ):
         # initialise_voodoo()
         if aitemplate:
-            from model_manager.aitemplate import AITemplateModelManager
+            from hordelib.model_manager.aitemplate import AITemplateModelManager
 
             self.aitemplate = AITemplateModelManager()
         else:
             self.aitemplate = None
         if blip:
-            from model_manager.blip import BlipModelManager
+            from hordelib.model_manager.blip import BlipModelManager
 
             self.blip = BlipModelManager()
         else:
             self.blip = None
         if clip:
-            from model_manager.clip import ClipModelManager
+            from hordelib.model_manager.clip import ClipModelManager
 
             self.clip = ClipModelManager()
         else:
             self.clip = None
         if compvis:
-            from model_manager.compvis import CompVisModelManager
+            from hordelib.model_manager.compvis import CompVisModelManager
 
             self.compvis = CompVisModelManager()
         else:
             self.compvis = None
         if diffusers:
-            from model_manager.diffusers import DiffusersModelManager
+            from hordelib.model_manager.diffusers import DiffusersModelManager
 
             self.diffusers = DiffusersModelManager()
         else:
             self.diffusers = None
         if esrgan:
-            from model_manager.esrgan import EsrganModelManager
+            from hordelib.model_manager.esrgan import EsrganModelManager
 
             self.esrgan = EsrganModelManager()
         else:
             self.esrgan = None
         if gfpgan:
-            from model_manager.gfpgan import GfpganModelManager
+            from hordelib.model_manager.gfpgan import GfpganModelManager
 
             self.gfpgan = GfpganModelManager()
         else:
             self.gfpgan = None
         if safety_checker:
-            from model_manager.safety_checker import SafetyCheckerModelManager
+            from hordelib.model_manager.safety_checker import SafetyCheckerModelManager
 
             self.safety_checker = SafetyCheckerModelManager()
         else:
             self.safety_checker = None
         if codeformer:
-            from model_manager.codeformer import CodeFormerModelManager
+            from hordelib.model_manager.codeformer import CodeFormerModelManager
 
             self.codeformer = CodeFormerModelManager()
         else:
             self.codeformer = None
         if controlnet:
-            from model_manager.controlnet import ControlNetModelManager
+            from hordelib.model_manager.controlnet import ControlNetModelManager
 
             self.controlnet = ControlNetModelManager()
         else:

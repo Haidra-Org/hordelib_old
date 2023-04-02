@@ -8,7 +8,7 @@ from transformers import CLIPFeatureExtractor, CLIPTokenizer
 
 # from nataili.aitemplate import StableDiffusionAITPipeline
 from hordelib.cache import get_cache_directory
-from model_manager.base import BaseModelManager
+from hordelib.model_manager.base import BaseModelManager
 from loguru import logger
 # from nataili.util.voodoo import init_ait_module
 

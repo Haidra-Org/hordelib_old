@@ -5,7 +5,7 @@ import torch
 from diffusers.pipelines.stable_diffusion.safety_checker import StableDiffusionSafetyChecker
 
 from hordelib.cache import get_cache_directory
-from model_manager.base import BaseModelManager
+from hordelib.model_manager.base import BaseModelManager
 from loguru import logger
 
 

@@ -4,7 +4,7 @@ from pathlib import Path
 import torch
 
 from hordelib.cache import get_cache_directory
-from model_manager.base import BaseModelManager
+from hordelib.model_manager.base import BaseModelManager
 
 # from worker.model_manager.esrgan import EsrganModelManager
 # from worker.model_manager.gfpgan import GfpganModelManager

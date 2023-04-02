@@ -6,7 +6,7 @@ from basicsr.archs.rrdbnet_arch import RRDBNet
 from realesrgan import RealESRGANer
 from realesrgan.archs.srvgg_arch import SRVGGNetCompact
 from hordelib.cache import get_cache_directory
-from model_manager.base import BaseModelManager
+from hordelib.model_manager.base import BaseModelManager
 from loguru import logger
 
 

@@ -4,7 +4,7 @@ from omegaconf import OmegaConf
 
 # from ldm.util import instantiate_from_config
 from hordelib.cache import get_cache_directory
-from model_manager.base import BaseModelManager
+from hordelib.model_manager.base import BaseModelManager
 
 # from nataili.model_manager.compvis import CompVisModelManager, DisableInitialization
 from loguru import logger

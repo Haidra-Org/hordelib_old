@@ -5,7 +5,7 @@ import comfy
 from pathlib import Path
 
 from hordelib.cache import get_cache_directory
-from model_manager.base import BaseModelManager
+from hordelib.model_manager.base import BaseModelManager
 
 from loguru import logger
 

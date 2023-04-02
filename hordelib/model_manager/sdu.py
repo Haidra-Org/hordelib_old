@@ -8,7 +8,7 @@ from omegaconf import OmegaConf
 from torch import nn
 
 # from ldm.util import instantiate_from_config
-from model_manager.base import BaseModelManager
+from hordelib.model_manager.base import BaseModelManager
 from loguru import logger
 
 

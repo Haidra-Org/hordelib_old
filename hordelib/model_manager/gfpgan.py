@@ -4,7 +4,7 @@ from pathlib import Path
 import torch
 
 from hordelib.cache import get_cache_directory
-from model_manager.base import BaseModelManager
+from hordelib.model_manager.base import BaseModelManager
 # from nataili.util.gfpgan import GFPGANer
 from loguru import logger
 
