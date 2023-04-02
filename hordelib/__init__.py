@@ -26,3 +26,7 @@ horde_model_manager = None # This needs
 
 class HordelibException(Exception):
     pass
+
+def set_horde_model_manager(mm):
+    global horde_model_manager
+    horde_model_manager = mm
