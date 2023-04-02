@@ -15,12 +15,14 @@ installer = install.Installer()
 installer.install(COMFYUI_VERSION)
 
 
-class HordelibException(Exception):
-    pass
-
 disable_xformers = Switch()
 disable_voodoo = Switch()
 enable_local_ray_temp = Switch()
 disable_progress = Switch()
 disable_download_progress = Switch()
 enable_ray_alternative = Switch()
+
+model_manager = None # This needs
+
+class HordelibException(Exception):
+    pass
