@@ -22,6 +22,8 @@ class HordeCheckpointLoader:
     CATEGORY = "loaders"
 
     def load_checkpoint(self, ckpt_name, output_vae=True, output_clip=True):
+        logger.info(model_manager)
+        logger.info(model_manager.compvis)
         return model_manager.compvis.loaded_models[ckpt_name]
 
 NODE_CLASS_MAPPINGS = {"HordeCheckpointLoader": HordeCheckpointLoader}
