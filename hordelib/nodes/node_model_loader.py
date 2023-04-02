@@ -4,7 +4,7 @@
 import os
 
 import comfy
-from hordelib import model_manager
+from hordelib import horde_model_manager
 from loguru import logger
 
 
@@ -23,8 +23,8 @@ class HordeCheckpointLoader:
     CATEGORY = "loaders"
 
     def load_checkpoint(self, ckpt_name, output_vae=True, output_clip=True):
-        logger.info(model_manager)
-        logger.info(model_manager.compvis)
-        return model_manager.compvis.loaded_models[ckpt_name]
+        logger.info(horde_model_manager)
+        logger.info(horde_model_manager.compvis)
+        return horde_model_manager.compvis.loaded_models[ckpt_name]
 
 NODE_CLASS_MAPPINGS = {"HordeCheckpointLoader": HordeCheckpointLoader}

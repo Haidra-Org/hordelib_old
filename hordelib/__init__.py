@@ -22,7 +22,7 @@ disable_progress = Switch()
 disable_download_progress = Switch()
 enable_ray_alternative = Switch()
 
-model_manager = None # This needs
+horde_model_manager = None # This needs
 
 class HordelibException(Exception):
     pass
