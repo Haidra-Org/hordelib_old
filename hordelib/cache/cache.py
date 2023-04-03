@@ -1,15 +1,14 @@
 import hashlib
-import json
 import os
 import sqlite3
 import sys
 from pathlib import Path
 
+from loguru import logger
 from PIL import Image
 from tqdm import tqdm
 
 from hordelib import disable_progress
-from loguru import logger
 
 if sys.version_info < (3, 9):
     import importlib_resources
