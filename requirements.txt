@@ -16,4 +16,3 @@ accelerate
 pyyaml
 pillow
 loguru
-clip-interrogator

@@ -33,9 +33,13 @@ class BulkImageEmbedder:
         """
         self.model_name = model_name
         self.model_manager = ClipModelManager()
-        self.cache_image = Cache(self.model_name, cache_parentname="embeds", cache_subname="image")
+        self.cache_image = Cache(
+            self.model_name, cache_parentname="embeds", cache_subname="image"
+        )
         self.model_manager.load(self.model_name)
-        self.image_embed = ImageEmbed(self.model_manager.loaded_models[self.model_name], self.cache_image)
+        self.image_embed = ImageEmbed(
+            self.model_manager.loaded_models[self.model_name], self.cache_image
+        )
         self._prepare_from_directory(input_directory=input_directory)
 
     def insert(self, image, input_directory):

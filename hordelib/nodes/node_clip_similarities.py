@@ -7,6 +7,7 @@ from PIL.PngImagePlugin import PngInfo
 from hordelib import horde_model_manager
 from hordelib.clip.interrogate import Interrogator
 
+
 class HordeClipSimilarities:
     @classmethod
     def INPUT_TYPES(s):
@@ -29,9 +30,11 @@ class HordeClipSimilarities:
 
         results = []
         for image in images:
-            model =  horde_model_manager.clip.loaded_models[clip_name]
+            model = horde_model_manager.clip.loaded_models[clip_name]
             interrogator = Interrogator(model)
-            similarity_results = interrogator(image=image, text_array=string_list, similarity=True)["default"]
+            similarity_results = interrogator(
+                image=image, text_array=string_list, similarity=True
+            )["default"]
             results.append({"similarity_results": similarity_results, "type": "ARRAY"})
 
         return {"similarities": results}

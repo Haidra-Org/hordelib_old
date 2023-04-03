@@ -25,4 +25,5 @@ class HordeCheckpointLoader:
     def load_checkpoint(self, ckpt_name, output_vae=True, output_clip=True):
         return horde_model_manager.compvis.loaded_models[ckpt_name]
 
+
 NODE_CLASS_MAPPINGS = {"HordeCheckpointLoader": HordeCheckpointLoader}

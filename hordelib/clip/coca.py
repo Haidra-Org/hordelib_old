@@ -26,4 +26,8 @@ class CoCa:
             image = image.half()
         generated = self.model.generate(image)
 
-        return open_clip.decode(generated[0]).split("<end_of_text>")[0].replace("<start_of_text>", "")
+        return (
+            open_clip.decode(generated[0])
+            .split("<end_of_text>")[0]
+            .replace("<start_of_text>", "")
+        )

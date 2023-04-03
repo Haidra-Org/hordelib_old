@@ -9,7 +9,9 @@ T = TypeVar("T")
 def autocast_cuda(func: T, dtype: dtype = float16) -> T:
     @wraps(func)
     def wrap(*args, **kwargs):
-        return amp.autocast(device_type="cuda", dtype=dtype)(no_grad()(func))(*args, **kwargs)
+        return amp.autocast(device_type="cuda", dtype=dtype)(no_grad()(func))(
+            *args, **kwargs
+        )
 
     return wrap
 
@@ -17,6 +19,8 @@ def autocast_cuda(func: T, dtype: dtype = float16) -> T:
 def autocast_cpu(func: T, dtype: dtype = float16) -> T:
     @wraps(func)
     def wrap(*args, **kwargs):
-        return amp.autocast(device_type="cpu", dtype=dtype)(no_grad()(func))(*args, **kwargs)
+        return amp.autocast(device_type="cpu", dtype=dtype)(no_grad()(func))(
+            *args, **kwargs
+        )
 
     return wrap

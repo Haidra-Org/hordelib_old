@@ -29,7 +29,9 @@ def get_cache_directory():
     if AIWORKER_CACHE_HOME:
         base_dir = AIWORKER_CACHE_HOME
     else:
-        base_dir = os.environ.get("XDG_CACHE_HOME", os.path.join(Path.home(), ".cache/"))
+        base_dir = os.environ.get(
+            "XDG_CACHE_HOME", os.path.join(Path.home(), ".cache/")
+        )
     return os.path.join(base_dir, "nataili")
 
 
@@ -157,17 +159,23 @@ class Cache:
         """
         Create a sqlite database from the cache
         """
-        self.cursor.execute("CREATE TABLE IF NOT EXISTS cache (file text, hash text, pil_hash text)")
+        self.cursor.execute(
+            "CREATE TABLE IF NOT EXISTS cache (file text, hash text, pil_hash text)"
+        )
         self.cursor.execute("CREATE INDEX IF NOT EXISTS file_index ON cache (file)")
         self.cursor.execute("CREATE INDEX IF NOT EXISTS hash_index ON cache (hash)")
-        self.cursor.execute("CREATE INDEX IF NOT EXISTS pil_hash_index ON cache (pil_hash)")
+        self.cursor.execute(
+            "CREATE INDEX IF NOT EXISTS pil_hash_index ON cache (pil_hash)"
+        )
         self.conn.commit()
 
     def add_sqlite_row(self, file: str, hash: str, pil_hash: str, commit=True):
         """
         Add a row to the sqlite database
         """
-        self.cursor.execute("INSERT INTO cache VALUES (?, ?, ?)", (file, hash, pil_hash))
+        self.cursor.execute(
+            "INSERT INTO cache VALUES (?, ?, ?)", (file, hash, pil_hash)
+        )
         if commit:
             self.conn.commit()
 
@@ -177,7 +185,9 @@ class Cache:
         """
         # Populate sqlite database
         for file in list_of_files:
-            self.add_sqlite_row(file["file"], file["hash"], file["pil_hash"], commit=False)
+            self.add_sqlite_row(
+                file["file"], file["hash"], file["pil_hash"], commit=False
+            )
         self.conn.commit()
 
     def key_exists(self, key):
@@ -190,12 +200,20 @@ class Cache:
             return True
         return False
 
-    def get(self, file: str = None, file_hash: str = None, pil_hash: str = None, no_return=False):
+    def get(
+        self,
+        file: str = None,
+        file_hash: str = None,
+        pil_hash: str = None,
+        no_return=False,
+    ):
         """
         Get a file from the cache
         """
         if not any([file, file_hash, pil_hash]):
-            raise ValueError("At least one value must be provided to search the database")
+            raise ValueError(
+                "At least one value must be provided to search the database"
+            )
         file = os.path.splitext(file)[0] if file else None
         query = "SELECT hash, pil_hash FROM cache WHERE "
         conditions = []

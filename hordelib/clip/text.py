@@ -18,7 +18,9 @@ class TextEmbed:
         """
         self.model = model
         self.cache = cache
-        self.executor = ThreadPoolExecutor(max_workers=1024, thread_name_prefix="SaveThread")
+        self.executor = ThreadPoolExecutor(
+            max_workers=1024, thread_name_prefix="SaveThread"
+        )
 
     @autocast_cuda
     def _batch(self, text_list: list):
@@ -26,7 +28,10 @@ class TextEmbed:
             if isinstance(text["prompt"], bytes):
                 text["prompt"] = text["prompt"].decode("utf-8")
             text["hash"] = hashlib.sha256(text["prompt"]).hexdigest()
-        text_tokens = [clip.tokenize(text["prompt"], truncate=True).to(self.model["device"]) for text in text_list]
+        text_tokens = [
+            clip.tokenize(text["prompt"], truncate=True).to(self.model["device"])
+            for text in text_list
+        ]
         text_tokens = torch.cat(text_tokens, dim=0)
         with torch.no_grad():
             text_features = self.model["model"].encode_text(text_tokens).float()
@@ -36,7 +41,10 @@ class TextEmbed:
 
     def _save(self, text_embed_array, text_hash):
         text_embed_array /= text_embed_array.norm(dim=-1, keepdim=True)
-        np.save(f"{self.cache.cache_dir}/{text_hash}", text_embed_array.float().cpu().detach().numpy())
+        np.save(
+            f"{self.cache.cache_dir}/{text_hash}",
+            text_embed_array.float().cpu().detach().numpy(),
+        )
 
     @autocast_cuda
     def __call__(self, text: str, check_cache: bool = False, filename: str = None):
