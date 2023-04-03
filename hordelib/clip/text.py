@@ -6,8 +6,8 @@ import numpy as np
 import torch
 
 from hordelib.cache import Cache
-from hordelib.util.cast import autocast_cuda
-from hordelib.util.logger import logger
+from hordelib.utils.cast import autocast_cuda
+from loguru import logger
 
 
 class TextEmbed:
