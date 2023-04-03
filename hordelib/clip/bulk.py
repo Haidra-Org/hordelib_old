@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Literal, Union
 
 import numpy as np
+from loguru import logger
 from PIL import Image
 from tqdm import tqdm
 
@@ -11,7 +12,6 @@ from hordelib import disable_progress
 from hordelib.cache import Cache
 from hordelib.clip.image import ImageEmbed
 from hordelib.model_manager.clip import ClipModelManager
-from loguru import logger
 
 
 class BulkImageEmbedder:

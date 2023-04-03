@@ -10,19 +10,18 @@ from tqdm import tqdm
 
 from hordelib import disable_progress
 
-if sys.version_info < (3, 9):
+if sys.version_info < (3, 9):  # XXX
     import importlib_resources
 else:
     import importlib.resources as importlib_resources
 
 
 def get_package():
-    pkg = importlib_resources.files("annotator")
-    return pkg
+    return importlib_resources.files("annotator")  # XXX
 
 
 def get_cache_directory():
-    """The nataili specific directory for caching."""
+    """The AI Horde Worker specific directory for caching."""
     AIWORKER_CACHE_HOME = os.environ.get("AIWORKER_CACHE_HOME")
     base_dir = ""
     if AIWORKER_CACHE_HOME:
@@ -71,6 +70,7 @@ class Cache:
         self.create_sqlite_db()
 
     def list_dir(self, input_directory, extensions=[".webp"]):
+        # XXX mutable for argument defaults
         """
         List all files in a directory
         :param input_directory: Directory to list
@@ -137,6 +137,7 @@ class Cache:
         return self.hash_pil_image(pil_image)
 
     def hash_files(self, files_list, input_directory, extensions=[".webp"]):
+        # XXX mutable for argument defaults
         """
         Hash all files in a directory
         :param input_directory: Directory to hash

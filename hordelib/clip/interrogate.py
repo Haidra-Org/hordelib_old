@@ -4,12 +4,12 @@ from typing import Dict, List, Union
 
 import numpy as np
 import torch
+from loguru import logger
 from PIL import Image
 
 from hordelib.cache import Cache
 from hordelib.clip.image import ImageEmbed
 from hordelib.clip.text import TextEmbed
-from loguru import logger
 
 
 class Interrogator:
