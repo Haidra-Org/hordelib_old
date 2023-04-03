@@ -26,13 +26,13 @@ class ClipModelManager(BaseModelManager):
 
     def load_data_lists(self):
         data_lists = {}
-        data_lists["artist"] = load_list(self.pkg / "artists.txt")
-        data_lists["flavors"] = load_list(self.pkg / "flavors.txt")
-        data_lists["medium"] = load_list(self.pkg / "mediums.txt")
-        data_lists["movement"] = load_list(self.pkg / "movements.txt")
-        data_lists["trending"] = load_list(self.pkg / "sites.txt")
-        data_lists["techniques"] = load_list(self.pkg / "techniques.txt")
-        data_lists["tags"] = load_list(self.pkg / "tags.txt")
+        # data_lists["artist"] = load_list(self.pkg / "artists.txt")
+        # data_lists["flavors"] = load_list(self.pkg / "flavors.txt")
+        # data_lists["medium"] = load_list(self.pkg / "mediums.txt")
+        # data_lists["movement"] = load_list(self.pkg / "movements.txt")
+        # data_lists["trending"] = load_list(self.pkg / "sites.txt")
+        # data_lists["techniques"] = load_list(self.pkg / "techniques.txt")
+        # data_lists["tags"] = load_list(self.pkg / "tags.txt")
         return data_lists
 
     def load_coca(self, model_name, half_precision=True, gpu_id=0, cpu_only=False):
