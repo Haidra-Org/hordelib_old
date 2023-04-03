@@ -27,4 +27,5 @@ class HordeCheckpointLoader:
         logger.info(horde_model_manager.compvis)
         return horde_model_manager.compvis.loaded_models[ckpt_name]
 
+
 NODE_CLASS_MAPPINGS = {"HordeCheckpointLoader": HordeCheckpointLoader}
