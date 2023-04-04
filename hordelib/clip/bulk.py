@@ -8,10 +8,10 @@ from loguru import logger
 from PIL import Image
 from tqdm import tqdm
 
-from hordelib import disable_progress
 from hordelib.cache import Cache
 from hordelib.clip.image import ImageEmbed
 from hordelib.model_manager.clip import ClipModelManager
+from hordelib.settings import WorkerSettings
 
 
 class BulkImageEmbedder:
@@ -57,5 +57,7 @@ class BulkImageEmbedder:
         logger.info(f"Found {len(directory_list)} files. Filtering...")
         filtered_list = self.cache_image.filter_list(directory_list)
         logger.info(f"Found {len(filtered_list)} files to embed.")
-        for image in tqdm(filtered_list, disable=disable_progress.active):
+        for image in tqdm(
+            filtered_list, disable=WorkerSettings.disable_progress.active
+        ):
             self.insert(image, input_directory)

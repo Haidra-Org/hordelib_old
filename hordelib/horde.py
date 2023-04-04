@@ -89,8 +89,9 @@ class HordeLib:
         params["sampler.sampler_name"] = sampler
 
         # Clip skip inversion, comfy uses -1, -2, etc
-        if params.get("clip_skip.stop_at_clip_layer", 0) > 0:
-            params["clip_skip.stop_at_clip_layer"] = -params["clip_skip.stop_at_clip_layer"]
+        clip_skip_key = "clip_skip.stop_at_clip_layer"
+        if params.get(clip_skip_key, 0) > 0:
+            params[clip_skip_key] = -params[clip_skip_key]
 
         return params
 
