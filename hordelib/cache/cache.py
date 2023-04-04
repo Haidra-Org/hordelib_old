@@ -8,7 +8,7 @@ from loguru import logger
 from PIL import Image
 from tqdm import tqdm
 
-from hordelib import disable_progress
+from hordelib.settings import WorkerSettings
 
 if sys.version_info < (3, 9):  # XXX
     import importlib_resources
@@ -78,7 +78,9 @@ class Cache:
         :return: List of files
         """
         files = []
-        for file in tqdm(os.listdir(input_directory), disable=disable_progress.active):
+        for file in tqdm(
+            os.listdir(input_directory), disable=WorkerSettings.disable_progress.active
+        ):
             if os.path.splitext(file)[1] in extensions:
                 files.append(os.path.splitext(file)[0])
         return files
@@ -145,7 +147,7 @@ class Cache:
         """
         pil_hashes = []
         file_hashes = []
-        for file in tqdm(files_list, disable=disable_progress.active):
+        for file in tqdm(files_list, disable=WorkerSettings.disable_progress.active):
             for extension in extensions:
                 file = file + extension
                 file_path = os.path.join(input_directory, file)
