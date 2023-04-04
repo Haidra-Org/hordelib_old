@@ -4,7 +4,58 @@ import contextlib
 
 from PIL import Image
 
-from hordelib.comfy import Comfy
+from hordelib.comfy_horde import Comfy_Horde
+from hordelib.model_manager.hyper import ModelManager
+
+
+class SharedModelManager(ModelManager):
+    """Extends `hyper.ModelManager` to be a singleton. Call `.loadModelManagers() to init.`"""
+
+    _instance = None
+    manager: ModelManager | None = None
+
+    def __new__(
+        cls,
+        # aitemplate: bool = False,
+        blip: bool = False,
+        clip: bool = False,
+        codeformer: bool = False,
+        compvis: bool = False,
+        controlnet: bool = False,
+        diffusers: bool = False,
+        # esrgan: bool = False,
+        # gfpgan: bool = False,
+        safety_checker: bool = False,
+    ):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+
+        if cls.manager is None:
+            cls.manager = ModelManager()
+
+        return cls._instance
+
+    @classmethod
+    def loadModelManagers(
+        cls,
+        # aitemplate: bool = False,
+        blip: bool = False,
+        clip: bool = False,
+        codeformer: bool = False,
+        compvis: bool = False,
+        controlnet: bool = False,
+        diffusers: bool = False,
+        # esrgan: bool = False,
+        # gfpgan: bool = False,
+        safety_checker: bool = False,
+    ):
+        if cls.manager is None:
+            raise Exception()  # XXX
+
+        args_passed = locals().copy()
+        args_passed.pop("cls")
+
+        cls.manager.init_model_managers(**args_passed)
 
 
 class HordeLib:
@@ -96,7 +147,7 @@ class HordeLib:
         return params
 
     def text_to_image(self, payload: dict[str, str | None]) -> Image.Image | None:
-        generator = Comfy()
+        generator = Comfy_Horde()
         images = generator.run_image_pipeline(
             "stable_diffusion", self._parameter_remap(payload)
         )
