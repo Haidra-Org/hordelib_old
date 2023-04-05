@@ -2,16 +2,16 @@
 import pytest
 from PIL import Image
 
-from hordelib.comfy_horde import Comfy_Horde
 from hordelib.horde import SharedModelManager
+from hordelib.pipeline import HordeComfyPipelineHandler
 
 
 class TestInference:
-    comfy: Comfy_Horde
+    comfy: HordeComfyPipelineHandler
 
     @pytest.fixture(autouse=True)
     def setup_and_teardown(self):
-        self.comfy = Comfy_Horde()
+        self.comfy = HordeComfyPipelineHandler()
         SharedModelManager.loadModelManagers(compvis=True)
         assert SharedModelManager.manager is not None
         SharedModelManager.manager.load("Deliberate")

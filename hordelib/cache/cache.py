@@ -10,14 +10,15 @@ from tqdm import tqdm
 
 from hordelib.settings import WorkerSettings
 
-if sys.version_info < (3, 9):  # XXX
+if sys.version_info < (3, 9):  # XXX is <3.9 support going to be a thing?
     import importlib_resources
 else:
     import importlib.resources as importlib_resources
 
 
 def get_package():
-    return importlib_resources.files("annotator")  # XXX
+    return importlib_resources.files("annotator")
+    # XXX this predates me (@tazlin), doesn't look right
 
 
 def get_cache_directory():
@@ -204,9 +205,9 @@ class Cache:
 
     def get(
         self,
-        file: str = None,
-        file_hash: str = None,
-        pil_hash: str = None,
+        file: str | None = None,
+        file_hash: str | None = None,
+        pil_hash: str | None = None,
         no_return=False,
     ):
         """

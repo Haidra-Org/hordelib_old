@@ -4,13 +4,16 @@ import contextlib
 
 from PIL import Image
 
-from hordelib.comfy_horde import Comfy_Horde
 from hordelib.model_manager.hyper import ModelManager
+from hordelib.pipeline import HordeComfyPipelineHandler
 
 
 class SharedModelManager:
+    """Exposes the legacy `ModelManager` through variable `manager`."""
+
     _instance = None
     manager: ModelManager | None = None
+    """The legacy ModelManager. Use `loadModelManagers` instead of the old `__init__`."""
 
     def __new__(cls):
         if cls._instance is None:
@@ -31,6 +34,7 @@ class SharedModelManager:
         # gfpgan: bool = False,
         safety_checker: bool = False,
     ):
+        """Loads all corresponding `BaseModelManagers`."""
         if cls.manager is None:
             cls.manager = ModelManager()
 
@@ -41,6 +45,8 @@ class SharedModelManager:
 
 
 class HordeLib:
+    """Primary interface between the horde worker and the inference engine."""
+
     # Horde to comfy sampler mapping
     SAMPLERS_MAP = {
         "k_euler": "euler",
@@ -106,7 +112,7 @@ class HordeLib:
         # We break prompt up on horde's "###"
         promptsCombined = payload.get("prompt", "")
 
-        if promptsCombined is None:  # XXX
+        if promptsCombined is None:  # XXX better guarantees need to be made
             raise TypeError("`None` value encountered!")
 
         promptsSplit = [x.strip() for x in promptsCombined.split("###")][:2]
@@ -129,7 +135,15 @@ class HordeLib:
         return params
 
     def text_to_image(self, payload: dict[str, str | None]) -> Image.Image | None:
-        generator = Comfy_Horde()
+        """Create and return an image from the horde payload.
+
+        Args:
+            payload (dict[str, str | None]): A AI-Horde payload..
+
+        Returns:
+            Image.Image | None: The resulting image. If `None`, the job failed.
+        """
+        generator = HordeComfyPipelineHandler()
         images = generator.run_image_pipeline(
             "stable_diffusion", self._parameter_remap(payload)
         )
