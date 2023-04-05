@@ -11,7 +11,7 @@ from loguru import logger
 from PIL import Image
 
 from hordelib.ComfyUI import execution
-from hordelib.ComfyUI import comfy
+from hordelib.ComfyUI import comfy,comfy_extras
 from comfy.sd import load_checkpoint_guess_config
 
 

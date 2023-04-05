@@ -8,6 +8,7 @@ from realesrgan.archs.srvgg_arch import SRVGGNetCompact
 
 from hordelib.cache import get_cache_directory
 from hordelib.model_manager.base import BaseModelManager
+from hordelib.ComfyUI import comfy, comfy_extras
 
 
 class EsrganModelManager(BaseModelManager):
@@ -33,6 +34,7 @@ class EsrganModelManager(BaseModelManager):
         gpu_id: int. The id of the gpu to use. If the gpu is not available, the model will be loaded on the cpu.
         cpu_only: bool. If True, the model will be loaded on the cpu. If True, half_precision will be set to False.
         """
+
         if not self.cuda_available:
             cpu_only = True
         if model_name not in self.models:
@@ -50,11 +52,9 @@ class EsrganModelManager(BaseModelManager):
         if model_name not in self.loaded_models:
             tic = time.time()
             logger.info(f"{model_name}", status="Loading")  # logger.init
+
             self.loaded_models[model_name] = self.load_esrgan(
                 model_name,
-                half_precision=half_precision,
-                gpu_id=gpu_id,
-                cpu_only=cpu_only,
             )
             logger.info(f"Loading {model_name}", status="Success")  # logger.init_ok
             toc = time.time()
@@ -66,79 +66,8 @@ class EsrganModelManager(BaseModelManager):
     def load_esrgan(
         self,
         model_name,
-        half_precision=True,
-        gpu_id=0,
-        cpu_only=False,
     ):
-        RealESRGAN_models = {
-            "RealESRGAN_x4plus": RRDBNet(
-                num_in_ch=3,
-                num_out_ch=3,
-                num_feat=64,
-                num_block=23,
-                num_grow_ch=32,
-                scale=4,
-            ),
-            "RealESRGAN_x4plus_anime_6B": RRDBNet(
-                num_in_ch=3,
-                num_out_ch=3,
-                num_feat=64,
-                num_block=6,
-                num_grow_ch=32,
-                scale=4,
-            ),
-            "RealESRGAN_x2plus": RRDBNet(
-                num_in_ch=3,
-                num_out_ch=3,
-                num_feat=64,
-                num_block=23,
-                num_grow_ch=32,
-                scale=2,
-            ),
-            "NMKD_Siax": RRDBNet(
-                num_in_ch=3,
-                num_out_ch=3,
-                num_feat=64,
-                num_block=23,
-                num_grow_ch=32,
-                scale=4,
-            ),
-            "4x_AnimeSharp": RRDBNet(
-                num_in_ch=3,
-                num_out_ch=3,
-                num_feat=64,
-                num_block=23,
-                num_grow_ch=32,
-                scale=4,
-            ),
-        }
         model_path = self.get_model_files(model_name)[0]["path"]
-        model_path = f"{self.path}/{model_path}"
-        if cpu_only:
-            device = torch.device("cpu")
-            half_precision = False
-        else:
-            device = torch.device(f"cuda:{gpu_id}" if self.cuda_available else "cpu")
-        logger.info(f"Loading model {model_name} on {device}")
-        logger.info(f"Model path: {model_path}")
-        if "Real" in model_name:
-            model = RealESRGANer(
-                scale=4,
-                model_path=model_path,
-                model=RealESRGAN_models[self.models[model_name]["name"]],
-                half=True if half_precision else False,
-                device=device,
-                gpu_id=gpu_id,
-            )
-        else:
-            model = SRVGGNetCompact(
-                num_in_ch=3,
-                num_out_ch=3,
-                num_feat=64,
-                num_conv=32,
-                upscale=4,
-            )
-            model.eval()
-            model.to(device)
-        return {"model": model, "device": device, "half_precision": half_precision}
-        return {"model": model, "device": device, "half_precision": half_precision}
+        sd = comfy.utils.load_torch_file(model_path)
+        out = comfy_extras.chainner_models.model_loading.load_state_dict(sd).eval()
+        return (out, )

@@ -25,11 +25,9 @@ class HordeCheckpointLoader:
         if SharedModelManager.manager is None:  # XXX
             raise RuntimeError()  # XXX
 
-        logger.info(SharedModelManager.manager)
         if SharedModelManager.manager.compvis is None:
             logger.error("horde_model_manager.compvis appears to be missing!")
             raise RuntimeError()  # XXX
-        logger.info(SharedModelManager.manager.compvis)
 
         return SharedModelManager.manager.compvis.loaded_models[ckpt_name]
 
