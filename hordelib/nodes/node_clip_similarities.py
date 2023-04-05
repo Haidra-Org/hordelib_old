@@ -1,7 +1,6 @@
 """Simple proof of concept to return the similarities of text to the image to the worker"""
 # node_image_output.py
 
-from hordelib import horde_model_manager
 from hordelib.clip.interrogate import Interrogator
 
 
