@@ -1,37 +1,37 @@
 # test_setup.py
 import pytest
 
-from hordelib.comfy_horde import Comfy_Horde
+from hordelib.pipeline import HordeComfyPipelineHandler
 
 
 class TestSetup:
     NUMBER_OF_PIPELINES = 2
-    comfy: Comfy_Horde
+    pipelineHandler: HordeComfyPipelineHandler
 
     @pytest.fixture(autouse=True)
     def setup_and_teardown(self):
-        self.comfy = Comfy_Horde()
+        self.pipelineHandler = HordeComfyPipelineHandler()
         yield
-        del self.comfy
+        del self.pipelineHandler
 
     def test_load_pipelines(self):
-        loaded = self.comfy._load_pipelines()
+        loaded = self.pipelineHandler._load_pipelines()
         assert loaded == TestSetup.NUMBER_OF_PIPELINES
         # Check the built in pipelines
-        assert "stable_diffusion" in self.comfy.pipelines
-        assert "stable_diffusion_hires_fix" in self.comfy.pipelines
+        assert "stable_diffusion" in self.pipelineHandler.pipelines
+        assert "stable_diffusion_hires_fix" in self.pipelineHandler.pipelines
 
     def test_load_invalid_pipeline(self):
-        loaded = self.comfy._load_pipeline("no-such-pipeline")
+        loaded = self.pipelineHandler._load_pipeline("no-such-pipeline")
         assert loaded is None
 
     def test_load_invalid_node(self, capsys):
-        self.comfy._load_node("no-such-node")
+        self.pipelineHandler._load_node("no-such-node")
         captured = capsys.readouterr()
         assert "No such file or directory" in str(captured)
 
     def test_load_custom_nodes(self):
-        self.comfy._load_custom_nodes()
+        self.pipelineHandler._load_custom_nodes()
 
         # Look for our nodes in the ComfyUI nodes list
         from hordelib.ComfyUI import execution
@@ -53,7 +53,7 @@ class TestSetup:
             "c.inputs.d.f": True,
             "unknown.parameter": False,
         }
-        self.comfy._set(test_dict, **params)
+        self.pipelineHandler._set(test_dict, **params)
         assert test_dict["a"]["inputs"]["b"]
         assert test_dict["c"]["inputs"]["d"]["e"]
         assert test_dict["c"]["inputs"]["d"]["f"]
@@ -65,7 +65,7 @@ class TestSetup:
             "node2": {"no_class": "NoClassType"},
             "node3-should-be-replaced": {"class_type": "CheckpointLoaderSimple"},
         }
-        data = self.comfy._fix_pipeline_types(data)
+        data = self.pipelineHandler._fix_pipeline_types(data)
 
         assert data["node1"]["class_type"] == "ShouldNotBeReplaced"
         assert data["node2"]["no_class"] == "NoClassType"
@@ -109,7 +109,7 @@ class TestSetup:
                 {"id": 3, "no_title": "Node3"},
             ]
         }
-        data = self.comfy._fix_node_names(data, design)
+        data = self.pipelineHandler._fix_node_names(data, design)
 
         assert "Node1" in data
         assert data["Node1"]["inputs"]["input1"][0] == "Node2"

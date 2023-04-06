@@ -13,8 +13,8 @@ from PIL import Image
 from hordelib.ComfyUI import execution
 
 
-class Comfy_Horde:
-    """Handles horde-specific behavior against ComfyUI."""
+class HordeComfyPipelineHandler:
+    """Handles horde-specific behavior against ComfyUI pipelines."""
 
     # Lookup of ComfyUI standard nodes to hordelib custom nodes
     NODE_REPLACEMENTS = {
@@ -61,11 +61,11 @@ class Comfy_Horde:
         # We have a list of nodes and each node has a class type, which we may want to change
         for nodename, node in data.items():
             if ("class_type" in node) and (
-                node["class_type"] in Comfy_Horde.NODE_REPLACEMENTS
+                node["class_type"] in HordeComfyPipelineHandler.NODE_REPLACEMENTS
             ):
-                data[nodename]["class_type"] = Comfy_Horde.NODE_REPLACEMENTS[
-                    node["class_type"]
-                ]
+                data[nodename][
+                    "class_type"
+                ] = HordeComfyPipelineHandler.NODE_REPLACEMENTS[node["class_type"]]
         return data
 
     def _fix_node_names(self, data: dict, design: dict) -> dict:

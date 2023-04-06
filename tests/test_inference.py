@@ -2,26 +2,26 @@
 import pytest
 from PIL import Image
 
-from hordelib.comfy_horde import Comfy_Horde
+from hordelib.pipeline import HordeComfyPipelineHandler
 from hordelib.horde import SharedModelManager
 
 
 class TestInference:
-    comfy: Comfy_Horde
+    pipelineHandler: HordeComfyPipelineHandler
 
     @pytest.fixture(autouse=True)
     def setup_and_teardown(self):
-        self.comfy = Comfy_Horde()
+        self.pipelineHandler = HordeComfyPipelineHandler()
         SharedModelManager.loadModelManagers(compvis=True)
         assert SharedModelManager.manager is not None
         SharedModelManager.manager.load("Deliberate")
         yield
-        del self.comfy
+        del self.pipelineHandler
         SharedModelManager._instance = None
         SharedModelManager.manager = None
 
     def test_unknown_pipeline(self):
-        result = self.comfy.run_pipeline("non-existent-pipeline", {})
+        result = self.pipelineHandler.run_pipeline("non-existent-pipeline", {})
         assert result is None
 
     def test_stable_diffusion_pipeline(self):
@@ -40,7 +40,7 @@ class TestInference:
             "model_loader.ckpt_name": "Deliberate",
             "clip_skip.stop_at_clip_layer": -1,
         }
-        images = self.comfy.run_image_pipeline("stable_diffusion", params)
+        images = self.pipelineHandler.run_image_pipeline("stable_diffusion", params)
         assert images is not None
 
         image = Image.open(images[0]["imagedata"])
@@ -62,7 +62,7 @@ class TestInference:
             "model_loader.ckpt_name": "Deliberate",
             "clip_skip.stop_at_clip_layer": -2,
         }
-        images = self.comfy.run_image_pipeline("stable_diffusion", params)
+        images = self.pipelineHandler.run_image_pipeline("stable_diffusion", params)
         assert images is not None
 
         image = Image.open(images[0]["imagedata"])
@@ -95,7 +95,9 @@ class TestInference:
             "upscale_sampler.scheduler": "simple",
             "upscale_sampler.denoise": 0.5,
         }
-        images = self.comfy.run_image_pipeline("stable_diffusion_hires_fix", params)
+        images = self.pipelineHandler.run_image_pipeline(
+            "stable_diffusion_hires_fix", params
+        )
         assert images is not None
 
         image = Image.open(images[0]["imagedata"])

@@ -4,7 +4,7 @@ import contextlib
 
 from PIL import Image
 
-from hordelib.comfy_horde import Comfy_Horde
+from hordelib.pipeline import HordeComfyPipelineHandler
 from hordelib.model_manager.hyper import ModelManager
 
 
@@ -129,7 +129,7 @@ class HordeLib:
         return params
 
     def text_to_image(self, payload: dict[str, str | None]) -> Image.Image | None:
-        generator = Comfy_Horde()
+        generator = HordeComfyPipelineHandler()
         images = generator.run_image_pipeline(
             "stable_diffusion", self._parameter_remap(payload)
         )

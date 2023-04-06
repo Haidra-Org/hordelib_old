@@ -8,10 +8,10 @@ def test_find_comfyui():
 
 
 def test_instantiation():
-    from hordelib.comfy_horde import Comfy_Horde
+    from hordelib.pipeline import HordeComfyPipelineHandler
 
-    _ = Comfy_Horde()
-    assert isinstance(_, Comfy_Horde)
+    _ = HordeComfyPipelineHandler()
+    assert isinstance(_, HordeComfyPipelineHandler)
 
 
 def test_path():  # XXX
