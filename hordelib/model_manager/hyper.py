@@ -34,8 +34,8 @@ MODEL_MANAGERS_TYPE_LOOKUP = {
     "compvis": CompVisModelManager,
     "controlnet": ControlNetModelManager,
     "diffusers": DiffusersModelManager,
-    # "esrgan": EsrganModelManager,
-    # "gfpgan": GfpganModelManager,
+    "esrgan": EsrganModelManager,
+    "gfpgan": GfpganModelManager,
     "safety_checker": SafetyCheckerModelManager,
 }
 """Keys are `str` which represent attrs in `ModelManger`. Values are the corresponding `type`."""
