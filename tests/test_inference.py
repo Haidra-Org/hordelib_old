@@ -1,8 +1,8 @@
 # test_inference.py
-import pytest
+import pytest  # noqa: I001
 from PIL import Image
-
 from hordelib.pipeline import HordeComfyPipelineHandler
+
 from hordelib.horde import SharedModelManager
 
 

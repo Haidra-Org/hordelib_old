@@ -4,6 +4,18 @@ import pytest
 from hordelib.horde import HordeLib, SharedModelManager
 
 
+class TestNodeModel:
+    def test_HordeCheckpointLoader(self):
+        from hordelib.nodes.node_model_loader import HordeCheckpointLoader
+
+        assert isinstance(HordeCheckpointLoader.INPUT_TYPES(), dict)
+        ckptLoader = HordeCheckpointLoader()
+        assert ckptLoader is not None
+        assert isinstance(ckptLoader.RETURN_TYPES, tuple)
+        assert isinstance(ckptLoader.FUNCTION, str)
+        assert isinstance(ckptLoader.CATEGORY, str)
+
+
 class TestSharedModelManager:
     horde = HordeLib()
     default_model_manager_args: dict
@@ -30,6 +42,11 @@ class TestSharedModelManager:
         del self.horde
         SharedModelManager._instance = None
         SharedModelManager.manager = None
+
+    def test_singleton(self):
+        instance_a = SharedModelManager()
+        instance_b = SharedModelManager()
+        assert instance_a is instance_b
 
     def test_compvis(self):
         from hordelib.model_manager.compvis import CompVisModelManager
