@@ -1,16 +1,12 @@
+import os
 import time
 
-import torch
-
-# from worker.model_manager.esrgan import EsrganModelManager# XXX # FIXME
-# from worker.model_manager.gfpgan import GfpganModelManager # XXX # FIXME
-# from nataili.util.codeformer import CodeFormer # XXX # FIXME
 from loguru import logger
+
 
 from hordelib.cache import get_cache_directory
 from hordelib.model_manager.base import BaseModelManager
 from hordelib.ComfyUI import comfy, comfy_extras
-
 class CodeFormerModelManager(BaseModelManager):
     def __init__(self, download_reference=True):
         super().__init__()

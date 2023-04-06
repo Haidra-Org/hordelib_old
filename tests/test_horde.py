@@ -21,8 +21,8 @@ class TestSharedModelManager:
             "compvis": True,
             "controlnet": True,
             "diffusers": True,
-            # "esrgan": True,
-            # "gfpgan": True,
+            "esrgan": True,
+            "gfpgan": True,
             "safety_checker": True,
         }
         SharedModelManager.loadModelManagers(**self.default_model_manager_args)
@@ -92,8 +92,8 @@ class TestHordeInference:
             "compvis": True,
             "controlnet": True,
             "diffusers": True,
-            # "esrgan": True,
-            # "gfpgan": True,
+            "esrgan": True,
+            "gfpgan": True,
             "safety_checker": True,
         }
         SharedModelManager.loadModelManagers(**self.default_model_manager_args)

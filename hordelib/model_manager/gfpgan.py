@@ -1,8 +1,6 @@
+import os
 import time
 
-import torch
-
-# from nataili.util.gfpgan import GFPGANer # XXX # FIXME
 from loguru import logger
 
 from hordelib.cache import get_cache_directory
