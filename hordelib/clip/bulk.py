@@ -1,9 +1,7 @@
 import hashlib
-import os
 from concurrent.futures import ThreadPoolExecutor
-from typing import Literal, Union
+from typing import Literal
 
-import numpy as np
 from loguru import logger
 from PIL import Image
 from tqdm import tqdm

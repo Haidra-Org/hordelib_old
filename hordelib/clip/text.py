@@ -7,7 +7,6 @@ import torch
 
 from hordelib.cache import Cache
 from hordelib.utils.cast import autocast_cuda
-from loguru import logger
 
 
 class TextEmbed:
@@ -69,6 +68,7 @@ class TextEmbed:
         if filename:
             np.save(f"{self.cache.cache_dir}/{text_hash}", text_embed_array)
             self.cache.add_sqlite_row(filename, text_hash, text_hash)
-        else:
+            return None
+        else:  # XXX
             np.save(f"{self.cache.cache_dir}/{text_hash}", text_embed_array)
             self.cache.add_sqlite_row(text, text_hash, text_hash)

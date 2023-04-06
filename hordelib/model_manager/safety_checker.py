@@ -62,6 +62,7 @@ class SafetyCheckerModelManager(BaseModelManager):
                 f"Loading {model_name}: Took {toc-tic} seconds", status="Success"
             )  # logger.init_ok
             return True
+        return None
 
     def load_safety_checker(
         self,

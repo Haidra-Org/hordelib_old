@@ -52,3 +52,4 @@ class CompVisModelManager(BaseModelManager):
                 f"{model_name}: {round(toc-tic,2)} seconds", status="Loaded"
             )  # logger.init_ok
             return True
+        return None

@@ -86,23 +86,23 @@ class AITemplateModelManager(BaseModelManager):
         """
         if cuda_arch == 89:
             return self.models[model_name]["config"]["sm89"]["download"]
-        elif cuda_arch >= 80 and cuda_arch < 89:
+        if cuda_arch >= 80 and cuda_arch < 89:
             return self.models[model_name]["config"]["sm80"]["download"]
-        elif cuda_arch == 75:
+        if cuda_arch == 75:
             return self.models[model_name]["config"]["sm75"]["download"]
-        else:
-            logger.warning("CUDA Compute Capability not supported")
-            return []
+
+        logger.warning("CUDA Compute Capability not supported")
+        return []
 
     def get_ait_workdir(self, cuda_arch, model_name="stable_diffusion"):
         if cuda_arch == 89:
             return f"./{self.models[model_name]['config']['sm89']['download'][0]['file_path']}/"
-        elif cuda_arch >= 80 and cuda_arch < 89:
+        if cuda_arch >= 80 and cuda_arch < 89:
             return f"./{self.models[model_name]['config']['sm80']['download'][0]['file_path']}/"
-        elif cuda_arch == 75:
+        if cuda_arch == 75:
             return f"./{self.models[model_name]['config']['sm75']['download'][0]['file_path']}/"
-        else:
-            raise ValueError("CUDA Compute Capability not supported")
+
+        raise ValueError("CUDA Compute Capability not supported")
 
     def load(
         self,

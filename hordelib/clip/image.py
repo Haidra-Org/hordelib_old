@@ -1,19 +1,13 @@
 import hashlib
-import os
-
-# threading
-import threading
-import time
 from concurrent.futures import ThreadPoolExecutor
-from uuid import uuid4
 
 import numpy as np
 import torch
+from loguru import logger
 from PIL import Image
 
 from hordelib.cache import Cache
 from hordelib.utils.cast import autocast_cuda
-from loguru import logger
 
 
 class ImageEmbed:
@@ -93,10 +87,11 @@ class ImageEmbed:
             raise ValueError("Either image or filename must be set")
         if image is not None and filename is not None:
             raise ValueError("Only one of image or filename must be set")
-        if image is None:
-            pil_image = Image.open(f"{directory}/{filename}").convert("RGB")
-        else:
-            pil_image = image
+        pil_image = (
+            Image.open(f"{directory}/{filename}").convert("RGB")
+            if image is None
+            else image
+        )
         if image is None:
             file_hash = hashlib.sha256(
                 open(f"{directory}/{filename}", "rb").read()

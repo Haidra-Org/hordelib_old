@@ -62,6 +62,7 @@ class EsrganModelManager(BaseModelManager):
                 f"Loading {model_name}: Took {toc-tic} seconds", status="Success"
             )  # logger.init_ok
             return True
+        return None
 
     def load_esrgan(
         self,
@@ -126,7 +127,7 @@ class EsrganModelManager(BaseModelManager):
                 scale=4,
                 model_path=model_path,
                 model=RealESRGAN_models[self.models[model_name]["name"]],
-                half=True if half_precision else False,
+                half=bool(half_precision),
                 device=device,
                 gpu_id=gpu_id,
             )

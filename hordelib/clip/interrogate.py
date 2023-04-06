@@ -1,6 +1,5 @@
 import hashlib
 import os
-from typing import Dict, List, Union
 
 import numpy as np
 import torch
@@ -32,7 +31,7 @@ class Interrogator:
     def load(
         self,
         key: str,
-        text_array: List[str],
+        text_array: list[str],
         individual: bool = True,
         device: str = "cuda",
     ):
@@ -152,12 +151,7 @@ class Interrogator:
             similarity[text] = round(
                 self._similarity(image_features, text_features)[0][0].item(), 4
             )
-        return {
-            k: v
-            for k, v in sorted(
-                similarity.items(), key=lambda item: item[1], reverse=True
-            )
-        }
+        return dict(sorted(similarity.items(), key=lambda item: item[1], reverse=True))
 
     def rank(self, image_features, text_array, key, device, top_count=2):
         """
@@ -197,10 +191,10 @@ class Interrogator:
 
     def __call__(
         self,
-        image: Image.Image = None,
-        filename: str = None,
-        directory: str = None,
-        text_array: Union[List[str], Dict[str, List[str]], None] = None,
+        image: Image.Image | None = None,
+        filename: str | None = None,
+        directory: str | None = None,
+        text_array: list[str] | dict[str, list[str]] | None = None,
         similarity=False,
         rank=False,
         top_count=2,
@@ -242,7 +236,7 @@ class Interrogator:
         )
         if similarity and not rank:
             results = {}
-            for k in text_array.keys():
+            for k in text_array:
                 results[k] = self.similarity(
                     image_features, text_array[k], k, self.model["device"]
                 )
@@ -250,7 +244,7 @@ class Interrogator:
             return results
         elif rank and not similarity:
             results = {}
-            for k in text_array.keys():
+            for k in text_array:
                 results[k] = self.rank(
                     image_features, text_array[k], k, self.model["device"], top_count
                 )
@@ -258,13 +252,13 @@ class Interrogator:
             return results
         else:
             similarity = {}
-            for k in text_array.keys():
+            for k in text_array:
                 similarity[k] = self.similarity(
                     image_features, text_array[k], k, self.model["device"]
                 )
                 logger.debug(f"{k}: {similarity[k]}")
             rank = {}
-            for k in text_array.keys():
+            for k in text_array:
                 rank[k] = self.rank(
                     image_features, text_array[k], k, self.model["device"], top_count
                 )

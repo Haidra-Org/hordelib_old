@@ -194,22 +194,19 @@ class BaseModelManager:
         return True
 
     @staticmethod
-    def get_file_md5sum_hash(file_name):
+    def get_file_md5sum_hash(file_name) -> str | None:
         # Bail out if the source file doesn't exist
         if not os.path.isfile(file_name):
-            return
+            return None
 
         # Check if we have a cached md5 hash for the source file
         # and use that unless our source file is newer than our hash
         md5_file = f"{os.path.splitext(file_name)[0]}.md5"
         source_timestamp = os.path.getmtime(file_name)
-        if os.path.isfile(md5_file):
-            hash_timestamp = os.path.getmtime(md5_file)
-        else:
-            hash_timestamp = 0
+        hash_timestamp = os.path.getmtime(md5_file) if os.path.isfile(md5_file) else 0
         if hash_timestamp > source_timestamp:
             # Use our cached hash
-            with open(md5_file, "rt") as handle:
+            with open(md5_file) as handle:
                 md5_hash = handle.read().split()[0]
             return md5_hash
 
@@ -226,7 +223,7 @@ class BaseModelManager:
         # Cache this md5 hash we just calculated. Use md5sum format files
         # so we can also use OS tools to manipulate these md5 files
         try:
-            with open(md5_file, "wt") as handle:
+            with open(md5_file, "w") as handle:
                 handle.write(f"{md5_hash} *{os.path.basename(md5_file)}")
         except (OSError, PermissionError):
             logger.debug("Could not write to md5sum file, ignoring")
@@ -242,13 +239,12 @@ class BaseModelManager:
         # and use that unless our source file is newer than our hash
         sha256_file = f"{os.path.splitext(file_name)[0]}.sha256"
         source_timestamp = os.path.getmtime(file_name)
-        if os.path.isfile(sha256_file):
-            hash_timestamp = os.path.getmtime(sha256_file)
-        else:
-            hash_timestamp = 0
+        hash_timestamp = (
+            os.path.getmtime(sha256_file) if os.path.isfile(sha256_file) else 0
+        )
         if hash_timestamp > source_timestamp:
             # Use our cached hash
-            with open(sha256_file, "rt") as handle:
+            with open(sha256_file) as handle:
                 sha256_hash = handle.read().split()[0]
             return sha256_hash
 
@@ -286,10 +282,7 @@ class BaseModelManager:
             sha256_file_hash = self.get_file_sha256_hash(full_path)
             logger.debug(f"sha256sum: {sha256_file_hash}")
             logger.debug(f"Expected: {file_details['sha256sum']}")
-            if file_details["sha256sum"] != sha256_file_hash:
-                return False
-            else:
-                return True
+            return file_details["sha256sum"] == sha256_file_hash
 
         # If sha256 is not available, fall back to md5
         if "md5sum" in file_details:
@@ -297,10 +290,7 @@ class BaseModelManager:
             md5_file_hash = self.get_file_md5sum_hash(full_path)
             logger.debug(f"md5sum: {md5_file_hash}")
             logger.debug(f"Expected: {file_details['md5sum']}")
-            if file_details["md5sum"] != md5_file_hash:
-                return False
-            else:
-                return True
+            return file_details["md5sum"] != md5_file_hash
 
         # If no hashes available, return True for now
         # THIS IS A SECURITY RISK, EVENTUALLY WE SHOULD RETURN FALSE

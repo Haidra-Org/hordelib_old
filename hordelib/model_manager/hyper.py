@@ -128,7 +128,7 @@ class ModelManager:
     def reload_database(self) -> None:
         """Completely resets the `BaseModelManager` classes, and forces each to re-init."""
         model_managers: list[BaseModelManager] = []
-        for model_manager_type in MODEL_MANAGERS_TYPE_LOOKUP.keys():
+        for model_manager_type in MODEL_MANAGERS_TYPE_LOOKUP:
             model_managers.append(getattr(self, model_manager_type))
 
         self.available_models = []  # reset available models
@@ -147,7 +147,7 @@ class ModelManager:
         Returns:
             bool | None: The success of the download. If `None`, the model_name was not found.
         """
-        for model_manager_type in MODEL_MANAGERS_TYPE_LOOKUP.keys():
+        for model_manager_type in MODEL_MANAGERS_TYPE_LOOKUP:
             model_manager: BaseModelManager = getattr(self, model_manager_type)
             if model_manager is None:
                 continue
@@ -160,7 +160,7 @@ class ModelManager:
 
     def download_all(self) -> None:
         """Attempts to download all available models for all `BaseModelManager` types."""
-        for model_manager_type in MODEL_MANAGERS_TYPE_LOOKUP.keys():
+        for model_manager_type in MODEL_MANAGERS_TYPE_LOOKUP:
             model_manager: BaseModelManager = getattr(self, model_manager_type)
             if model_manager is None:
                 continue
@@ -183,7 +183,7 @@ class ModelManager:
         Returns:
             bool | None: The result of the validation. If `None`, the model was not found.
         """
-        for model_manager_type in MODEL_MANAGERS_TYPE_LOOKUP.keys():
+        for model_manager_type in MODEL_MANAGERS_TYPE_LOOKUP:
             model_manager: BaseModelManager = getattr(self, model_manager_type)
             if model_manager is None:
                 continue
@@ -200,7 +200,7 @@ class ModelManager:
         Args:
             models (list[str]): The list of models to mark.
         """
-        for model_manager_type in MODEL_MANAGERS_TYPE_LOOKUP.keys():
+        for model_manager_type in MODEL_MANAGERS_TYPE_LOOKUP:
             model_manager: BaseModelManager = getattr(self, model_manager_type)
             if model_manager is None:
                 continue
@@ -217,7 +217,7 @@ class ModelManager:
         Returns:
             bool | None: The result of the unloading. If `None`, the model was not found.
         """
-        for model_manager_type in MODEL_MANAGERS_TYPE_LOOKUP.keys():
+        for model_manager_type in MODEL_MANAGERS_TYPE_LOOKUP:
             model_manager: BaseModelManager = getattr(self, model_manager_type)
             if model_manager is None:
                 continue
@@ -241,24 +241,22 @@ class ModelManager:
             model_types = ["ckpt", "diffusers"]
         models_available = []
         for model_type in model_types:
-            if model_type == "ckpt":
-                if self.compvis is not None:
-                    for model in self.compvis.models:
-                        # We don't want to check the .yaml file as those exist in this repo instead
-                        model_files = [
-                            filename
-                            for filename in self.compvis.get_model_files(model)
-                            if not filename["path"].endswith(".yaml")
-                        ]
-                        if self.compvis.check_available(model_files):
-                            models_available.append(model)
-            if model_type == "diffusers":
-                if self.diffusers is not None:
-                    for model in self.diffusers.models:
-                        if self.diffusers.check_available(
-                            self.diffusers.get_model_files(model)
-                        ):
-                            models_available.append(model)
+            if model_type == "ckpt" and self.compvis is not None:
+                for model in self.compvis.models:
+                    # We don't want to check the .yaml file as those exist in this repo instead
+                    model_files = [
+                        filename
+                        for filename in self.compvis.get_model_files(model)
+                        if not filename["path"].endswith(".yaml")
+                    ]
+                    if self.compvis.check_available(model_files):
+                        models_available.append(model)
+            if model_type == "diffusers" and self.diffusers is not None:
+                for model in self.diffusers.models:
+                    if self.diffusers.check_available(
+                        self.diffusers.get_model_files(model)
+                    ):
+                        models_available.append(model)
         return models_available
 
     def count_available_models_by_types(

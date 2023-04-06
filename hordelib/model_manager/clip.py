@@ -144,10 +144,11 @@ class ClipModelManager(BaseModelManager):
                 )
             else:
                 logger.error(f"Unknown model type: {self.models[model_name]['type']}")
-                return
+                return None
             logger.info(f"Loading {model_name}", status="Success")  # logger.init_ok
             toc = time.time()
             logger.info(
                 f"Loading {model_name}: Took {toc-tic} seconds", status="Success"
             )  # logger.init_ok
             return True
+        return None
