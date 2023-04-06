@@ -9,7 +9,7 @@ from loguru import logger
 
 from hordelib.cache import get_cache_directory
 from hordelib.model_manager.base import BaseModelManager
-
+from hordelib.ComfyUI import comfy, comfy_extras
 
 class CodeFormerModelManager(BaseModelManager):
     def __init__(self, download_reference=True):
