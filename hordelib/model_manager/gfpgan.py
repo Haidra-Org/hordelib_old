@@ -5,7 +5,9 @@ from loguru import logger
 
 from hordelib.cache import get_cache_directory
 from hordelib.model_manager.base import BaseModelManager
-from hordelib.ComfyUI import comfy, comfy_extras
+from hordelib import comfy_horde
+
+
 
 class GfpganModelManager(BaseModelManager):
     def __init__(self, download_reference=True):
@@ -57,6 +59,7 @@ class GfpganModelManager(BaseModelManager):
         model_name,
     ):
         model_path = self.get_model_files(model_name)[0]["path"]
-        sd = comfy.utils.load_torch_file(model_path)
-        out = comfy_extras.chainner_models.model_loading.load_state_dict(sd).eval()
+        model_path = f"{self.path}/{model_path}"
+        sd = comfy_horde.load_torch_file(model_path)
+        out = comfy_horde.model_loading.load_state_dict(sd).eval()
         return (out, )
