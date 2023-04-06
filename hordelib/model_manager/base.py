@@ -69,10 +69,10 @@ class BaseModelManager:
             models = response.json()
             return models
         except Exception as e:
-            logger.info_err(
+            logger.error(
                 "Model Reference", status=f"Download failed: {e}"
-            )  # logger.init_err
-            logger.info_warn("Model Reference", status="Local")  # logger.init_warn
+            )  # logger.info_err
+            logger.warning("Model Reference", status="Local")  # logger.init_warn
             return json.loads((self.models_path).read_text())
 
     def get_model(self, model_name):
@@ -394,7 +394,7 @@ class BaseModelManager:
                 )
                 input("")
                 continue
-            # TODO: simplify
+            # TODO: simplify # XXX
             if "file_content" in download[i]:
                 file_content = download[i]["file_content"]
                 logger.info(f"writing {file_content} to {file_path}")
