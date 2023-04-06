@@ -1,11 +1,10 @@
 # test_horde.py
 import pytest
-import numpy as np
 from PIL import Image
 
 from hordelib.horde import HordeLib
 from hordelib.shared_model_manager import SharedModelManager
-from transformers import CLIPFeatureExtractor
+from hordelib.safety_checker import is_image_nsfw
 
 
 class TestHordePostProcessing:
@@ -38,12 +37,4 @@ class TestHordePostProcessing:
         assert SharedModelManager.manager.safety_checker.is_model_loaded("safety_checker") is True
 
     def test_safety_checker(self):
-        safety_checker = SharedModelManager.manager.loaded_models["safety_checker"]["model"]
-        feature_extractor = CLIPFeatureExtractor()
-        image_features = feature_extractor(self.image, return_tensors="pt").to("cpu")
-        _, has_nsfw_concept = safety_checker(
-            clip_input=image_features.pixel_values,
-            images=[np.asarray(self.image)],
-        )
-        assert has_nsfw_concept is not None
-        assert False in has_nsfw_concept
+        assert is_image_nsfw(self.image) is False
