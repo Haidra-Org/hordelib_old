@@ -24,19 +24,13 @@ class EsrganModelManager(BaseModelManager):
     def load(
         self,
         model_name: str,
-        half_precision=True,
-        gpu_id=0,
-        cpu_only=False,
     ):
         """
         model_name: str. Name of the model to load. See available_models for a list of available models.
-        half_precision: bool. If True, the model will be loaded in half precision.
-        gpu_id: int. The id of the gpu to use. If the gpu is not available, the model will be loaded on the cpu.
-        cpu_only: bool. If True, the model will be loaded on the cpu. If True, half_precision will be set to False.
         """
 
-        if not self.cuda_available:
-            cpu_only = True
+        # if not self.cuda_available:
+        #     cpu_only = True
         if model_name not in self.models:
             logger.error(f"{model_name} not found")
             return False

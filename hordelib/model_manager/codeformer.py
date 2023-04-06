@@ -67,22 +67,8 @@ class CodeFormerModelManager(BaseModelManager):
     def load_codeformer(
         self,
         model_name,
-        half_precision=True,
-        gpu_id=0,
-        cpu_only=False,
     ):
         model_path = self.get_model_files(model_name)[0]["path"]
-        model_path = f"{self.path}/{model_path}"
-        if not self.cuda_available:
-            cpu_only = True
-        if cpu_only:
-            device = torch.device("cpu")
-            half_precision = False
-        else:
-            device = torch.device(f"cuda:{gpu_id}" if self.cuda_available else "cpu")
-        logger.info(f"Loading model {model_name} on {device}")
-        logger.info(f"Model path: {model_path}")
-        model = CodeFormer(self.esrgan, self.gfpgan, self, device=device, upscale=1).to(
-            device
-        )  # XXX # FIXME
-        return {"model": model, "device": device, "half_precision": half_precision}
+        sd = comfy.utils.load_torch_file(model_path)
+        out = comfy_extras.chainner_models.model_loading.load_state_dict(sd).eval()
+        return (out, )
