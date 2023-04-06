@@ -17,9 +17,9 @@ class HordePPModelLoader:
             raise RuntimeError()  # XXX
 
         if SharedModelManager.manager.esrgan is not None and model_name in SharedModelManager.manager.esrgan.models:
-            SharedModelManager.manager.esrgan.loaded_models[model_name]
+            return SharedModelManager.manager.esrgan.loaded_models[model_name]
         elif SharedModelManager.manager.gfpgan is not None and model_name in SharedModelManager.manager.gfpgan.models:
-            SharedModelManager.manager.gfpgan.loaded_models[model_name]
+            return SharedModelManager.manager.gfpgan.loaded_models[model_name]
         else:
             logger.error(f"{model_name} not found in any of the PostProcessor Model Managers")
             raise RuntimeError()  # XXX
