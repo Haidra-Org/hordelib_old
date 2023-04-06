@@ -27,14 +27,18 @@ class TestHordePostProcessing:
         self.image = Image.open("db0.jpg") 
         SharedModelManager.loadModelManagers(**self.default_model_manager_args)
         assert SharedModelManager.manager is not None
-        SharedModelManager.manager.load("safety_checker")
         yield
         del self.horde
         SharedModelManager._instance = None
         SharedModelManager.manager = None
 
     def test_load(self):
+        SharedModelManager.manager.load("safety_checker")
         assert SharedModelManager.manager.safety_checker.is_model_loaded("safety_checker") is True
 
-    def test_safety_checker(self):
+    def test_safety_checker_with_preload(self):
+        SharedModelManager.manager.load("safety_checker")
+        assert is_image_nsfw(self.image) is False
+
+    def test_safety_checker_without_preload(self):
         assert is_image_nsfw(self.image) is False

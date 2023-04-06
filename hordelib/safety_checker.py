@@ -5,7 +5,7 @@ from hordelib.shared_model_manager import SharedModelManager
 
 
 def is_image_nsfw(image):
-    if SharedModelManager.manager.safety_checker is None:
+    if "safety_checker" not in SharedModelManager.manager.loaded_models:
         SharedModelManager.manager.load("safety_checker")
     safety_checker = SharedModelManager.manager.loaded_models["safety_checker"]["model"]
     feature_extractor = CLIPFeatureExtractor()
