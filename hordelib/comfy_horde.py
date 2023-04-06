@@ -13,7 +13,6 @@ from PIL import Image
 # Do not change the order of these imports
 # fmt: off
 import execution
-import comfy, comfy_extras
 from comfy.sd import load_checkpoint_guess_config
 from comfy.utils import load_torch_file
 from comfy_extras.chainner_models import model_loading
