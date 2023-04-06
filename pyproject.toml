@@ -50,3 +50,6 @@ exclude = '''
   | \.tox
 )/
 '''
+
+[tool.ruff]
+line-length = 100
