@@ -217,6 +217,7 @@ class Comfy_Horde:
 
         # Inject our model manager if required
         from hordelib.shared_model_manager import SharedModelManager
+
         if "model_loader.model_manager" not in params:
             params["model_loader.model_manager"] = SharedModelManager
 

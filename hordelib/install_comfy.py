@@ -50,7 +50,9 @@ class Installer:
         # Install if ComfyUI is missing completely
         if not os.path.exists(get_comfyui_path()):
             installdir = os.path.dirname(get_comfyui_path())
-            cls._run("git clone https://github.com/comfyanonymous/ComfyUI.git", installdir)
+            cls._run(
+                "git clone https://github.com/comfyanonymous/ComfyUI.git", installdir
+            )
             cls._run(f"git checkout {comfy_version}", get_comfyui_path())
             return
 

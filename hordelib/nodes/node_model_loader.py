@@ -20,7 +20,9 @@ class HordeCheckpointLoader:
 
     CATEGORY = "loaders"
 
-    def load_checkpoint(self, model_manager, ckpt_name, output_vae=True, output_clip=True):
+    def load_checkpoint(
+        self, model_manager, ckpt_name, output_vae=True, output_clip=True
+    ):
 
         if model_manager.manager.compvis is None:
             logger.error("horde_model_manager.compvis appears to be missing!")

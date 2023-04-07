@@ -8,7 +8,6 @@ from hordelib.model_manager.base import BaseModelManager
 from hordelib import comfy_horde
 
 
-
 class GfpganModelManager(BaseModelManager):
     def __init__(self, download_reference=True):
         super().__init__()
@@ -45,7 +44,6 @@ class GfpganModelManager(BaseModelManager):
             logger.info(f"{model_name}", status="Loading")  # logger.init
             self.loaded_models[model_name] = self.load_gfpgan(
                 model_name,
-
             )
             logger.info(f"Loading {model_name}", status="Success")
             toc = time.time()
@@ -62,4 +60,4 @@ class GfpganModelManager(BaseModelManager):
         model_path = f"{self.path}/{model_path}"
         sd = comfy_horde.load_torch_file(model_path)
         out = comfy_horde.model_loading.load_state_dict(sd).eval()
-        return (out, )
+        return (out,)
