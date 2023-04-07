@@ -4,10 +4,13 @@ from loguru import logger
 class HordeUpscaleModelLoader:
     @classmethod
     def INPUT_TYPES(s):
-        return {"required": {
-            "model_name": ("<model name>", ),
-            "model_manager": ("<model manager instance>",),
-        }}
+        return {
+            "required": {
+                "model_name": ("<model name>",),
+                "model_manager": ("<model manager instance>",),
+            }
+        }
+
     RETURN_TYPES = ("UPSCALE_MODEL",)
     FUNCTION = "load_model"
 

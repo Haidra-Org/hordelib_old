@@ -63,4 +63,4 @@ class EsrganModelManager(BaseModelManager):
         model_path = f"{self.path}/{model_path}"
         sd = comfy_horde.load_torch_file(model_path)
         out = comfy_horde.model_loading.load_state_dict(sd).eval()
-        return (out, )
+        return (out,)

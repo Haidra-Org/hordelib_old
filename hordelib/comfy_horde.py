@@ -81,7 +81,9 @@ class Comfy_Horde:
             if ("class_type" in node) and (
                 node["class_type"] in Comfy_Horde.NODE_REPLACEMENTS
             ):
-                logger.debug(f"Changed type {data[nodename]['class_type']} to {Comfy_Horde.NODE_REPLACEMENTS[node['class_type']]}")
+                logger.debug(
+                    f"Changed type {data[nodename]['class_type']} to {Comfy_Horde.NODE_REPLACEMENTS[node['class_type']]}"
+                )
                 data[nodename]["class_type"] = Comfy_Horde.NODE_REPLACEMENTS[
                     node["class_type"]
                 ]
@@ -226,6 +228,7 @@ class Comfy_Horde:
 
         # Inject our model manager if required
         from hordelib.shared_model_manager import SharedModelManager
+
         if "model_loader.model_manager" not in params:
             logger.debug("Injecting model manager")
             params["model_loader.model_manager"] = SharedModelManager

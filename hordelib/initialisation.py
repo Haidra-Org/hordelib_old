@@ -15,4 +15,5 @@ def initialise():
 
     # Initialise model manager
     from hordelib.shared_model_manager import SharedModelManager
+
     SharedModelManager.loadModelManagers(**DEFAULT_MODEL_MANAGERS)

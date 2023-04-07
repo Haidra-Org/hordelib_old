@@ -9,7 +9,6 @@ from hordelib.model_manager.base import BaseModelManager
 from hordelib import comfy_horde
 
 
-
 class CodeFormerModelManager(BaseModelManager):
     def __init__(self, download_reference=True):
         super().__init__()
@@ -71,4 +70,4 @@ class CodeFormerModelManager(BaseModelManager):
         model_path = f"{self.path}/{model_path}"
         sd = comfy_horde.load_torch_file(model_path)
         out = comfy_horde.model_loading.load_state_dict(sd).eval()
-        return (out, )
+        return (out,)

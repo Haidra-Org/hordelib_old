@@ -136,45 +136,20 @@ class TestSetup:
                     "sampler_name": "euler",
                     "scheduler": "normal",
                     "denoise": 1.0,
-                    "model": [
-                        "model_loader",
-                        0
-                    ],
-                    "positive": [
-                        "prompt",
-                        0
-                    ],
-                    "negative": [
-                        "negative_prompt",
-                        0
-                    ],
-                    "latent_image": [
-                        "empty_latent_image",
-                        0
-                    ]
+                    "model": ["model_loader", 0],
+                    "positive": ["prompt", 0],
+                    "negative": ["negative_prompt", 0],
+                    "latent_image": ["empty_latent_image", 0],
                 },
-                "class_type": "KSampler"
+                "class_type": "KSampler",
             },
             "vae_encoder": {
-                "inputs": {
-                    "pixels": [
-                        "image_loader",
-                        0
-                    ],
-                    "vae": [
-                        "model_loader",
-                        2
-                    ]
-                },
-                "class_type": "VAEEncode"
+                "inputs": {"pixels": ["image_loader", 0], "vae": ["model_loader", 2]},
+                "class_type": "VAEEncode",
             },
             "empty_latent_image": {
-                "inputs": {
-                    "width": 512,
-                    "height": 512,
-                    "batch_size": 1
-                },
-                "class_type": "EmptyLatentImage"
+                "inputs": {"width": 512, "height": 512, "batch_size": 1},
+                "class_type": "EmptyLatentImage",
             },
         }
         result = self.comfy.reconnect_input(data, "sampler.latent_image", "vae_encoder")
