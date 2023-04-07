@@ -1,9 +1,7 @@
 import hashlib
-import os
 from concurrent.futures import ThreadPoolExecutor
-from typing import Literal, Union
+from typing import Literal
 
-import numpy as np
 from loguru import logger
 from PIL import Image
 from tqdm import tqdm
@@ -34,11 +32,11 @@ class BulkImageEmbedder:
         self.model_name = model_name
         self.model_manager = ClipModelManager()
         self.cache_image = Cache(
-            self.model_name, cache_parentname="embeds", cache_subname="image"
+            self.model_name, cache_parentname="embeds", cache_subname="image",
         )
         self.model_manager.load(self.model_name)
         self.image_embed = ImageEmbed(
-            self.model_manager.loaded_models[self.model_name], self.cache_image
+            self.model_manager.loaded_models[self.model_name], self.cache_image,
         )
         self._prepare_from_directory(input_directory=input_directory)
 
@@ -58,6 +56,6 @@ class BulkImageEmbedder:
         filtered_list = self.cache_image.filter_list(directory_list)
         logger.info(f"Found {len(filtered_list)} files to embed.")
         for image in tqdm(
-            filtered_list, disable=WorkerSettings.disable_progress.active
+            filtered_list, disable=WorkerSettings.disable_progress.active,
         ):
             self.insert(image, input_directory)

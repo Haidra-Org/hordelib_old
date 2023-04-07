@@ -1,6 +1,5 @@
 # node_image_output.py
 # Simple proof of concept to return an image byte stream to the horde worker.
-import json
 from io import BytesIO
 
 import numpy as np
