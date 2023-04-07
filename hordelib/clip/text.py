@@ -18,7 +18,8 @@ class TextEmbed:
         self.model = model
         self.cache = cache
         self.executor = ThreadPoolExecutor(
-            max_workers=1024, thread_name_prefix="SaveThread",
+            max_workers=1024,
+            thread_name_prefix="SaveThread",
         )
 
     @autocast_cuda

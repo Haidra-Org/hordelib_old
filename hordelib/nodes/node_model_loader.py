@@ -20,7 +20,11 @@ class HordeCheckpointLoader:
     CATEGORY = "loaders"
 
     def load_checkpoint(
-        self, model_manager, model_name, output_vae=True, output_clip=True,
+        self,
+        model_manager,
+        model_name,
+        output_vae=True,
+        output_clip=True,
     ):
 
         logger.debug(f"Loading model {model_name} through our custom node")

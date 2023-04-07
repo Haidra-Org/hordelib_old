@@ -31,7 +31,10 @@ class ComfyWebAppLauncher:
         # Now launch the comfyui process and replace our current process
         os.chdir(get_comfyui_path())
         subprocess.run(
-            ["python", "main.py"], shell=True, text=True, cwd=get_comfyui_path(),
+            ["python", "main.py"],
+            shell=True,
+            text=True,
+            cwd=get_comfyui_path(),
         )
 
     @classmethod

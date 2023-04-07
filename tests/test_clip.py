@@ -40,7 +40,9 @@ class TestHordePostProcessing:
             SharedModelManager.manager.loaded_models["ViT-L/14"],
         )
         similarity_result = interrogator(
-            image=self.image, text_array=word_list, similarity=True,
+            image=self.image,
+            text_array=word_list,
+            similarity=True,
         )
         assert "default" in similarity_result
         assert similarity_result["default"]["outlaw"] > 0.15

@@ -109,11 +109,13 @@ class ControlNetModelManager(BaseModelManager):
         if model_name not in self.available_models:
             logger.error(f"{model_name} not available")
             logger.info(
-                f"Downloading {model_name}", status="Downloading",
+                f"Downloading {model_name}",
+                status="Downloading",
             )  # logger.init_ok
             self.download_model(model_name)
             logger.info(
-                f"{model_name} downloaded", status="Downloading",
+                f"{model_name} downloaded",
+                status="Downloading",
             )  # logger.init_ok
         if model_name in self.control_nets:
             logger.info(f"{model_name} already loaded")

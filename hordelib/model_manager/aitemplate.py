@@ -124,11 +124,13 @@ class AITemplateModelManager(BaseModelManager):
             logger.info("No available aitemplates")
             sm = self.recommended_gpu[0]["sm"]
             logger.info(
-                f"Downloading AITemplate for {sm}", status="Downloading",
+                f"Downloading AITemplate for {sm}",
+                status="Downloading",
             )  # logger.init_ok
             self.download_ait()
             logger.info(
-                f"AITemplate for {sm} downloaded", status="Downloading",
+                f"AITemplate for {sm} downloaded",
+                status="Downloading",
             )  # logger.init_ok
         if model_name not in self.loaded_models:
             tic = time.time()
@@ -140,7 +142,8 @@ class AITemplateModelManager(BaseModelManager):
             logger.info(f"Loading {model_name}", status="Success")  # logger.init_ok
             toc = time.time()
             logger.info(
-                f"Loading {model_name}: Took {toc-tic} seconds", status="Success",
+                f"Loading {model_name}: Took {toc-tic} seconds",
+                status="Success",
             )  # logger.init_ok
             return True
         return None

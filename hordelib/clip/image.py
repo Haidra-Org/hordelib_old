@@ -21,7 +21,8 @@ class ImageEmbed:
         self.model = model
         self.cache = cache
         self.executor = ThreadPoolExecutor(
-            max_workers=1024, thread_name_prefix="SaveThread",
+            max_workers=1024,
+            thread_name_prefix="SaveThread",
         )
 
     @autocast_cuda
@@ -56,7 +57,9 @@ class ImageEmbed:
             image_features = self.model["model"].encode_image(preprocess_images)
             for image_embed_array, pil_image in zip(image_features, pil_images):
                 self.executor.submit(
-                    self._save, image_embed_array, pil_image["hash"],
+                    self._save,
+                    image_embed_array,
+                    pil_image["hash"],
                 )
                 self.cache.add_sqlite_row(
                     file=pil_image["filename"].replace(".webp", ""),
@@ -89,7 +92,11 @@ class ImageEmbed:
             raise ValueError("Either image or filename must be set")
         if image is not None and filename is not None:
             raise ValueError("Only one of image or filename must be set")
-        pil_image = Image.open(f"{directory}/{filename}").convert("RGB") if image is None else image
+        pil_image = (
+            Image.open(f"{directory}/{filename}").convert("RGB")
+            if image is None
+            else image
+        )
         if image is None:
             file_hash = hashlib.sha256(
                 open(f"{directory}/{filename}", "rb").read(),

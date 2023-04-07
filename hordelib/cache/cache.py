@@ -29,7 +29,8 @@ def get_cache_directory():
         base_dir = AIWORKER_CACHE_HOME
     else:
         base_dir = os.environ.get(
-            "XDG_CACHE_HOME", os.path.join(Path.home(), ".cache/"),
+            "XDG_CACHE_HOME",
+            os.path.join(Path.home(), ".cache/"),
         )
     return os.path.join(base_dir, "nataili")
 
@@ -80,7 +81,8 @@ class Cache:
         """
         files = []
         for file in tqdm(
-            os.listdir(input_directory), disable=WorkerSettings.disable_progress.active,
+            os.listdir(input_directory),
+            disable=WorkerSettings.disable_progress.active,
         ):
             if os.path.splitext(file)[1] in extensions:
                 files.append(os.path.splitext(file)[0])
@@ -177,7 +179,8 @@ class Cache:
         Add a row to the sqlite database
         """
         self.cursor.execute(
-            "INSERT INTO cache VALUES (?, ?, ?)", (file, hash, pil_hash),
+            "INSERT INTO cache VALUES (?, ?, ?)",
+            (file, hash, pil_hash),
         )
         if commit:
             self.conn.commit()
@@ -189,7 +192,10 @@ class Cache:
         # Populate sqlite database
         for file in list_of_files:
             self.add_sqlite_row(
-                file["file"], file["hash"], file["pil_hash"], commit=False,
+                file["file"],
+                file["hash"],
+                file["pil_hash"],
+                commit=False,
             )
         self.conn.commit()
 
