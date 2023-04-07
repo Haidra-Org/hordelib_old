@@ -162,7 +162,7 @@ class Interrogator:
                 similarity.items(),
                 key=lambda item: item[1],
                 reverse=True,
-            )
+            ),
         )
 
     def rank(self, image_features, text_array, key, device, top_count=2):
