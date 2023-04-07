@@ -4,10 +4,10 @@ from concurrent.futures import ThreadPoolExecutor
 import clip
 import numpy as np
 import torch
+from loguru import logger
 
 from hordelib.cache import Cache
 from hordelib.utils.cast import autocast_cuda
-from loguru import logger
 
 
 class TextEmbed:
@@ -19,7 +19,8 @@ class TextEmbed:
         self.model = model
         self.cache = cache
         self.executor = ThreadPoolExecutor(
-            max_workers=1024, thread_name_prefix="SaveThread"
+            max_workers=1024,
+            thread_name_prefix="SaveThread",
         )
 
     @autocast_cuda
@@ -36,7 +37,7 @@ class TextEmbed:
         with torch.no_grad():
             text_features = self.model["model"].encode_text(text_tokens).float()
         for text_embed_array, text in zip(text_features, text_list):
-            future = self.executor.submit(self._save, text_embed_array, text["hash"])
+            self.executor.submit(self._save, text_embed_array, text["hash"])
             self.cache.add_sqlite_row(text["filename"], text["hash"], text["hash"])
 
     def _save(self, text_embed_array, text_hash):
@@ -69,6 +70,8 @@ class TextEmbed:
         if filename:
             np.save(f"{self.cache.cache_dir}/{text_hash}", text_embed_array)
             self.cache.add_sqlite_row(filename, text_hash, text_hash)
+            return None
         else:
             np.save(f"{self.cache.cache_dir}/{text_hash}", text_embed_array)
             self.cache.add_sqlite_row(text, text_hash, text_hash)
+            return None

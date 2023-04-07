@@ -29,7 +29,8 @@ def get_cache_directory():
         base_dir = AIWORKER_CACHE_HOME
     else:
         base_dir = os.environ.get(
-            "XDG_CACHE_HOME", os.path.join(Path.home(), ".cache/")
+            "XDG_CACHE_HOME",
+            os.path.join(Path.home(), ".cache/"),
         )
     return os.path.join(base_dir, "nataili")
 
@@ -80,7 +81,8 @@ class Cache:
         """
         files = []
         for file in tqdm(
-            os.listdir(input_directory), disable=WorkerSettings.disable_progress.active
+            os.listdir(input_directory),
+            disable=WorkerSettings.disable_progress.active,
         ):
             if os.path.splitext(file)[1] in extensions:
                 files.append(os.path.splitext(file)[0])
@@ -163,12 +165,12 @@ class Cache:
         Create a sqlite database from the cache
         """
         self.cursor.execute(
-            "CREATE TABLE IF NOT EXISTS cache (file text, hash text, pil_hash text)"
+            "CREATE TABLE IF NOT EXISTS cache (file text, hash text, pil_hash text)",
         )
         self.cursor.execute("CREATE INDEX IF NOT EXISTS file_index ON cache (file)")
         self.cursor.execute("CREATE INDEX IF NOT EXISTS hash_index ON cache (hash)")
         self.cursor.execute(
-            "CREATE INDEX IF NOT EXISTS pil_hash_index ON cache (pil_hash)"
+            "CREATE INDEX IF NOT EXISTS pil_hash_index ON cache (pil_hash)",
         )
         self.conn.commit()
 
@@ -177,7 +179,8 @@ class Cache:
         Add a row to the sqlite database
         """
         self.cursor.execute(
-            "INSERT INTO cache VALUES (?, ?, ?)", (file, hash, pil_hash)
+            "INSERT INTO cache VALUES (?, ?, ?)",
+            (file, hash, pil_hash),
         )
         if commit:
             self.conn.commit()
@@ -189,7 +192,10 @@ class Cache:
         # Populate sqlite database
         for file in list_of_files:
             self.add_sqlite_row(
-                file["file"], file["hash"], file["pil_hash"], commit=False
+                file["file"],
+                file["hash"],
+                file["pil_hash"],
+                commit=False,
             )
         self.conn.commit()
 
@@ -215,7 +221,7 @@ class Cache:
         """
         if not any([file, file_hash, pil_hash]):
             raise ValueError(
-                "At least one value must be provided to search the database"
+                "At least one value must be provided to search the database",
             )
         file = os.path.splitext(file)[0] if file else None
         query = "SELECT hash, pil_hash FROM cache WHERE "
