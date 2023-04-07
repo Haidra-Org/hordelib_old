@@ -68,7 +68,8 @@ class HordeLib:
         return params
 
     def _parameter_remap_text_to_image(
-        self, payload: dict[str, str | None],
+        self,
+        payload: dict[str, str | None],
     ) -> dict[str, str | None]:
         params = self._parameter_remap(payload)
 

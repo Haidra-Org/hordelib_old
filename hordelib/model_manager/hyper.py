@@ -163,7 +163,9 @@ class ModelManager:
             model_manager.download_all_models()
 
     def validate_model(
-        self, model_name: str, skip_checksum: bool = False,
+        self,
+        model_name: str,
+        skip_checksum: bool = False,
     ) -> bool | None:
         """Runs a integrity check against the model specified.
 
@@ -251,7 +253,8 @@ class ModelManager:
         return models_available
 
     def count_available_models_by_types(
-        self, model_types: list[str] | None = None,
+        self,
+        model_types: list[str] | None = None,
     ) -> int:
         return len(self.get_available_models_by_types(model_types))
 
@@ -359,7 +362,9 @@ class ModelManager:
             return success
         if self.gfpgan is not None and model_name in self.gfpgan.models:
             success = self.gfpgan.load(
-                model_name=model_name, gpu_id=gpu_id, cpu_only=cpu_only,
+                model_name=model_name,
+                gpu_id=gpu_id,
+                cpu_only=cpu_only,
             )
             if success:
                 self.loaded_models.update(

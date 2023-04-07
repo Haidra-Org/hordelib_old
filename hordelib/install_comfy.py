@@ -36,7 +36,11 @@ class Installer:
     def _run(cls, command, directory=get_hordelib_path()) -> tuple[bool, str] | None:
         try:
             result = subprocess.run(
-                command, shell=True, text=True, capture_output=True, cwd=directory,
+                command,
+                shell=True,
+                text=True,
+                capture_output=True,
+                cwd=directory,
             )
         except Exception as Ex:
             logger.error(Ex)
@@ -52,7 +56,8 @@ class Installer:
         if not os.path.exists(get_comfyui_path()):
             installdir = os.path.dirname(get_comfyui_path())
             cls._run(
-                "git clone https://github.com/comfyanonymous/ComfyUI.git", installdir,
+                "git clone https://github.com/comfyanonymous/ComfyUI.git",
+                installdir,
             )
             cls._run(f"git checkout {comfy_version}", get_comfyui_path())
             return

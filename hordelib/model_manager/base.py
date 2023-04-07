@@ -70,7 +70,8 @@ class BaseModelManager:
             return models
         except Exception as e:
             logger.info_err(
-                "Model Reference", status=f"Download failed: {e}",
+                "Model Reference",
+                status=f"Download failed: {e}",
             )  # logger.init_err
             logger.info_warn("Model Reference", status="Local")  # logger.init_warn
             return json.loads((self.models_path).read_text())
@@ -239,7 +240,9 @@ class BaseModelManager:
         # and use that unless our source file is newer than our hash
         sha256_file = f"{os.path.splitext(file_name)[0]}.sha256"
         source_timestamp = os.path.getmtime(file_name)
-        hash_timestamp = os.path.getmtime(sha256_file) if os.path.isfile(sha256_file) else 0
+        hash_timestamp = (
+            os.path.getmtime(sha256_file) if os.path.isfile(sha256_file) else 0
+        )
         if hash_timestamp > source_timestamp:
             # Use our cached hash
             with open(sha256_file, "rt") as handle:
