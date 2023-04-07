@@ -1,0 +1,4 @@
+# .git-blame-ignore-revs
+
+# Applied black and automatically applied ruff linting rules project wide
+88d2a2d07554d058083593ec734ddfe8a8586311
