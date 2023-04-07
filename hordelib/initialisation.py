@@ -1,8 +1,8 @@
 # initialisation.py
 # Initialise hordelib.
 from hordelib import install_comfy
-from hordelib.consts import COMFYUI_VERSION, DEFAULT_MODEL_MANAGERS
 from hordelib.config_path import set_system_path
+from hordelib.consts import COMFYUI_VERSION, DEFAULT_MODEL_MANAGERS
 
 
 def initialise():

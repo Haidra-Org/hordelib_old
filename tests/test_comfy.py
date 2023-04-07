@@ -83,7 +83,7 @@ class TestSetup:
                     "input3": "foo",
                     "input4": 33,
                     "input5": None,
-                }
+                },
             },
             "2": {
                 "inputs": {
@@ -92,7 +92,7 @@ class TestSetup:
                     "input3": "foo",
                     "input4": 33,
                     "input5": None,
-                }
+                },
             },
             "3": {
                 "inputs": {
@@ -101,7 +101,7 @@ class TestSetup:
                     "input3": "foo",
                     "input4": 33,
                     "input5": None,
-                }
+                },
             },
         }
         design = {
@@ -109,7 +109,7 @@ class TestSetup:
                 {"id": 1, "title": "Node1"},
                 {"id": 2, "title": "Node2"},
                 {"id": 3, "no_title": "Node3"},
-            ]
+            ],
         }
         data = self.comfy._fix_node_names(data, design)
 

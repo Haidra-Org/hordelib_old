@@ -1,7 +1,7 @@
 # horde_image_loader.py
 # Load images into the pipeline from PIL, not disk
-import torch
 import numpy as np
+import torch
 
 
 class HordeImageLoader:

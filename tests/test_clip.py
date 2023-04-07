@@ -2,9 +2,9 @@
 import pytest
 from PIL import Image
 
+from hordelib.clip.interrogate import Interrogator
 from hordelib.horde import HordeLib
 from hordelib.shared_model_manager import SharedModelManager
-from hordelib.clip.interrogate import Interrogator
 
 
 class TestHordePostProcessing:
@@ -37,10 +37,10 @@ class TestHordePostProcessing:
         assert SharedModelManager.manager.clip.is_model_loaded("ViT-L/14") is True
         word_list = ["outlaw", "explosion", "underwater"]
         interrogator = Interrogator(
-            SharedModelManager.manager.loaded_models["ViT-L/14"]
+            SharedModelManager.manager.loaded_models["ViT-L/14"],
         )
         similarity_result = interrogator(
-            image=self.image, text_array=word_list, similarity=True
+            image=self.image, text_array=word_list, similarity=True,
         )
         assert "default" in similarity_result
         assert similarity_result["default"]["outlaw"] > 0.15

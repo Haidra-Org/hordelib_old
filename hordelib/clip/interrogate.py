@@ -22,10 +22,10 @@ class Interrogator:
         """
         self.model = model
         self.cache = Cache(
-            self.model["cache_name"], cache_parentname="embeds", cache_subname="text"
+            self.model["cache_name"], cache_parentname="embeds", cache_subname="text",
         )
         self.cache_image = Cache(
-            self.model["cache_name"], cache_parentname="embeds", cache_subname="image"
+            self.model["cache_name"], cache_parentname="embeds", cache_subname="image",
         )
         self.embed_lists = {}
 
@@ -66,7 +66,7 @@ class Interrogator:
                 text_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
                 filename = f"{self.cache.cache_dir}/{text_hash}.npy"
                 logger.debug(
-                    f"text: {text}, text_hash: {text_hash}, filename: {filename}"
+                    f"text: {text}, text_hash: {text_hash}, filename: {filename}",
                 )
                 embed = torch.from_numpy(np.load(filename)).float().to(device)
                 if len(embed.shape) == 1:
@@ -79,7 +79,7 @@ class Interrogator:
                     text_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
                     filename = f"{self.cache.cache_dir}/{text_hash}.npy"
                     logger.debug(
-                        f"text: {text}, text_hash: {text_hash}, filename: {filename}"
+                        f"text: {text}, text_hash: {text_hash}, filename: {filename}",
                     )
                     embed = torch.from_numpy(np.load(filename)).float().to(device)
                     if len(embed.shape) == 1:
@@ -150,14 +150,11 @@ class Interrogator:
         for text in text_array:
             text_features = self.embed_lists[key][text].to(device)
             similarity[text] = round(
-                self._similarity(image_features, text_features)[0][0].item(), 4
+                self._similarity(image_features, text_features)[0][0].item(), 4,
             )
-        return {
-            k: v
-            for k, v in sorted(
-                similarity.items(), key=lambda item: item[1], reverse=True
-            )
-        }
+        return dict(sorted(
+                similarity.items(), key=lambda item: item[1], reverse=True,
+            ))
 
     def rank(self, image_features, text_array, key, device, top_count=2):
         """
@@ -242,31 +239,31 @@ class Interrogator:
         )
         if similarity and not rank:
             results = {}
-            for k in text_array.keys():
+            for k in text_array:
                 results[k] = self.similarity(
-                    image_features, text_array[k], k, self.model["device"]
+                    image_features, text_array[k], k, self.model["device"],
                 )
                 logger.debug(f"{k}: {results[k]}")
             return results
         elif rank and not similarity:
             results = {}
-            for k in text_array.keys():
+            for k in text_array:
                 results[k] = self.rank(
-                    image_features, text_array[k], k, self.model["device"], top_count
+                    image_features, text_array[k], k, self.model["device"], top_count,
                 )
                 logger.debug(f"{k}: {results[k]}")
             return results
         else:
             similarity = {}
-            for k in text_array.keys():
+            for k in text_array:
                 similarity[k] = self.similarity(
-                    image_features, text_array[k], k, self.model["device"]
+                    image_features, text_array[k], k, self.model["device"],
                 )
                 logger.debug(f"{k}: {similarity[k]}")
             rank = {}
-            for k in text_array.keys():
+            for k in text_array:
                 rank[k] = self.rank(
-                    image_features, text_array[k], k, self.model["device"], top_count
+                    image_features, text_array[k], k, self.model["device"], top_count,
                 )
                 logger.debug(f"{k}: {rank[k]}")
             return {
