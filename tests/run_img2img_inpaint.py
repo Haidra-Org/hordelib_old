@@ -34,7 +34,7 @@ data = {
     "ddim_steps": 20,
     "n_iter": 1,
     "model": "Deliberate",
-    "source_image": Image.open("images/test_outpaint.png"),
+    "source_image": Image.open("images/test_inpaint.png"),
     "source_processing": "inpainting",
 }
 pil_image = generate.basic_inference(data)
