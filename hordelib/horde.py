@@ -184,7 +184,7 @@ class HordeLib:
 
         return pipeline
 
-    def text_to_image(self, payload: dict[str, str | None]) -> Image.Image | None:
+    def basic_inference(self, payload: dict[str, str | None]) -> Image.Image | None:
         generator = Comfy_Horde()
         # Validate our payload parameters
         params = self._validate_text_to_image_params(payload)
