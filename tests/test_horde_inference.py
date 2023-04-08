@@ -31,7 +31,7 @@ class TestHordeInference:
         SharedModelManager._instance = None
         SharedModelManager.manager = None
 
-    def test_parameter_remap_text_to_image_simple(self):
+    def test_parameter_remap_basic_inference_simple(self):
         data = {
             "sampler_name": "k_lms",
             "cfg_scale": 5,
@@ -69,7 +69,7 @@ class TestHordeInference:
             "model_loader.model_manager": SharedModelManager,
         }
         assert self.horde is not None
-        result = self.horde._parameter_remap_text_to_image(data)
+        result = self.horde._parameter_remap_basic_inference(data)
         assert result == expected, f"Dictionaries don't match: {result} != {expected}"
 
     def test_parameter_remap_variation(self):
@@ -110,7 +110,7 @@ class TestHordeInference:
             "model_loader.model_manager": SharedModelManager,
         }
         assert self.horde is not None
-        result = self.horde._parameter_remap_text_to_image(data)
+        result = self.horde._parameter_remap_basic_inference(data)
         assert result == expected, f"Dictionaries don't match: {result} != {expected}"
 
     def test_text_to_image(self):
