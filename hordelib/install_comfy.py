@@ -65,6 +65,10 @@ class Installer:
                 installdir,
             )
             cls._run(f"git checkout {comfy_version}", get_comfyui_path())
+            # Apply our patches to comfyui
+            Installer.apply_patch(
+                os.path.join(get_hordelib_path(), "install_comfy.patch")
+            )
             return
 
         # If it's installed, is it up to date?
@@ -84,6 +88,8 @@ class Installer:
         cls._run("git checkout master", get_comfyui_path())
         cls._run("git pull", get_comfyui_path())
         cls._run(f"git checkout {comfy_version}", get_comfyui_path())
+        # Apply our patches to comfyui
+        Installer.apply_patch(os.path.join(get_hordelib_path(), "install_comfy.patch"))
 
     @classmethod
     def apply_patch(cls, patchfile):
@@ -98,11 +104,12 @@ class Installer:
         could_reverse = not result.returncode
         if could_apply:
             # Apply the patch
-            logger.debug(f"Applying patch {patchfile}")
-            cls._run_get_result(f"git apply {patchfile}", get_comfyui_path())
+            logger.info(f"Applying patch {patchfile}")
+            result = cls._run_get_result(f"git apply {patchfile}", get_comfyui_path())
+            logger.debug(f"{result}")
         elif could_reverse:
             # Patch is already applied, all is well
-            logger.debug(f"Already applied patch {patchfile}")
+            logger.info(f"Already applied patch {patchfile}")
         else:
             # Couldn't apply or reverse? That's not so good
             logger.error(f"Could not apply patch {patchfile}")
