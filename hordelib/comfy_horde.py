@@ -27,10 +27,10 @@ class Comfy_Horde:
     """Handles horde-specific behavior against ComfyUI."""
 
     # We save pipelines from the ComfyUI GUI. This is very convenient as it
-    # makes it super easy to load and edit them in the future. However standard
-    # ComfyUI's GUI doesn't know about our custom nodes, so we allow the pipeline
+    # makes it super easy to load and edit them in the future. We allow the pipeline
     # design with standard nodes, then at runtime we dynamically replace these
-    # node types with our own where we need to.
+    # node types with our own where we need to. This allows easy previewing in ComfyUI
+    # which our custom nodes don't allow.
     NODE_REPLACEMENTS = {
         "CheckpointLoaderSimple": "HordeCheckpointLoader",
         "UpscaleModelLoader": "HordeUpscaleModelLoader",
@@ -252,6 +252,14 @@ class Comfy_Horde:
         # XXX This probably shouldn't be here. But for the moment, it works.
         if "image_loader.image" in params:
             self.reconnect_input(pipeline, "sampler.latent_image", "vae_encode")
+
+        # XXX This shouldn't be here either, but it's not clear to me yet where the
+        # XXX correct place for dynamic connection of nodes is. Need to do a few more
+        # XXX pipelines to see.
+        if "control_type" in params:
+            self.reconnect_input(
+                pipeline, "controlnet_apply.image", params["control_type"]
+            )
 
         # Set the pipeline parameters
         self._set(pipeline, **params)

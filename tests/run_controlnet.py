@@ -38,6 +38,9 @@ data = {
     "source_processing": "img2img",
 }
 for preproc in HordeLib.CONTROLNET_IMAGE_PREPROCESSOR_MAP.keys():
+    if preproc == "scribble":
+        # Not valid for normal image input test
+        continue
     data["control_type"] = preproc
     pil_image = generate.basic_inference(data)
     pil_image.save(f"images/run_controlnet_{preproc}.png")

@@ -53,16 +53,19 @@ class HordeLib:
         "source_processing": "source_processing",
     }
 
+    # Horde names on the left, our node names on the right
+    # We use this to dynamically route the image through the
+    # right node by reconnect inputs.
     CONTROLNET_IMAGE_PREPROCESSOR_MAP = {
-        "canny": "CannyEdgePreprocessor",
-        "hed": "HEDPreprocessor",
-        "depth": "LeReS-DepthMapPreprocessor",
-        "normal": "MiDaS-NormalMapPreprocessor",
-        "openpose": "OpenposePreprocessor",
-        "seg": "SemSegPreprocessor",
-        "scribble": "ScribblePreprocessor",
-        "fakescribbles": "FakeScribblePreprocessor",
-        "hough": "M-LSDPreprocessor",
+        "canny": "canny",
+        "hed": "hed",
+        "depth": "depth",
+        "normal": "normal",
+        "openpose": "openpose",
+        "seg": "seg",
+        "scribble": "scribble",
+        "fakescribbles": "fakescribble",
+        "hough": "mlsd",
         # "<unused>": "MiDaS-DepthMapPreprocessor",
         # "<unused>": "MediaPipe-HandPosePreprocessor",
         # "<unused>": "MediaPipe-FaceMeshPreprocessor",
@@ -72,15 +75,15 @@ class HordeLib:
     }
 
     CONTROLNET_MODEL_MAP = {
-        "canny": "diff_control_sd15_canny_fp16",
-        "hed": "diff_control_sd15_hed_fp16",
-        "depth": "diff_control_sd15_depth_fp16",
-        "normal": "control_normal_fp16",
-        "openpose": "control_openpose_fp16",
-        "seg": "control_seg_fp16",
-        "scribble": "control_scribble_fp16",
-        "fakescribbles": "control_scribble_fp16",
-        "hough": "control_mlsd_fp16",
+        "canny": "diff_control_sd15_canny_fp16.safetensors",
+        "hed": "diff_control_sd15_hed_fp16.safetensors",
+        "depth": "diff_control_sd15_depth_fp16.safetensors",
+        "normal": "control_normal_fp16.safetensors",
+        "openpose": "control_openpose_fp16.safetensors",
+        "seg": "control_seg_fp16.safetensors",
+        "scribble": "control_scribble_fp16.safetensors",
+        "fakescribbles": "control_scribble_fp16.safetensors",
+        "hough": "control_mlsd_fp16.safetensors",
     }
 
     SOURCE_IMAGE_PROCESSING_OPTIONS = ["img2img", "inpainting", "outpainting"]
@@ -174,7 +177,7 @@ class HordeLib:
             cnet_model = HordeLib.CONTROLNET_MODEL_MAP.get(cnet)
 
             # The controlnet model can become a direct parameter to the pipeline
-            params["controlnet_model_loader.model_name"] = cnet_model
+            params["controlnet_model_loader.control_net_name"] = cnet_model
 
             # For the pre-processor we dynamically reroute nodes in the pipeline later
             params["control_type"] = pre_processor
