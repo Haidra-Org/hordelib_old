@@ -6,6 +6,7 @@ import json
 import os
 import re
 from io import BytesIO
+from pprint import pformat
 
 from loguru import logger
 from PIL import Image
@@ -13,12 +14,13 @@ from PIL import Image
 from hordelib.config_path import get_comfyui_path
 
 # Do not change the order of these imports
-# fmt: off
+# isort: off
 import execution
 from comfy.sd import load_checkpoint_guess_config
 from comfy.utils import load_torch_file
 from comfy_extras.chainner_models import model_loading
-# fmt: on
+
+# isort: on
 
 
 class Comfy_Horde:
@@ -178,24 +180,35 @@ class Comfy_Horde:
     def _set(self, dct, **kwargs) -> None:
         for key, value in kwargs.items():
             keys = key.split(".")
+            skip = False
             if "inputs" not in keys:
                 keys.insert(1, "inputs")
             current = dct
 
             for k in keys[:-1]:
                 if k not in current:
-                    logger.error(f"Attempt to set unknown pipeline parameter {key}")
+                    logger.warning(f"Attempt to set unknown pipeline parameter {key}")
+                    skip = True
                     break
 
                 current = current[k]
 
-            current[keys[-1]] = value
+            if not skip:
+                current[keys[-1]] = value
 
     # Connect the named input to the named node (output).
     # Used for dynamic switching of pipeline graphs
     @classmethod
     def reconnect_input(cls, dct, input, output):
         logger.debug(f"Request to reconnect input {input} to output {output}")
+
+        # First check the output even exists
+        if output not in dct.keys():
+            logger.error(
+                f"Can not reconnect input {input} to {output} as {output} does not exist"
+            )
+            return None
+
         keys = input.split(".")
         if "inputs" not in keys:
             keys.insert(1, "inputs")
@@ -207,6 +220,7 @@ class Comfy_Horde:
 
             current = current[k]
 
+        logger.debug(f"Request completed to reconnect input {input} to output {output}")
         current[0] = output
         return True
 
@@ -241,6 +255,13 @@ class Comfy_Horde:
 
         # Set the pipeline parameters
         self._set(pipeline, **params)
+
+        # This is useful for dumping the entire pipeline to the terminal when
+        # developing and debugging new pipelines. A badly structured pipeline
+        # file just results in a cryptic error from comfy
+        pretty_pipeline = pformat(pipeline)
+        if False:  # This isn't here Tazlin :)
+            logger.error(pretty_pipeline)
 
         # Fake it!
         if self.unit_testing:
