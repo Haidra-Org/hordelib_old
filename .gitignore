@@ -147,3 +147,5 @@ images/hor*.webp
 comfy-prompt*.json
 
 .vscode
+*.ckpt
+*.pth

@@ -1,6 +1,7 @@
 [run]
 omit =
     ComfyUI/*
+    nodes/*/*
 
 [report]
 show_missing = true
