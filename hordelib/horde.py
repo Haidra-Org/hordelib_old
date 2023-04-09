@@ -25,7 +25,7 @@ class HordeLib:
         "ddim": "ddim",
         "uni_pc": "uni_pc",
         "uni_pc_bh2": "uni_pc_bh2",
-        "plms": "<not supported>",
+        "plms": "euler",
     }
 
     # Horde to tex2img parameter mapping
@@ -51,6 +51,36 @@ class HordeLib:
         "source_image": "image_loader.image",
         "source_mask": None,
         "source_processing": "source_processing",
+    }
+
+    CONTROLNET_IMAGE_PREPROCESSOR_MAP = {
+        "canny": "CannyEdgePreprocessor",
+        "hed": "HEDPreprocessor",
+        "depth": "LeReS-DepthMapPreprocessor",
+        "normal": "MiDaS-NormalMapPreprocessor",
+        "openpose": "OpenposePreprocessor",
+        "seg": "SemSegPreprocessor",
+        "scribble": "ScribblePreprocessor",
+        "fakescribbles": "FakeScribblePreprocessor",
+        "hough": "M-LSDPreprocessor",
+        # "<unused>": "MiDaS-DepthMapPreprocessor",
+        # "<unused>": "MediaPipe-HandPosePreprocessor",
+        # "<unused>": "MediaPipe-FaceMeshPreprocessor",
+        # "<unused>": "BinaryPreprocessor",
+        # "<unused>": "ColorPreprocessor",
+        # "<unused>": "PiDiNetPreprocessor",
+    }
+
+    CONTROLNET_MODEL_MAP = {
+        "canny": "diff_control_sd15_canny_fp16.safetensors",
+        "hed": "diff_control_sd15_hed_fp16.safetensors",
+        "depth": "diff_control_sd15_depth_fp16.safetensors",
+        "normal": "control_normal_fp16.safetensors",
+        "openpose": "control_openpose_fp16.safetensors",
+        "seg": "control_seg_fp16.safetensors",
+        "scribble": "control_scribble_fp16.safetensors",
+        "fakescribbles": "control_scribble_fp16.safetensors",
+        "hough": "control_mlsd_fp16.safetensors",
     }
 
     SOURCE_IMAGE_PROCESSING_OPTIONS = ["img2img", "inpainting", "outpainting"]
