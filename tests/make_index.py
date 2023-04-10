@@ -19,37 +19,50 @@ TEMPLATE = """
         color: #fff;
     }
     a {
-    color: #fff;
-    text-decoration: none;
+        color: #fff;
+        text-decoration: none;
     }
     .gallery {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        /*gap: 10px;*/
     }
-
+    h1 {
+        font-family: 'Roboto', sans-serif;
+        font-size: 24px;
+        text-align: left;
+        margin-bottom: 20px;
+    }
     .thumbnail {
-      max-width: 200px;
-      cursor: pointer;
+        max-width: 160px;
+        cursor: pointer;
+    }
+    figure {
+        max-width: 160px;
+        text-align: center;
+        margin: 0 5px;
     }
     figcaption {
-    font-family: 'Roboto', sans-serif;
-    font-size: 10px;
-    color: #333;
+        font-family: 'Roboto', sans-serif;
+        font-size: 12px;
+        color: #fff;
+        word-wrap: break-word; /* Force text to wrap onto multiple lines */
     }
   </style>
 </head>
 <body>
+  <h1>Latest Build Results</h1>
   <div class="gallery">
-  [images]
+    [images]
   </div>
 </body>
 </html>
+
 """
 
 
 def href(filename):
-    return f'<a href="{filename}" target="_blank"><figure><img class="thumbnail" src="{filename}"><figcaption>{filename}</figcaption></figure></a>'
+    return f'<a href="{filename}"><figure><img class="thumbnail" src="{filename}"><figcaption>{filename.replace("_", " ")}</figcaption></figure></a>'
 
 
 def create_index():
