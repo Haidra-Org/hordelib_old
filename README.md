@@ -1,5 +1,11 @@
 # hordelib
 
+[![PyPI version](https://badge.fury.io/py/hordelib.svg)](https://badge.fury.io/py/hordelib)
+[![Downloads](https://pepy.tech/badge/hordelib)](https://pepy.tech/project/hordelib)
+![Build](https://github.com/jug-dev/hordelib/actions/workflows/tests.yaml/badge.svg)
+
+![GitHub license](https://img.shields.io/github/license/jug-dev/hordelib)
+
 `hordelib` is a thin wrapper around [ComfyUI](https://github.com/comfyanonymous/ComfyUI) primarily to enable the [AI Horde](https://aihorde.net/) to run inference pipelines designed visually in the ComfyUI GUI.
 
 The developers of this project can be found in the AI Horde Discord server: https://discord.gg/3DxrhksKznb
@@ -50,7 +56,7 @@ data = {
     "tiling": False,
     "hires_fix": False,
     "clip_skip": 1,
-    "control_type": "canny",
+    "control_type": None,
     "image_is_control": False,
     "return_control_map": False,
     "prompt": "an ancient llamia monster",
