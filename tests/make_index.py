@@ -69,7 +69,6 @@ TEMPLATE = """
   </div>
 </body>
 </html>
-
 """
 
 
