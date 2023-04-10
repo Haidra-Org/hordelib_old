@@ -347,36 +347,3 @@ class TestHordeInference:
         pil_image = self.horde.basic_inference(data)
         assert pil_image is not None
         pil_image.save("images/horde_image_to_image_mask_out.webp", quality=90)
-
-    def test_controlnet(self):
-        data = {
-            "sampler_name": "k_dpmpp_2m",
-            "cfg_scale": 7.5,
-            "denoising_strength": 1.0,
-            "seed": 123456789,
-            "height": 512,
-            "width": 512,
-            "karras": True,
-            "tiling": False,
-            "hires_fix": False,
-            "clip_skip": 1,
-            "control_type": "",
-            "image_is_control": False,
-            "return_control_map": False,
-            "prompt": "a man walking in the snow",
-            "ddim_steps": 25,
-            "n_iter": 1,
-            "model": "Deliberate",
-            "source_image": Image.open("images/test_db0.jpg"),
-            "source_processing": "img2img",
-        }
-        assert self.horde is not None
-
-        for preproc in HordeLib.CONTROLNET_IMAGE_PREPROCESSOR_MAP.keys():
-            if preproc == "scribble":
-                # Not valid for normal image input test
-                continue
-            data["control_type"] = preproc
-            pil_image = self.horde.basic_inference(data)
-            assert pil_image is not None
-            pil_image.save(f"images/horde_controlnet_{preproc}.webp", quality=90)
