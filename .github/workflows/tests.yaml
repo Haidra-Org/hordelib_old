@@ -25,6 +25,8 @@ jobs:
         run: tox -e tests
       - name: Run a direct run test
         run: python -m tests.run_upscale
+      - name: Create CI webpage of results
+        run: python -m tests.make_index
       - uses: actions/upload-artifact@v3
         with:
           name: test-images

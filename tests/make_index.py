@@ -3,6 +3,7 @@
 # It's a 30 second hack to create an index.html that shows all our tests results.
 import os
 import glob
+import datetime
 
 
 TEMPLATE = """
@@ -33,6 +34,12 @@ TEMPLATE = """
         text-align: left;
         margin-bottom: 20px;
     }
+    h2 {
+        font-family: 'Roboto', sans-serif;
+        font-size: 14px;
+        text-align: left;
+        margin-bottom: 20px;
+    }
     .thumbnail {
         max-width: 160px;
         cursor: pointer;
@@ -52,8 +59,13 @@ TEMPLATE = """
 </head>
 <body>
   <h1>Latest Build Results</h1>
+  <h2>[timestamp]</h2>
   <div class="gallery">
     [images]
+  </div>
+  <h1>Input files for the tests</h1>
+  <div class="gallery">
+    [input_images]
   </div>
 </body>
 </html>
@@ -68,11 +80,25 @@ def href(filename):
 def create_index():
     # Get a list of images
     files = glob.glob("images/*.webp")
+    input_files = glob.glob("images/test_*")
     refs = []
     for imagefile in files:
         filename = os.path.basename(imagefile)
         refs.append(href(filename))
+    in_refs = []
+    for imagefile in input_files:
+        filename = os.path.basename(imagefile)
+        in_refs.append(href(filename))
+
+    # Poor man's template engine :)
+    refs.sort()
     indexhtml = TEMPLATE.replace("[images]", "".join(refs))
+    indexhtml = indexhtml.replace("[input_images]", "".join(in_refs))
+    indexhtml = indexhtml.replace(
+        "[timestamp]", datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    )
+
+    # Output results
     with open("images/index.html", "wt") as outfile:
         outfile.write(indexhtml)
 
