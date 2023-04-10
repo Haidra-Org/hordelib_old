@@ -43,4 +43,4 @@ for preproc in HordeLib.CONTROLNET_IMAGE_PREPROCESSOR_MAP.keys():
         continue
     data["control_type"] = preproc
     pil_image = generate.basic_inference(data)
-    pil_image.save(f"images/run_controlnet_{preproc}.png")
+    pil_image.save(f"images/run_controlnet_{preproc}.webp", quality=90)

@@ -36,6 +36,7 @@ class Comfy_Horde:
         "UpscaleModelLoader": "HordeUpscaleModelLoader",
         "SaveImage": "HordeImageOutput",
         "LoadImage": "HordeImageLoader",
+        "DiffControlNetLoader": "HordeDiffControlNetLoader",
     }
 
     # We may wish some ComfyUI standard nodes had different names for consistency. Here
@@ -194,6 +195,10 @@ class Comfy_Horde:
                 current = current[k]
 
             if not skip:
+                if not current.get(keys[-1]):
+                    logger.warning(
+                        f"Attempt to set parameter CREATED parameter '{key}'"
+                    )
                 current[keys[-1]] = value
 
     # Connect the named input to the named node (output).
@@ -257,19 +262,17 @@ class Comfy_Horde:
         # XXX correct place for dynamic connection of nodes is. Need to do a few more
         # XXX pipelines to see.
         if "control_type" in params:
+            # Inject control net model manager
+            if "controlnet_model_loader.model_manager" not in params:
+                logger.debug("Injecting controlnet model manager")
+                params["controlnet_model_loader.model_manager"] = SharedModelManager
+            # Connect to the correct pre-processor node
             self.reconnect_input(
                 pipeline, "controlnet_apply.image", params["control_type"]
             )
 
         # Set the pipeline parameters
         self._set(pipeline, **params)
-
-        # This is useful for dumping the entire pipeline to the terminal when
-        # developing and debugging new pipelines. A badly structured pipeline
-        # file just results in a cryptic error from comfy
-        pretty_pipeline = pformat(pipeline)
-        if False:  # This isn't here Tazlin :)
-            logger.error(pretty_pipeline)
 
         # Fake it!
         if self.unit_testing:
@@ -286,8 +289,16 @@ class Comfy_Horde:
         inference = execution.PromptExecutor(self)
         # Load our custom nodes
         self._load_custom_nodes()
+
+        # This is useful for dumping the entire pipeline to the terminal when
+        # developing and debugging new pipelines. A badly structured pipeline
+        # file just results in a cryptic error from comfy
+        pretty_pipeline = pformat(pipeline)
+        if False:  # This isn't here Tazlin :)
+            logger.error(pretty_pipeline)
+
         # The client_id parameter here is just so we receive comfy callbacks for debugging.
-        # We essential pretend we are a web client and want async callbacks.
+        # We pretend we are a web client and want async callbacks.
         inference.execute(pipeline, extra_data={"client_id": 1})
 
         return inference.outputs
