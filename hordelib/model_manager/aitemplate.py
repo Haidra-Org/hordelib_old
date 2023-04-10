@@ -1,7 +1,7 @@
+# XXX # FIXME
 import time
 
 import torch
-from diffusers import LMSDiscreteScheduler
 from loguru import logger
 from transformers import CLIPFeatureExtractor, CLIPTokenizer
 

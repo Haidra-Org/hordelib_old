@@ -2,7 +2,9 @@
 import torch
 from loguru import logger
 
-from hordelib.model_manager.aitemplate import AITemplateModelManager
+from hordelib.consts import ModelCategoryNames
+
+# from hordelib.model_manager.aitemplate import AITemplateModelManager
 from hordelib.model_manager.base import BaseModelManager
 from hordelib.model_manager.blip import BlipModelManager
 from hordelib.model_manager.clip import ClipModelManager
@@ -17,17 +19,17 @@ from hordelib.model_manager.safety_checker import SafetyCheckerModelManager
 # from worker.util.voodoo import initialise_voodoo
 
 
-MODEL_MANAGERS_TYPE_LOOKUP = {
-    "aitemplate": AITemplateModelManager,
-    "blip": BlipModelManager,
-    "clip": ClipModelManager,
-    "codeformer": CodeFormerModelManager,
-    "compvis": CompVisModelManager,
-    "controlnet": ControlNetModelManager,
-    "diffusers": DiffusersModelManager,
-    "esrgan": EsrganModelManager,
-    "gfpgan": GfpganModelManager,
-    "safety_checker": SafetyCheckerModelManager,
+MODEL_MANAGERS_TYPE_LOOKUP: dict[ModelCategoryNames, type] = {
+    # ModelCategoryNames.aitemplate: AITemplateModelManager,
+    ModelCategoryNames.blip: BlipModelManager,
+    ModelCategoryNames.clip: ClipModelManager,
+    ModelCategoryNames.codeformer: CodeFormerModelManager,
+    ModelCategoryNames.compvis: CompVisModelManager,
+    ModelCategoryNames.controlnet: ControlNetModelManager,
+    ModelCategoryNames.diffusers: DiffusersModelManager,
+    ModelCategoryNames.esrgan: EsrganModelManager,
+    ModelCategoryNames.gfpgan: GfpganModelManager,
+    ModelCategoryNames.safety_checker: SafetyCheckerModelManager,
 }
 """Keys are `str` which represent attrs in `ModelManger`. Values are the corresponding `type`."""
 
@@ -35,7 +37,7 @@ MODEL_MANAGERS_TYPE_LOOKUP = {
 class ModelManager:
     """Controller class for all managers which extend `BaseModelManager`."""
 
-    aitemplate: AITemplateModelManager | None = None
+    # aitemplate: AITemplateModelManager | None = None
     blip: BlipModelManager | None = None
     clip: ClipModelManager | None = None
     codeformer: CodeFormerModelManager | None = None
@@ -64,7 +66,7 @@ class ModelManager:
 
     def init_model_managers(
         self,
-        aitemplate: bool = False,
+        # aitemplate: bool = False, # XXX
         blip: bool = False,
         clip: bool = False,
         codeformer: bool = False,
@@ -76,8 +78,8 @@ class ModelManager:
         safety_checker: bool = False,
     ):  # XXX are we married to the name and/or the idea behind this function
         """For each arg which is true, attempt to load that `BaseModelManager` type."""
-        args_passed: dict = locals().copy()
-        args_passed.pop("self")
+        args_passed: dict = locals().copy()  # XXX This is temporary
+        args_passed.pop("self")  # XXX This is temporary
 
         allModelMangerTypeKeys = MODEL_MANAGERS_TYPE_LOOKUP.keys()
         # e.g. `MODEL_MANAGERS_TYPE_LOOKUP["compvis"]`` returns type `CompVisModelManager`
@@ -98,7 +100,7 @@ class ModelManager:
     def refreshManagers(self) -> None:  # XXX rename + docstring rewrite
         """Called when one of the `BaseModelManager` changes, updating `available_models`."""
         model_types = [
-            self.aitemplate,
+            # self.aitemplate, # XXX TODO
             self.blip,
             self.clip,
             self.compvis,
@@ -155,10 +157,10 @@ class ModelManager:
             model_manager: BaseModelManager = getattr(self, model_manager_type)
             if model_manager is None:
                 continue
-            if isinstance(model_manager, AITemplateModelManager):
-                model_manager.download_ait("cuda")
-                # XXX this special handling predates me (@tazlin)
-                continue
+            # if isinstance(model_manager, AITemplateModelManager):
+            #    model_manager.download_ait("cuda")
+            #    # XXX this special handling predates me (@tazlin)
+            #    continue
 
             model_manager.download_all_models()
 
@@ -292,11 +294,11 @@ class ModelManager:
         Returns:
             bool | None: The success of the load. If `None`, the model was not found.
         """
-
+        # XXX This whole function is a mess and still needs to be reworked. # FIXME
         if not self.cuda_available:
             cpu_only = True
-        if self.aitemplate is not None and model_name in self.aitemplate.models:
-            return self.aitemplate.load(model_name, gpu_id)
+        # if self.aitemplate is not None and model_name in self.aitemplate.models:
+        #     return self.aitemplate.load(model_name, gpu_id)
         if self.blip is not None and model_name in self.blip.models:
             success = self.blip.load(
                 model_name=model_name,

@@ -4,22 +4,21 @@ import torch
 from diffusers.pipelines.stable_diffusion.safety_checker import (
     StableDiffusionSafetyChecker,
 )
+
+# XXX Remove diffusers?
 from loguru import logger
 
 from hordelib.cache import get_cache_directory
-from hordelib.consts import REMOTE_MODEL_DB
+from hordelib.consts import MODEL_DB_NAMES, REMOTE_MODEL_DB, ModelCategoryNames
 from hordelib.model_manager.base import BaseModelManager
 
 
 class SafetyCheckerModelManager(BaseModelManager):
     def __init__(self, download_reference=True):
-        super().__init__()
-        self.download_reference = download_reference
-        self.path = f"{get_cache_directory()}/safety_checker"
-        self.models_db_name = "safety_checker"
-        self.models_path = self.pkg / f"{self.models_db_name}.json"
-        self.remote_db = f"{REMOTE_MODEL_DB}{self.models_db_name}.json"
-        self.init()
+        super().__init__(
+            models_db_name=MODEL_DB_NAMES[ModelCategoryNames.safety_checker],
+            download_reference=download_reference,
+        )
 
     def load(
         self,

@@ -4,6 +4,7 @@ import os
 import shutil
 import sys
 import zipfile
+from pathlib import Path
 from uuid import uuid4
 
 import git
@@ -14,12 +15,14 @@ from tqdm import tqdm
 from transformers import logging
 
 from hordelib.cache import get_cache_directory
+from hordelib.config_path import get_hordelib_path
 from hordelib.consts import REMOTE_MODEL_DB
+from hordelib.model_manager.abstract_base import AbstractBaseModelManager
 
 # from nataili import disable_download_progress
 from hordelib.settings import WorkerSettings
 
-if sys.version_info < (3, 9):
+if sys.version_info < (3, 9):  # XXX # FIXME
     import importlib_resources
 else:
     import importlib.resources as importlib_resources
@@ -27,28 +30,47 @@ else:
 logging.set_verbosity_error()
 
 
-class BaseModelManager:
-    def __init__(self, download_reference=True):
-        self.path = get_cache_directory()
+class BaseModelManager(AbstractBaseModelManager):
+    def __init__(
+        self,
+        *,
+        models_db_name: str,  # XXX Remove default
+        modelFolder: str | None = None,
+        download_reference: bool = False,
+    ):
+        if not modelFolder:
+            self.path = os.path.join(get_cache_directory(), f"{models_db_name}")
+        else:
+            self.path = os.path.join(get_cache_directory(), f"{modelFolder}")
+
         self.models = {}
         self.available_models = []
         self.loaded_models = {}
         self.tainted_models = []
-        self.pkg = importlib_resources.files("hordelib")
-        self.models_db_name = "models"
-        self.models_path = self.pkg / f"{self.models_db_name}.json"
+        self.pkg = importlib_resources.files("hordelib")  # XXX Remove
+        self.models_db_name = models_db_name
+        self.models_path = Path(get_hordelib_path()).joinpath(
+            "model_database/",
+            f"{self.models_db_name}.json",
+        )
+
         self.cuda_available = torch.cuda.is_available()
         self.cuda_devices, self.recommended_gpu = self.get_cuda_devices()
         self.remote_db = f"{REMOTE_MODEL_DB}{self.models_db_name}.json"
         self.download_reference = download_reference
+        self.init()
 
     def init(self, list_models=False):
         if self.download_reference:
             self.models = self.download_model_reference()
-            logger.info(f"Downloaded model reference. Got {len(self.models)} models.")
+            logger.info(
+                f"Downloaded model reference. Got {len(self.models)} models for {self.models_db_name}.",
+            )
         else:
             self.models = json.loads((self.models_path).read_text())
-            logger.info(f"Loaded model reference. Got {len(self.models)} models.")
+            logger.info(
+                f"Loaded model reference. Got {len(self.models)} models for {self.models_db_name}.",
+            )
         if list_models:
             for model in self.models:
                 logger.info(model)
@@ -57,7 +79,9 @@ class BaseModelManager:
             if self.check_model_available(model):
                 models_available.append(model)
         self.available_models = models_available
-        logger.info(f"Got {len(self.available_models)} available models.")
+        logger.info(
+            f"Got {len(self.available_models)} available models  for {self.models_db_name}.",
+        )
         if list_models:
             for model in self.available_models:
                 logger.info(model)
@@ -70,11 +94,11 @@ class BaseModelManager:
             models = response.json()
             return models
         except Exception as e:
-            logger.info_err(
+            logger.info(
                 "Model Reference",
                 status=f"Download failed: {e}",
             )  # logger.init_err
-            logger.info_warn("Model Reference", status="Local")  # logger.init_warn
+            logger.info("Model Reference", status="Local")  # logger.init_warn
             return json.loads((self.models_path).read_text())
 
     def get_model(self, model_name):
@@ -206,7 +230,7 @@ class BaseModelManager:
         hash_timestamp = os.path.getmtime(md5_file) if os.path.isfile(md5_file) else 0
         if hash_timestamp > source_timestamp:
             # Use our cached hash
-            with open(md5_file, "rt") as handle:
+            with open(md5_file) as handle:
                 md5_hash = handle.read().split()[0]
             return md5_hash
 
@@ -223,7 +247,7 @@ class BaseModelManager:
         # Cache this md5 hash we just calculated. Use md5sum format files
         # so we can also use OS tools to manipulate these md5 files
         try:
-            with open(md5_file, "wt") as handle:
+            with open(md5_file, "w") as handle:
                 handle.write(f"{md5_hash} *{os.path.basename(md5_file)}")
         except (OSError, PermissionError):
             logger.debug("Could not write to md5sum file, ignoring")
@@ -233,7 +257,7 @@ class BaseModelManager:
     @staticmethod
     def get_file_sha256_hash(file_name):
         if not os.path.isfile(file_name):
-            raise FileNotFoundError("No file {}".format(file_name))
+            raise FileNotFoundError(f"No file {file_name}")
 
         # Check if we have a cached sha256 hash for the source file
         # and use that unless our source file is newer than our hash
@@ -244,7 +268,7 @@ class BaseModelManager:
         )
         if hash_timestamp > source_timestamp:
             # Use our cached hash
-            with open(sha256_file, "rt") as handle:
+            with open(sha256_file) as handle:
                 sha256_hash = handle.read().split()[0]
             return sha256_hash
 
@@ -261,7 +285,7 @@ class BaseModelManager:
         # Cache this sha256 hash we just calculated. Use sha256sum format files
         # so we can also use OS tools to manipulate these md5 files
         try:
-            with open(sha256_file, "wt") as handle:
+            with open(sha256_file, "w") as handle:
                 handle.write(f"{sha256_hash} *{os.path.basename(sha256_file)}")
         except (OSError, PermissionError):
             logger.debug("Could not write to sha256sum file, ignoring")

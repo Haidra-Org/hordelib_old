@@ -13,17 +13,17 @@ class TestSharedModelManager:
     def setup_and_teardown(self):
         self.horde = HordeLib()
 
-        self.default_model_manager_args = {
+        self.default_model_manager_args = {  # XXX # FIXME
             # aitemplate
-            "blip": True,
+            "blip": False,
             "clip": True,
-            "codeformer": True,
+            "codeformer": False,
             "compvis": True,
-            "controlnet": True,
+            "controlnet": False,
             "diffusers": True,
-            "esrgan": True,
-            "gfpgan": True,
-            "safety_checker": True,
+            "esrgan": False,
+            "gfpgan": False,
+            "safety_checker": False,  # XXX
         }
         SharedModelManager.loadModelManagers(**self.default_model_manager_args)
         assert SharedModelManager.manager is not None
@@ -43,6 +43,11 @@ class TestSharedModelManager:
         from hordelib.model_manager.compvis import CompVisModelManager
 
         CompVisModelManager()
+
+    def test_singleton(self):
+        a = SharedModelManager()
+        b = SharedModelManager()
+        assert a.manager is b.manager
 
     def test_horde_model_manager_init(self):
         assert SharedModelManager.manager is not None

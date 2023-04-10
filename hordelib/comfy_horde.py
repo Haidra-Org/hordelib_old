@@ -11,16 +11,33 @@ from pprint import pformat
 from loguru import logger
 from PIL import Image
 
-from hordelib.config_path import get_comfyui_path
 
 # Do not change the order of these imports
 # isort: off
 import execution
 from comfy.sd import load_checkpoint_guess_config, load_controlnet
-from comfy.utils import load_torch_file
-from comfy_extras.chainner_models import model_loading
+from comfy.utils import load_torch_file  # XXX Add to __all__
+from comfy_extras.chainner_models import model_loading  # XXX Add to __all__
 
 # isort: on
+
+
+def horde_load_checkpoint(
+    ckpt_path: str,
+    output_vae: bool = True,
+    output_clip: bool = True,
+    embeddings_path: str | None = None,
+):
+    return load_checkpoint_guess_config(
+        ckpt_path,
+        output_vae=output_vae,
+        output_clip=output_clip,
+        embedding_directory=embeddings_path,
+    )
+
+
+def horde_load_controlnet(controlnet_path: str, target_model):
+    return load_controlnet(ckpt_path=controlnet_path, model=target_model)
 
 
 class Comfy_Horde:
