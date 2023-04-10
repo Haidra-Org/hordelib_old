@@ -10,6 +10,7 @@ from hordelib.model_manager.base import BaseModelManager
 
 class NewModelManager(BaseModelManager):
     def __init__(self, download_reference=True):
+        raise NotImplementedError()
         super().__init__()
         self.download_reference = download_reference
         self.path = f"{get_cache_directory()}/new"

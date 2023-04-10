@@ -5,7 +5,7 @@ from omegaconf import OmegaConf
 
 # from ldm.util import instantiate_from_config
 from hordelib.cache import get_cache_directory
-from hordelib.consts import REMOTE_MODEL_DB
+from hordelib.consts import MODEL_DB_NAMES, ModelCategoryNames
 from hordelib.model_manager.base import BaseModelManager
 from hordelib.model_manager.torch_hijack import (
     DisableInitialization,
@@ -15,14 +15,11 @@ from hordelib.model_manager.torch_hijack import (
 
 class ControlNetModelManager(BaseModelManager):
     def __init__(self, download_reference=True, compvis=None):
-        super().__init__()
-        self.download_reference = download_reference
-        self.path = f"{get_cache_directory()}/controlnet"
-        self.models_db_name = "controlnet"
-        self.models_path = self.pkg / f"{self.models_db_name}.json"
-        self.remote_db = f"{REMOTE_MODEL_DB}{self.models_db_name}.json"
+        super().__init__(
+            models_db_name=MODEL_DB_NAMES[ModelCategoryNames.controlnet],
+            download_reference=download_reference,
+        )
         self.control_nets = {}
-        self.init()
 
     def load_control_ldm(
         self,

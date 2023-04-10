@@ -4,20 +4,16 @@ import time
 from loguru import logger
 
 from hordelib import comfy_horde
-from hordelib.cache import get_cache_directory
-from hordelib.consts import REMOTE_MODEL_DB
+from hordelib.consts import MODEL_DB_NAMES, ModelCategoryNames
 from hordelib.model_manager.base import BaseModelManager
 
 
 class GfpganModelManager(BaseModelManager):
     def __init__(self, download_reference=True):
-        super().__init__()
-        self.download_reference = download_reference
-        self.path = f"{get_cache_directory()}/gfpgan"
-        self.models_db_name = "gfpgan"
-        self.models_path = self.pkg / f"{self.models_db_name}.json"
-        self.remote_db = f"{REMOTE_MODEL_DB}{self.models_db_name}.json"
-        self.init()
+        super().__init__(
+            models_db_name=MODEL_DB_NAMES[ModelCategoryNames.gfpgan],
+            download_reference=download_reference,
+        )
 
     def load(
         self,

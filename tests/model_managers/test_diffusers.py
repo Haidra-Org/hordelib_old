@@ -1,0 +1,22 @@
+import pytest
+
+import hordelib
+
+
+class TestDiffusers:
+    _initialised = False
+
+    @pytest.fixture(autouse=True)
+    def setup_and_teardown(self):
+        if not self._initialised:
+            hordelib.initialise()
+        from hordelib.model_manager.diffusers import DiffusersModelManager
+
+        self.diffusers_model_manager = DiffusersModelManager()
+        assert self.diffusers_model_manager is not None
+        yield
+        del self.diffusers_model_manager
+
+    def test_diffusers_load_defaults(self):
+        success = self.diffusers_model_manager.load("stable_diffusion_inpainting")
+        assert success
