@@ -80,6 +80,9 @@ class ControlNetModelManager(BaseModelManager):
         return self.check_model_available(controlnet_name)
 
     def get_controlnet_filename(self, controlnet_name):
+        """Gets the `.safetensors` filename for the model
+        so that it can be located on disk
+        """
         for f in self.get_model_files(controlnet_name):
             if f["path"].endswith("safetensors"):
                 return f["path"]
