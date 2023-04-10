@@ -25,24 +25,26 @@ class ControlNetModelManager(BaseModelManager):
         model,
         model_baseline="stable diffusion 1",
     ):
-        control_net_name = self.get_controlnet_name(control_type, model_baseline)
-        if control_net_name not in self.models:
-            logger.error(f"{control_net_name} not found")
+        controlnet_name = self.get_controlnet_name(control_type, model_baseline)
+        if controlnet_name not in self.models:
+            logger.error(f"{controlnet_name} not found")
             return False
-        if control_net_name not in self.available_models:
-            logger.error(f"{control_net_name} not available")
+        if controlnet_name not in self.available_models:
+            logger.error(f"{controlnet_name} not available")
             logger.info(
-                f"Downloading {control_net_name}",
+                f"Downloading {controlnet_name}",
                 status="Downloading",
             )  # logger.init_ok
             self.download_control_type(control_type, [model_baseline])
             logger.info(
-                f"{control_net_name} downloaded",
+                f"{controlnet_name} downloaded",
                 status="Downloading",
             )  # logger.init_ok
 
         logger.info(f"{control_type}", status="Merging")  # logger.init
-        controlnet_path = os.path.join(self.path, control_type)
+        controlnet_path = os.path.join(
+            self.path, self.get_controlnet_filename(controlnet_name)
+        )
         controlnet = load_controlnet(controlnet_path, model)
         return (controlnet,)
 
@@ -51,13 +53,13 @@ class ControlNetModelManager(BaseModelManager):
     ):
         # We need to do a rename, as they're named differently in the model reference
         for bl in sd_baselines:
-            control_net_name = self.get_controlnet_name(control_type, bl)
-            if control_net_name not in self.models:
+            controlnet_name = self.get_controlnet_name(control_type, bl)
+            if controlnet_name not in self.models:
                 logger.warning(
-                    f"Could not find {control_net_name} reference to download"
+                    f"Could not find {controlnet_name} reference to download"
                 )
                 continue
-            self.download_model(control_net_name)
+            self.download_model(controlnet_name)
 
     def get_controlnet_name(self, control_type, sd_baseline):
         """We have control nets for both SD and SD2
@@ -74,5 +76,10 @@ class ControlNetModelManager(BaseModelManager):
         self, control_type, sd_baseline="stable diffusion 1"
     ):
         # We need to do a rename, as they're named differently in the model reference
-        control_net_name = self.get_controlnet_name(control_type, sd_baseline)
-        return self.check_model_available(control_net_name)
+        controlnet_name = self.get_controlnet_name(control_type, sd_baseline)
+        return self.check_model_available(controlnet_name)
+
+    def get_controlnet_filename(self, controlnet_name):
+        for f in self.get_model_files(controlnet_name):
+            if f["path"].endswith("safetensors"):
+                return f["path"]

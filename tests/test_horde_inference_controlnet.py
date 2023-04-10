@@ -27,6 +27,7 @@ class TestHordeInference:
         assert SharedModelManager.manager is not None
         SharedModelManager.manager.load("Deliberate")
         for preproc in HordeLib.CONTROLNET_IMAGE_PREPROCESSOR_MAP.keys():
+        # for preproc in ['canny']:
             SharedModelManager.manager.controlnet.download_control_type(preproc)
         yield
         del self.horde

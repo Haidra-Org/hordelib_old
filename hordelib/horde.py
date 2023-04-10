@@ -174,10 +174,10 @@ class HordeLib:
             pre_processor = HordeLib.CONTROLNET_IMAGE_PREPROCESSOR_MAP.get(cnet)
 
             # Determine the appropriate controlnet model
-            cnet_model = HordeLib.CONTROLNET_MODEL_MAP.get(cnet)
+            # cnet_model = HordeLib.CONTROLNET_MODEL_MAP.get(cnet)
 
             # The controlnet model can become a direct parameter to the pipeline
-            params["controlnet_model_loader.control_net_name"] = cnet_model
+            params["controlnet_model_loader.control_net_name"] = cnet
 
             # For the pre-processor we dynamically reroute nodes in the pipeline later
             params["control_type"] = pre_processor
