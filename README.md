@@ -1,12 +1,12 @@
 # hordelib
 
-[![PyPI version](https://badge.fury.io/py/hordelib.svg)](https://badge.fury.io/py/hordelib)
+[![PyPI version](https://badge.fury.io/py/hordelib.svg?branch=main&nocache=1)](https://badge.fury.io/py/hordelib)
 [![Downloads](https://pepy.tech/badge/hordelib)](https://pepy.tech/project/hordelib)
 ![GitHub license](https://img.shields.io/github/license/jug-dev/hordelib)
 
 [![Build](https://github.com/jug-dev/hordelib/actions/workflows/maintests.yml/badge.svg?branch=main)](http://hordelib.s3-website-eu-west-1.amazonaws.com/)
-[![Test Images](https://badgen.net/badge/main/latest-test-images/blue?icon=awesome)](http://hordelib.s3-website-eu-west-1.amazonaws.com/)
-[![Test Images](https://badgen.net/badge/develop/latest-test-images/blue?icon=awesome)](http://hordelib.s3-website-eu-west-1.amazonaws.com/unstable)
+[![Test Images](https://badgen.net/badge/main/latest-images/blue?icon=awesome)](http://hordelib.s3-website-eu-west-1.amazonaws.com/)
+[![Test Images](https://badgen.net/badge/develop/latest-images/blue?icon=awesome)](http://hordelib.s3-website-eu-west-1.amazonaws.com/unstable)
 
 `hordelib` is a thin wrapper around [ComfyUI](https://github.com/comfyanonymous/ComfyUI) primarily to enable the [AI Horde](https://aihorde.net/) to run inference pipelines designed visually in the ComfyUI GUI.
 
@@ -145,8 +145,11 @@ The main config files for the project are: `pyproject.toml`, `tox.ini` and `requ
 
 ### PyPi Publishing
 
-Three steps:
-1. Bump the version in `hordelib/cosnts.py`
+_Will be automatic from the `releases` branch_
+
+But currently:
+
+1. checkout the `releases` branch
 1. `tox` _make sure everything works_
 1. `python build_helper.py` _builds the dist files_
 1. `twine upload -r pypi dist/*`
