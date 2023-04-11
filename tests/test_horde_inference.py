@@ -7,11 +7,11 @@ from hordelib.shared_model_manager import SharedModelManager
 
 
 class TestHordeInference:
-    @pytest.fixture(autouse=True)
+    @pytest.fixture(autouse=True, scope="class")
     def setup_and_teardown(self):
-        self.horde = HordeLib()
+        TestHordeInference.horde = HordeLib()
 
-        self.default_model_manager_args = {
+        TestHordeInference.default_model_manager_args = {
             # aitemplate
             # "blip": True,
             # "clip": True,
@@ -27,7 +27,7 @@ class TestHordeInference:
         assert SharedModelManager.manager is not None
         SharedModelManager.manager.load("Deliberate")
         yield
-        del self.horde
+        del TestHordeInference.horde
         SharedModelManager._instance = None
         SharedModelManager.manager = None
 
