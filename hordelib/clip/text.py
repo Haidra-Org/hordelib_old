@@ -71,7 +71,7 @@ class TextEmbed:
             np.save(f"{self.cache.cache_dir}/{text_hash}", text_embed_array)
             self.cache.add_sqlite_row(filename, text_hash, text_hash)
             return None
-        else:
-            np.save(f"{self.cache.cache_dir}/{text_hash}", text_embed_array)
-            self.cache.add_sqlite_row(text, text_hash, text_hash)
-            return None
+
+        np.save(f"{self.cache.cache_dir}/{text_hash}", text_embed_array)
+        self.cache.add_sqlite_row(text, text_hash, text_hash)
+        return None
