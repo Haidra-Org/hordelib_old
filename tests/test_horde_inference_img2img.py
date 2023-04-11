@@ -214,7 +214,7 @@ class TestHordeInference:
             "ddim_steps": 25,
             "n_iter": 1,
             "model": "Deliberate",
-            "source_image": "THIS SHOULD FAIL",
+            "source_image": "THIS SHOULD FAILOVER TO TEXT2IMG",
             "source_processing": "img2img",
         }
         assert self.horde is not None
