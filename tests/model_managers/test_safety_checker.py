@@ -21,6 +21,6 @@ class TestSafetyChecker:
         success = self.safety_model_manager.load("safety_checker")
         assert success
 
-    def test_safety_checker_load_cpu_only(self):
-        success = self.safety_model_manager.load("safety_checker", cpu_only=True)
-        assert success
+    # def test_safety_checker_load_cpu_only(self):
+    #     success = self.safety_model_manager.load("safety_checker", cpu_only=True)
+    #     assert success

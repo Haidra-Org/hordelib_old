@@ -2,7 +2,7 @@
 import torch
 from loguru import logger
 
-from hordelib.consts import ModelCategoryNames
+from hordelib.consts import MODEL_CATEGORY_NAMES
 
 # from hordelib.model_manager.aitemplate import AITemplateModelManager
 from hordelib.model_manager.base import BaseModelManager
@@ -19,17 +19,17 @@ from hordelib.model_manager.safety_checker import SafetyCheckerModelManager
 # from worker.util.voodoo import initialise_voodoo
 
 
-MODEL_MANAGERS_TYPE_LOOKUP: dict[ModelCategoryNames, type] = {
+MODEL_MANAGERS_TYPE_LOOKUP: dict[MODEL_CATEGORY_NAMES, type] = {
     # ModelCategoryNames.aitemplate: AITemplateModelManager,
-    ModelCategoryNames.blip: BlipModelManager,
-    ModelCategoryNames.clip: ClipModelManager,
-    ModelCategoryNames.codeformer: CodeFormerModelManager,
-    ModelCategoryNames.compvis: CompVisModelManager,
-    ModelCategoryNames.controlnet: ControlNetModelManager,
-    ModelCategoryNames.diffusers: DiffusersModelManager,
-    ModelCategoryNames.esrgan: EsrganModelManager,
-    ModelCategoryNames.gfpgan: GfpganModelManager,
-    ModelCategoryNames.safety_checker: SafetyCheckerModelManager,
+    MODEL_CATEGORY_NAMES.blip: BlipModelManager,
+    MODEL_CATEGORY_NAMES.clip: ClipModelManager,
+    MODEL_CATEGORY_NAMES.codeformer: CodeFormerModelManager,
+    MODEL_CATEGORY_NAMES.compvis: CompVisModelManager,
+    MODEL_CATEGORY_NAMES.controlnet: ControlNetModelManager,
+    MODEL_CATEGORY_NAMES.diffusers: DiffusersModelManager,
+    MODEL_CATEGORY_NAMES.esrgan: EsrganModelManager,
+    MODEL_CATEGORY_NAMES.gfpgan: GfpganModelManager,
+    MODEL_CATEGORY_NAMES.safety_checker: SafetyCheckerModelManager,
 }
 """Keys are `str` which represent attrs in `ModelManger`. Values are the corresponding `type`."""
 
@@ -89,11 +89,15 @@ class ModelManager:
                 raise Exception  # XXX better guarantees need to be made
             if not argValue:
                 continue
+            if getattr(self, argName) is not None:
+                continue
 
             modelmanager = MODEL_MANAGERS_TYPE_LOOKUP[argName]
 
             # at runtime modelmanager() will be CompVisModelManager(), ClipModelManager(), etc
-            setattr(self, argName, modelmanager())
+            setattr(
+                self, argName, modelmanager(download_reference=False)
+            )  # XXX # FIXME # HACK
 
         self.refreshManagers()
 
@@ -115,7 +119,7 @@ class ModelManager:
         self.available_models = []
         for model_type in model_types:
             if model_type is not None:
-                self.models.update(model_type.models)
+                self.models.update(model_type.model_reference)
                 self.available_models.extend(model_type.available_models)
 
     def reload_database(self) -> None:
@@ -127,8 +131,8 @@ class ModelManager:
         self.available_models = []  # reset available models
         for model_manager in model_managers:
             if model_manager is not None:
-                model_manager.init()
-                self.models.update(model_manager.models)
+                model_manager.loadModelDatabase()
+                self.models.update(model_manager.model_reference)
                 self.available_models.extend(model_manager.available_models)
 
     def download_model(self, model_name: str) -> bool | None:
@@ -144,7 +148,7 @@ class ModelManager:
             model_manager: BaseModelManager = getattr(self, model_manager_type)
             if model_manager is None:
                 continue
-            if model_name not in model_manager.models:
+            if model_name not in model_manager.model_reference:
                 continue
 
             return model_manager.download_model(model_name)
@@ -185,7 +189,7 @@ class ModelManager:
             if model_manager_type == "aitemplate":
                 continue
                 # XXX the special handling here predates me (@tazlin), unknown if needed
-            if model_name in model_manager.models:
+            if model_name in model_manager.model_reference:
                 return model_manager.validate_model(model_name, skip_checksum)
         return None
 
@@ -199,7 +203,7 @@ class ModelManager:
             model_manager: BaseModelManager = getattr(self, model_manager_type)
             if model_manager is None:
                 continue
-            if any(model in model_manager.models for model in models):
+            if any(model in model_manager.model_reference for model in models):
                 model_manager.taint_models(models)
         self.refreshManagers()
 
@@ -216,7 +220,7 @@ class ModelManager:
             model_manager: BaseModelManager = getattr(self, model_manager_type)
             if model_manager is None:
                 continue
-            if model_name not in model_manager.models:
+            if model_name not in model_manager.model_reference:
                 continue
             model_unloaded = model_manager.unload_model(model_name)
             del self.loaded_models[model_name]
@@ -240,7 +244,7 @@ class ModelManager:
         models_available = []
         for model_type in model_types:
             if model_type == "ckpt" and self.compvis is not None:
-                for model in self.compvis.models:
+                for model in self.compvis.model_reference:
                     # We don't want to check the .yaml file as those exist in this repo instead
                     model_files = [
                         filename
@@ -250,7 +254,7 @@ class ModelManager:
                     if self.compvis.check_available(model_files):
                         models_available.append(model)
             if model_type == "diffusers" and self.diffusers is not None:
-                for model in self.diffusers.models:
+                for model in self.diffusers.model_reference:
                     if self.diffusers.check_available(
                         self.diffusers.get_model_files(model),
                     ):
@@ -299,7 +303,7 @@ class ModelManager:
             cpu_only = True
         # if self.aitemplate is not None and model_name in self.aitemplate.models:
         #     return self.aitemplate.load(model_name, gpu_id)
-        if self.blip is not None and model_name in self.blip.models:
+        if self.blip is not None and model_name in self.blip.model_reference:
             success = self.blip.load(
                 model_name=model_name,
                 half_precision=half_precision,
@@ -311,7 +315,7 @@ class ModelManager:
                     {model_name: self.blip.loaded_models[model_name]},
                 )
             return success
-        if self.clip is not None and model_name in self.clip.models:
+        if self.clip is not None and model_name in self.clip.model_reference:
             success = self.clip.load(
                 model_name=model_name,
                 half_precision=half_precision,
@@ -323,7 +327,10 @@ class ModelManager:
                     {model_name: self.clip.loaded_models[model_name]},
                 )
             return success
-        if self.codeformer is not None and model_name in self.codeformer.models:
+        if (
+            self.codeformer is not None
+            and model_name in self.codeformer.model_reference
+        ):
             success = self.codeformer.load(
                 model_name=model_name,
             )
@@ -332,31 +339,27 @@ class ModelManager:
                     {model_name: self.codeformer.loaded_models[model_name]},
                 )
             return success
-        if self.compvis is not None and model_name in self.compvis.models:
-            success = self.compvis.load(
-                model_name=model_name,
-                output_vae=True,
-                output_clip=True,
-            )
+        if self.compvis is not None and model_name in self.compvis.model_reference:
+            success = self.compvis.load(model_name=model_name)
             if success:
                 self.loaded_models.update(
                     {model_name: self.compvis.loaded_models[model_name]},
                 )
             return success
-        if self.diffusers is not None and model_name in self.diffusers.models:
+        if self.diffusers is not None and model_name in self.diffusers.model_reference:
             success = self.diffusers.load(
                 model_name=model_name,
                 half_precision=half_precision,
                 gpu_id=gpu_id,
                 cpu_only=cpu_only,
-                voodoo=voodoo,
+                # voodoo=voodoo, # XXX
             )
             if success:
                 self.loaded_models.update(
                     {model_name: self.diffusers.loaded_models[model_name]},
                 )
             return success
-        if self.esrgan is not None and model_name in self.esrgan.models:
+        if self.esrgan is not None and model_name in self.esrgan.model_reference:
             success = self.esrgan.load(
                 model_name=model_name,
             )
@@ -365,7 +368,7 @@ class ModelManager:
                     {model_name: self.esrgan.loaded_models[model_name]},
                 )
             return success
-        if self.gfpgan is not None and model_name in self.gfpgan.models:
+        if self.gfpgan is not None and model_name in self.gfpgan.model_reference:
             success = self.gfpgan.load(
                 model_name=model_name,
             )
@@ -374,12 +377,12 @@ class ModelManager:
                     {model_name: self.gfpgan.loaded_models[model_name]},
                 )
             return success
-        if self.safety_checker is not None and model_name in self.safety_checker.models:
+        if (
+            self.safety_checker is not None
+            and model_name in self.safety_checker.model_reference
+        ):
             success = self.safety_checker.load(
                 model_name=model_name,
-                half_precision=half_precision,
-                gpu_id=gpu_id,
-                cpu_only=True,  # for the horde
             )
             if success:
                 self.loaded_models.update(

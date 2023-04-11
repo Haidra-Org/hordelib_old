@@ -7,6 +7,7 @@ import os
 import re
 from io import BytesIO
 from pprint import pformat
+import typing
 
 from loguru import logger
 from PIL import Image
@@ -15,7 +16,8 @@ from PIL import Image
 # Do not change the order of these imports
 # isort: off
 import execution
-from comfy.sd import load_checkpoint_guess_config, load_controlnet
+import comfy.sd
+import comfy.clip_vision
 from comfy.utils import load_torch_file  # XXX Add to __all__
 from comfy_extras.chainner_models import model_loading  # XXX Add to __all__
 
@@ -27,17 +29,37 @@ def horde_load_checkpoint(
     output_vae: bool = True,
     output_clip: bool = True,
     embeddings_path: str | None = None,
-):
-    return load_checkpoint_guess_config(
-        ckpt_path,
+) -> dict[str, typing.Any]:  # XXX # FIXME 'any'
+    # XXX Needs docstring
+    # XXX # TODO One day this signature should be generic, and not comfy specific
+    # XXX # This can remain a comfy call, but the rest of the code should be able
+    # XXX # to pretend it isn't
+
+    (
+        modelPatcher,
+        clipModel,
+        vae,
+        clipVisionModel,
+    ) = comfy.sd.load_checkpoint_guess_config(
+        ckpt_path=ckpt_path,
         output_vae=output_vae,
         output_clip=output_clip,
         embedding_directory=embeddings_path,
     )
 
+    return {
+        "model": modelPatcher,
+        "clip": clipModel,
+        "vae": vae,
+        "clipVisionModel": clipVisionModel,
+    }
 
-def horde_load_controlnet(controlnet_path: str, target_model):
-    return load_controlnet(ckpt_path=controlnet_path, model=target_model)
+
+def horde_load_controlnet(  # XXX Needs docstring
+    controlnet_path: str,
+    target_model,
+) -> comfy.sd.ControlNet | comfy.sd.T2IAdapter | None:
+    return comfy.sd.load_controlnet(ckpt_path=controlnet_path, model=target_model)
 
 
 class Comfy_Horde:
@@ -332,3 +354,6 @@ class Comfy_Horde:
             return result["output_image"]["images"]
 
         return None
+
+
+__all__ = ["load_torch_file", "model_loading"]

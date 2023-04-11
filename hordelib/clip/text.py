@@ -11,12 +11,12 @@ from hordelib.utils.cast import autocast_cuda
 
 
 class TextEmbed:
-    def __init__(self, model, cache: Cache):
+    def __init__(self, model_info, cache: Cache):
         """
         :param model: Loaded model from ModelManager
         :param cache: Cache object
         """
-        self.model = model
+        self.model_info = model_info
         self.cache = cache
         self.executor = ThreadPoolExecutor(
             max_workers=1024,
@@ -30,12 +30,12 @@ class TextEmbed:
                 text["prompt"] = text["prompt"].decode("utf-8")
             text["hash"] = hashlib.sha256(text["prompt"]).hexdigest()
         text_tokens = [
-            clip.tokenize(text["prompt"], truncate=True).to(self.model["device"])
+            clip.tokenize(text["prompt"], truncate=True).to(self.model_info["device"])
             for text in text_list
         ]
         text_tokens = torch.cat(text_tokens, dim=0)
         with torch.no_grad():
-            text_features = self.model["model"].encode_text(text_tokens).float()
+            text_features = self.model_info["model"].encode_text(text_tokens).float()
         for text_embed_array, text in zip(text_features, text_list):
             self.executor.submit(self._save, text_embed_array, text["hash"])
             self.cache.add_sqlite_row(text["filename"], text["hash"], text["hash"])
@@ -62,9 +62,9 @@ class TextEmbed:
             cached = self.cache.get(file_hash=text_hash)
             if cached:
                 return cached
-        text_tokens = clip.tokenize([text], truncate=True).to(self.model["device"])
+        text_tokens = clip.tokenize([text], truncate=True).to(self.model_info["device"])
         with torch.no_grad():
-            text_features = self.model["model"].encode_text(text_tokens).float()
+            text_features = self.model_info["model"].encode_text(text_tokens).float()
         text_features /= text_features.norm(dim=-1, keepdim=True)
         text_embed_array = text_features.cpu().detach().numpy()
         if filename:
