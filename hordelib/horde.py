@@ -230,10 +230,28 @@ class HordeLib:
 
         return pipeline
 
+    def _resize_sources_to_request(self, payload):
+        """Ensures the source_image and source_mask are at the size requested by the client"""
+        source_image = payload.get("source_image")
+        if not source_image:
+            return
+        if source_image.size != (payload["width"], payload["height"]):
+            payload["source_image"] = source_image.resize(
+                (payload["width"], payload["height"])
+            )
+        source_mask = payload.get("source_mask")
+        if not source_mask:
+            return
+        if source_mask.size != (payload["width"], payload["height"]):
+            payload["source_mask"] = source_mask.resize(
+                (payload["width"], payload["height"])
+            )
+
     def basic_inference(self, payload: dict[str, str | None]) -> Image.Image | None:
         generator = Comfy_Horde()
         # Validate our payload parameters
         self._validate_BASIC_INFERENCE_PARAMS(payload)
+        self._resize_sources_to_request(payload)
         # Determine our parameters
         params = self._parameter_remap_basic_inference(payload)
         # Determine the correct pipeline

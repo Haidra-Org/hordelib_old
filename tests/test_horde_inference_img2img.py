@@ -56,6 +56,8 @@ class TestHordeInference:
         assert self.horde is not None
         pil_image = self.horde.basic_inference(data)
         assert pil_image is not None
+        assert pil_image.size == (512, 512)
+        assert data["source_image"].size == (512, 512)
         pil_image.save("images/horde_image_to_image.webp", quality=90)
 
     def test_image_to_image_hires_fix_small(self):
@@ -83,6 +85,7 @@ class TestHordeInference:
         assert self.horde is not None
         pil_image = self.horde.basic_inference(data)
         assert pil_image is not None
+        assert pil_image.size == (512, 512)
         pil_image.save("images/horde_image_to_image_hires_fix_small.webp", quality=90)
 
     def test_image_to_image_hires_fix_large(self):
@@ -110,6 +113,7 @@ class TestHordeInference:
         assert self.horde is not None
         pil_image = self.horde.basic_inference(data)
         assert pil_image is not None
+        assert pil_image.size == (768, 768)
         pil_image.save("images/horde_image_to_image_hires_fix_large.webp", quality=90)
 
     def test_image_to_image_mask_in(self):
@@ -137,6 +141,7 @@ class TestHordeInference:
         assert self.horde is not None
         pil_image = self.horde.basic_inference(data)
         assert pil_image is not None
+        assert pil_image.size == (512, 512)
         pil_image.save("images/horde_image_to_image_mask_in.webp", quality=90)
 
     def test_image_to_image_mask_out(self):
@@ -164,6 +169,7 @@ class TestHordeInference:
         assert self.horde is not None
         pil_image = self.horde.basic_inference(data)
         assert pil_image is not None
+        assert pil_image.size == (512, 512)
         pil_image.save("images/horde_image_to_image_mask_out.webp", quality=90)
 
     def test_img2img_alpha_to_inpainting_convert(self):
@@ -186,4 +192,5 @@ class TestHordeInference:
         assert self.horde is not None
         pil_image = self.horde.basic_inference(data)
         assert pil_image is not None
+        assert pil_image.size == (512, 512)
         pil_image.save("images/horde_img2img_to_inpainting.webp", quality=90)
