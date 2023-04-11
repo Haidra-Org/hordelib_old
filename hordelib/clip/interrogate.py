@@ -13,21 +13,21 @@ from hordelib.clip.text import TextEmbed
 
 
 class Interrogator:
-    def __init__(self, model):
+    def __init__(self, model_info):
         """
         :param model: Loaded model from ModelManager
         For each data list in model["data_lists"], check if all items are cached.
         If not, embed all items and save to cache.
         If yes, load all text embeds from cache.
         """
-        self.model = model
+        self.model_info = model_info
         self.cache = Cache(
-            self.model["cache_name"],
+            self.model_info["cache_name"],
             cache_parentname="embeds",
             cache_subname="text",
         )
         self.cache_image = Cache(
-            self.model["cache_name"],
+            self.model_info["cache_name"],
             cache_parentname="embeds",
             cache_subname="image",
         )
@@ -57,7 +57,7 @@ class Interrogator:
                 break
         if not cached:
             logger.debug(f"Embedding {key}...")
-            text_embed = TextEmbed(self.model, self.cache)
+            text_embed = TextEmbed(self.model_info, self.cache)
             for text in text_array:
                 logger.debug(f"Embedding {text}")
                 text_embed(text)
@@ -235,16 +235,16 @@ class Interrogator:
             logger.error("Must specify similarity or rank")
             return
         if text_array is None:
-            text_array = self.model["data_lists"]
+            text_array = self.model_info["data_lists"]
         if isinstance(text_array, list):
             text_array = {"default": text_array}
         elif isinstance(text_array, dict):
             pass
-        image_embed = ImageEmbed(self.model, self.cache_image)
+        image_embed = ImageEmbed(self.model_info, self.cache_image)
         image_hash = image_embed(image, filename, directory)
         image_embed_array = np.load(f"{self.cache_image.cache_dir}/{image_hash}.npy")
         image_features = (
-            torch.from_numpy(image_embed_array).float().to(self.model["device"])
+            torch.from_numpy(image_embed_array).float().to(self.model_info["device"])
         )
         if similarity and not rank:
             results = {}
@@ -253,7 +253,7 @@ class Interrogator:
                     image_features,
                     text_array[k],
                     k,
-                    self.model["device"],
+                    self.model_info["device"],
                 )
                 logger.debug(f"{k}: {results[k]}")
             return results
@@ -264,7 +264,7 @@ class Interrogator:
                     image_features,
                     text_array[k],
                     k,
-                    self.model["device"],
+                    self.model_info["device"],
                     top_count,
                 )
                 logger.debug(f"{k}: {results[k]}")
@@ -276,7 +276,7 @@ class Interrogator:
                     image_features,
                     text_array[k],
                     k,
-                    self.model["device"],
+                    self.model_info["device"],
                 )
                 logger.debug(f"{k}: {similarity[k]}")
             rank = {}
@@ -285,7 +285,7 @@ class Interrogator:
                     image_features,
                     text_array[k],
                     k,
-                    self.model["device"],
+                    self.model_info["device"],
                     top_count,
                 )
                 logger.debug(f"{k}: {rank[k]}")

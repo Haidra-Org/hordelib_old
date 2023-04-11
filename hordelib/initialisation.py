@@ -3,12 +3,23 @@
 import sys
 
 from loguru import logger
+
+import hordelib.utils.logger
 from hordelib import install_comfy
 from hordelib.config_path import set_system_path, get_hordelib_path
-from hordelib.consts import COMFYUI_VERSION, DEFAULT_MODEL_MANAGERS, RELEASE_VERSION
+from hordelib.consts import (
+    COMFYUI_VERSION,
+    DEFAULT_MODEL_MANAGERS,
+    MODEL_CATEGORY_NAMES,
+    RELEASE_VERSION,
+)
 
 
-def initialise():
+def initialise(
+    model_managers_to_load: dict[MODEL_CATEGORY_NAMES, bool] = DEFAULT_MODEL_MANAGERS,
+):
+    logger.level("DEBUG")  # XXX # FIXME
+
     # If developer mode, don't permit some things
     if not RELEASE_VERSION and " " in get_hordelib_path():
         # Our runtime patching can't handle this
@@ -30,5 +41,6 @@ def initialise():
     # Initialise model manager
     from hordelib.shared_model_manager import SharedModelManager
 
-    SharedModelManager.loadModelManagers(**DEFAULT_MODEL_MANAGERS)
+    SharedModelManager.loadModelManagers(**model_managers_to_load)
+
     sys.argv = sys_arg_bkp
