@@ -199,7 +199,7 @@ class Interrogator:
             }
             for i in range(top_count)
         ]
-        return top
+        return top  # noqa: RET504
 
     def __call__(
         self,
@@ -257,7 +257,7 @@ class Interrogator:
                 )
                 logger.debug(f"{k}: {results[k]}")
             return results
-        elif rank and not similarity:
+        if rank and not similarity:
             results = {}
             for k in text_array:
                 results[k] = self.rank(
@@ -269,7 +269,7 @@ class Interrogator:
                 )
                 logger.debug(f"{k}: {results[k]}")
             return results
-        else:
+        else:  # noqa: RET505
             similarity = {}
             for k in text_array:
                 similarity[k] = self.similarity(
