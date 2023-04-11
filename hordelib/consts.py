@@ -18,7 +18,7 @@ class HordeSupportedBackends(Enum):
     ComfyUI = auto()
 
 
-class ModelCategoryNames(str, Enum):
+class MODEL_CATEGORY_NAMES(str, Enum):
     """Look up str enum for the categories of models (compvis, controlnet, clip, etc...)."""
 
     blip = "blip"
@@ -34,40 +34,40 @@ class ModelCategoryNames(str, Enum):
 
 # Default model managers to load
 DEFAULT_MODEL_MANAGERS = {
-    ModelCategoryNames.blip: True,
-    ModelCategoryNames.clip: True,
-    ModelCategoryNames.codeformer: True,
-    ModelCategoryNames.compvis: True,
-    ModelCategoryNames.controlnet: True,
-    ModelCategoryNames.diffusers: True,
-    ModelCategoryNames.esrgan: True,
-    ModelCategoryNames.gfpgan: True,
-    ModelCategoryNames.safety_checker: True,
+    MODEL_CATEGORY_NAMES.blip: True,
+    MODEL_CATEGORY_NAMES.clip: True,
+    MODEL_CATEGORY_NAMES.codeformer: True,
+    MODEL_CATEGORY_NAMES.compvis: True,
+    MODEL_CATEGORY_NAMES.controlnet: True,
+    MODEL_CATEGORY_NAMES.diffusers: True,
+    MODEL_CATEGORY_NAMES.esrgan: True,
+    MODEL_CATEGORY_NAMES.gfpgan: True,
+    MODEL_CATEGORY_NAMES.safety_checker: True,
 }
 """The default model managers to load."""  # XXX Clarify
 
 MODEL_DB_NAMES = {
-    ModelCategoryNames.blip: ModelCategoryNames.blip,
-    ModelCategoryNames.clip: ModelCategoryNames.clip,
-    ModelCategoryNames.codeformer: ModelCategoryNames.codeformer,
-    ModelCategoryNames.compvis: "stable_diffusion",
-    ModelCategoryNames.controlnet: ModelCategoryNames.controlnet,
-    ModelCategoryNames.diffusers: ModelCategoryNames.diffusers,
-    ModelCategoryNames.esrgan: ModelCategoryNames.esrgan,
-    ModelCategoryNames.gfpgan: ModelCategoryNames.gfpgan,
-    ModelCategoryNames.safety_checker: ModelCategoryNames.safety_checker,
+    MODEL_CATEGORY_NAMES.blip: MODEL_CATEGORY_NAMES.blip,
+    MODEL_CATEGORY_NAMES.clip: MODEL_CATEGORY_NAMES.clip,
+    MODEL_CATEGORY_NAMES.codeformer: MODEL_CATEGORY_NAMES.codeformer,
+    MODEL_CATEGORY_NAMES.compvis: "stable_diffusion",
+    MODEL_CATEGORY_NAMES.controlnet: MODEL_CATEGORY_NAMES.controlnet,
+    MODEL_CATEGORY_NAMES.diffusers: MODEL_CATEGORY_NAMES.diffusers,
+    MODEL_CATEGORY_NAMES.esrgan: MODEL_CATEGORY_NAMES.esrgan,
+    MODEL_CATEGORY_NAMES.gfpgan: MODEL_CATEGORY_NAMES.gfpgan,
+    MODEL_CATEGORY_NAMES.safety_checker: MODEL_CATEGORY_NAMES.safety_checker,
 }
 """The name of the json file (without the extension) of the corresponding model database."""
 
 MODEL_FOLDER_NAMES = {
-    ModelCategoryNames.blip: ModelCategoryNames.blip,
-    ModelCategoryNames.clip: ModelCategoryNames.clip,
-    ModelCategoryNames.codeformer: ModelCategoryNames.codeformer,
-    ModelCategoryNames.compvis: "compvis",
-    ModelCategoryNames.controlnet: ModelCategoryNames.controlnet,
-    ModelCategoryNames.diffusers: ModelCategoryNames.diffusers,
-    ModelCategoryNames.esrgan: ModelCategoryNames.esrgan,
-    ModelCategoryNames.gfpgan: ModelCategoryNames.gfpgan,
-    ModelCategoryNames.safety_checker: ModelCategoryNames.safety_checker,
+    MODEL_CATEGORY_NAMES.blip: MODEL_CATEGORY_NAMES.blip,
+    MODEL_CATEGORY_NAMES.clip: MODEL_CATEGORY_NAMES.clip,
+    MODEL_CATEGORY_NAMES.codeformer: MODEL_CATEGORY_NAMES.codeformer,
+    MODEL_CATEGORY_NAMES.compvis: "compvis",
+    MODEL_CATEGORY_NAMES.controlnet: MODEL_CATEGORY_NAMES.controlnet,
+    MODEL_CATEGORY_NAMES.diffusers: MODEL_CATEGORY_NAMES.diffusers,
+    MODEL_CATEGORY_NAMES.esrgan: MODEL_CATEGORY_NAMES.esrgan,
+    MODEL_CATEGORY_NAMES.gfpgan: MODEL_CATEGORY_NAMES.gfpgan,
+    MODEL_CATEGORY_NAMES.safety_checker: MODEL_CATEGORY_NAMES.safety_checker,
 }
 """The folder name on disk where the models are stored in AIWORKER_CACHE_HOME."""
