@@ -186,9 +186,7 @@ class Interrogator:
 
         similarity = torch.zeros((1, len(text_array))).to(device)
         for i in range(image_features.shape[0]):
-            similarity += (
-                100.0 * image_features[i].unsqueeze(0) @ text_features.T
-            ).softmax(dim=-1)
+            similarity += (100.0 * image_features[i].unsqueeze(0) @ text_features.T).softmax(dim=-1)
         similarity /= image_features.shape[0]
 
         top_probs, top_labels = similarity.cpu().topk(top_count, dim=-1)
@@ -243,9 +241,7 @@ class Interrogator:
         image_embed = ImageEmbed(self.model_info, self.cache_image)
         image_hash = image_embed(image, filename, directory)
         image_embed_array = np.load(f"{self.cache_image.cache_dir}/{image_hash}.npy")
-        image_features = (
-            torch.from_numpy(image_embed_array).float().to(self.model_info["device"])
-        )
+        image_features = torch.from_numpy(image_embed_array).float().to(self.model_info["device"])
         if similarity and not rank:
             results = {}
             for k in text_array:

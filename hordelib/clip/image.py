@@ -43,9 +43,7 @@ class ImageEmbed:
             for pil_image in pil_images:
                 try:
                     preprocess_images.append(
-                        self.model["preprocess"](pil_image["pil_image"])
-                        .unsqueeze(0)
-                        .to(self.model["device"]),
+                        self.model["preprocess"](pil_image["pil_image"]).unsqueeze(0).to(self.model["device"]),
                     )
                 except RuntimeError as e:
                     logger.error(e)
@@ -96,11 +94,7 @@ class ImageEmbed:
             raise ValueError("Either image or filename must be set")
         if image is not None and filename is not None:
             raise ValueError("Only one of image or filename must be set")
-        pil_image = (
-            Image.open(f"{directory}/{filename}").convert("RGB")
-            if image is None
-            else image
-        )
+        pil_image = Image.open(f"{directory}/{filename}").convert("RGB") if image is None else image
         if image is None:
             file_hash = hashlib.sha256(
                 open(f"{directory}/{filename}", "rb").read(),
@@ -118,11 +112,7 @@ class ImageEmbed:
             logger.debug(f"Skipping cache for image {image_hash}")
         logger.debug(f"Embedding image {image_hash}")
         with torch.no_grad():
-            preprocess_image = (
-                self.model["preprocess"](pil_image)
-                .unsqueeze(0)
-                .to(self.model["device"])
-            )
+            preprocess_image = self.model["preprocess"](pil_image).unsqueeze(0).to(self.model["device"])
         image_features = self.model["model"].encode_image(preprocess_image).float()
         self._save(image_features, image_hash)
         self.cache.add_sqlite_row(file=filename, hash=file_hash, pil_hash=image_hash)
