@@ -34,7 +34,7 @@ class TestHordeBlip:
         SharedModelManager.manager = None
 
     def test_blip_large_caption(self):
-        assert SharedModelManager.manager.clip.is_model_loaded("BLIP_Large") is True
+        assert SharedModelManager.manager.is_model_loaded("BLIP_Large") is True
         model = SharedModelManager.manager.loaded_models["BLIP_Large"]
         caption_class = Caption(model)
         caption = caption_class(
@@ -47,4 +47,4 @@ class TestHordeBlip:
             repetition_penalty=1.4,
         )
         assert caption is not None
-        assert caption == "caption"
+        assert len(caption) > 20

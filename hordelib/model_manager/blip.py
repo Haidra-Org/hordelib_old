@@ -1,9 +1,11 @@
 import importlib.resources as importlib_resources
 import time
+from pathlib import Path
 
 import torch
 from loguru import logger
 
+from hordelib.config_path import get_hordelib_path
 from hordelib.consts import MODEL_CATEGORY_NAMES, MODEL_DB_NAMES
 from hordelib.model_manager.base import BaseModelManager
 from hordelib.utils.blip.blip import blip_decoder
@@ -84,7 +86,11 @@ class BlipModelManager(BaseModelManager):
             device = torch.device(f"cuda:{gpu_id}" if self.cuda_available else "cpu")
         logger.info(f"Loading model {model_name} on {device}")
         logger.info(f"Model path: {model_path}")
-        with importlib_resources.as_file(self.pkg / "med_config.json") as med_config:
+        med_path = Path(get_hordelib_path()).joinpath(
+            "model_database/",
+            "med_config.json",
+        )
+        with importlib_resources.as_file(med_path.resolve()) as med_config:
             logger.info(f"Med config path: {med_config}")
             model = blip_decoder(
                 pretrained=model_path,
