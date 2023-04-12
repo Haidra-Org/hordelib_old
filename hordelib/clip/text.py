@@ -30,8 +30,7 @@ class TextEmbed:
                 text["prompt"] = text["prompt"].decode("utf-8")
             text["hash"] = hashlib.sha256(text["prompt"]).hexdigest()
         text_tokens = [
-            clip.tokenize(text["prompt"], truncate=True).to(self.model_info["device"])
-            for text in text_list
+            clip.tokenize(text["prompt"], truncate=True).to(self.model_info["device"]) for text in text_list
         ]
         text_tokens = torch.cat(text_tokens, dim=0)
         with torch.no_grad():
