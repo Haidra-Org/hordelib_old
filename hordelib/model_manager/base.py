@@ -550,10 +550,10 @@ class BaseModelManager(ABC):
         # XXX this has no fall back and always returns true
         for model in self.get_filtered_model_names(download_all=True):
             if not self.check_model_available(model):
-                logger.info(f"{model}", status="Downloading")  # logger.init
+                logger.init(f"{model}", status="Downloading")  # logger.init
                 self.download_model(model)
             else:
-                logger.info(f"{model} is already downloaded.")
+                logger.init(f"{model} is already downloaded.")
         return True
 
     def check_model_available(self, model_name: str) -> bool:
