@@ -55,7 +55,10 @@ class BLIP_Base(nn.Module):
         elif mode == "text":
             # return text features
             text_output = self.text_encoder(
-                text.input_ids, attention_mask=text.attention_mask, return_dict=True, mode="text"
+                text.input_ids,
+                attention_mask=text.attention_mask,
+                return_dict=True,
+                mode="text",
             )
             return text_output.last_hidden_state
 
@@ -107,7 +110,7 @@ class BLIP_Decoder(nn.Module):
         image_atts = torch.ones(image_embeds.size()[:-1], dtype=torch.long).to(image.device)
 
         text = self.tokenizer(caption, padding="longest", truncation=True, max_length=40, return_tensors="pt").to(
-            image.device
+            image.device,
         )
 
         text.input_ids[:, 0] = self.tokenizer.bos_token_id
@@ -128,7 +131,14 @@ class BLIP_Decoder(nn.Module):
         return loss_lm
 
     def generate(
-        self, image, sample=False, num_beams=3, max_length=30, min_length=10, top_p=0.9, repetition_penalty=1.0
+        self,
+        image,
+        sample=False,
+        num_beams=3,
+        max_length=30,
+        min_length=10,
+        top_p=0.9,
+        repetition_penalty=1.0,
     ):
         image_embeds = self.visual_encoder(image)
 
@@ -247,11 +257,13 @@ def load_checkpoint(model, url_or_filename):
     state_dict = checkpoint["model"]
 
     state_dict["visual_encoder.pos_embed"] = interpolate_pos_embed(
-        state_dict["visual_encoder.pos_embed"], model.visual_encoder
+        state_dict["visual_encoder.pos_embed"],
+        model.visual_encoder,
     )
     if "visual_encoder_m.pos_embed" in model.state_dict().keys():
         state_dict["visual_encoder_m.pos_embed"] = interpolate_pos_embed(
-            state_dict["visual_encoder_m.pos_embed"], model.visual_encoder_m
+            state_dict["visual_encoder_m.pos_embed"],
+            model.visual_encoder_m,
         )
     for key in model.state_dict().keys():
         if key in state_dict.keys():

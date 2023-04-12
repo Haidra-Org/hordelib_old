@@ -12,7 +12,14 @@ class Caption:
         self.model = model
 
     def __call__(
-        self, image, sample=True, num_beams=3, max_length=30, min_length=10, top_p=0.9, repetition_penalty=1.0
+        self,
+        image,
+        sample=True,
+        num_beams=3,
+        max_length=30,
+        min_length=10,
+        top_p=0.9,
+        repetition_penalty=1.0,
     ):
         """
         image: The image to caption. This can be a PIL.Image.Image or a path to an image.
@@ -36,7 +43,7 @@ class Caption:
                         mean=[0.48145466, 0.4578275, 0.40821073],
                         std=[0.26862954, 0.26130258, 0.27577711],
                     ),
-                ]
+                ],
             )(image)
             .unsqueeze(0)
             .to(self.model["device"])

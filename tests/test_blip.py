@@ -47,4 +47,4 @@ class TestHordeBlip:
             repetition_penalty=1.4,
         )
         assert caption is not None
-        assert caption == 'caption'
+        assert caption == "caption"

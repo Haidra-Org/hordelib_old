@@ -48,7 +48,7 @@ class BlipModelManager(BaseModelManager):
         if model_name not in self.loaded_models:
             tic = time.time()
             logger.info(f"{model_name}", status="Loading")  # logger.init
-            self.loaded_models[model_name] = self.modelToRam(  
+            self.loaded_models[model_name] = self.modelToRam(
                 model_name,
                 half_precision=half_precision,
                 gpu_id=gpu_id,

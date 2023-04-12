@@ -83,7 +83,7 @@ class BertSelfAttention(nn.Module):
         if config.hidden_size % config.num_attention_heads != 0 and not hasattr(config, "embedding_size"):
             raise ValueError(
                 "The hidden size (%d) is not a multiple of the number of attention "
-                "heads (%d)" % (config.hidden_size, config.num_attention_heads)
+                "heads (%d)" % (config.hidden_size, config.num_attention_heads),
             )
 
         self.num_attention_heads = config.num_attention_heads
@@ -232,7 +232,10 @@ class BertAttention(nn.Module):
         if len(heads) == 0:
             return
         heads, index = find_pruneable_heads_and_indices(
-            heads, self.self.num_attention_heads, self.self.attention_head_size, self.pruned_heads
+            heads,
+            self.self.num_attention_heads,
+            self.self.attention_head_size,
+            self.pruned_heads,
         )
 
         # Prune linear layers
@@ -351,7 +354,10 @@ class BertLayer(nn.Module):
             attention_output = cross_attention_outputs[0]
             outputs = outputs + cross_attention_outputs[1:-1]  # add cross attentions if we output attention weights
         layer_output = apply_chunking_to_forward(
-            self.feed_forward_chunk, self.chunk_size_feed_forward, self.seq_len_dim, attention_output
+            self.feed_forward_chunk,
+            self.chunk_size_feed_forward,
+            self.seq_len_dim,
+            attention_output,
         )
         outputs = (layer_output,) + outputs
 
@@ -403,7 +409,7 @@ class BertEncoder(nn.Module):
             if self.gradient_checkpointing and self.training:
                 if use_cache:
                     logger.warn(
-                        "`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`..."
+                        "`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`...",
                     )
                     use_cache = False
 
@@ -586,7 +592,11 @@ class BertModel(BertPreTrainedModel):
             self.encoder.layer[layer].attention.prune_heads(heads)
 
     def get_extended_attention_mask(
-        self, attention_mask: Tensor, input_shape: Tuple[int], device: device, is_decoder: bool
+        self,
+        attention_mask: Tensor,
+        input_shape: Tuple[int],
+        device: device,
+        is_decoder: bool,
     ) -> Tensor:
         """
         Makes broadcastable attention and causal masks so that future and masked tokens are ignored.
@@ -624,7 +634,9 @@ class BertModel(BertPreTrainedModel):
                     causal_mask = torch.cat(
                         [
                             torch.ones(
-                                (batch_size, seq_length, prefix_seq_len), device=device, dtype=causal_mask.dtype
+                                (batch_size, seq_length, prefix_seq_len),
+                                device=device,
+                                dtype=causal_mask.dtype,
                             ),
                             causal_mask,
                         ],
@@ -637,8 +649,9 @@ class BertModel(BertPreTrainedModel):
         else:
             raise ValueError(
                 "Wrong shape for input_ids (shape {}) or attention_mask (shape {})".format(
-                    input_shape, attention_mask.shape
-                )
+                    input_shape,
+                    attention_mask.shape,
+                ),
             )
 
         # Since attention_mask is 1.0 for positions we want to attend and 0.0 for
@@ -723,7 +736,10 @@ class BertModel(BertPreTrainedModel):
         # We can provide a self-attention mask of dimensions [batch_size, from_seq_length, to_seq_length]
         # ourselves in which case we just need to make it broadcastable to all heads.
         extended_attention_mask: torch.Tensor = self.get_extended_attention_mask(
-            attention_mask, input_shape, device, is_decoder
+            attention_mask,
+            input_shape,
+            device,
+            is_decoder,
         )
 
         # If a 2D or 3D attention mask is provided for the cross-attention

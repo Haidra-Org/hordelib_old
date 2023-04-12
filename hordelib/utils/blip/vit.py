@@ -102,7 +102,12 @@ class Block(nn.Module):
         super().__init__()
         self.norm1 = norm_layer(dim)
         self.attn = Attention(
-            dim, num_heads=num_heads, qkv_bias=qkv_bias, qk_scale=qk_scale, attn_drop=attn_drop, proj_drop=drop
+            dim,
+            num_heads=num_heads,
+            qkv_bias=qkv_bias,
+            qk_scale=qk_scale,
+            attn_drop=attn_drop,
+            proj_drop=drop,
         )
         # NOTE: drop path for stochastic depth, we shall see if this is better than dropout here
         self.drop_path = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
@@ -192,7 +197,7 @@ class VisionTransformer(nn.Module):
                     use_grad_checkpointing=(use_grad_checkpointing and i >= depth - ckpt_layer),
                 )
                 for i in range(depth)
-            ]
+            ],
         )
         self.norm = norm_layer(embed_dim)
 
@@ -284,7 +289,10 @@ def _load_weights(model: VisionTransformer, checkpoint_path: str, prefix: str = 
     pos_embed_w = _n2p(w[f"{prefix}Transformer/posembed_input/pos_embedding"], t=False)
     if pos_embed_w.shape != model.pos_embed.shape:
         pos_embed_w = resize_pos_embed(  # resize pos embedding when different size from pretrained weights
-            pos_embed_w, model.pos_embed, getattr(model, "num_tokens", 1), model.patch_embed.grid_size
+            pos_embed_w,
+            model.pos_embed,
+            getattr(model, "num_tokens", 1),
+            model.patch_embed.grid_size,
         )
     model.pos_embed.copy_(pos_embed_w)
     model.norm.weight.copy_(_n2p(w[f"{prefix}Transformer/encoder_norm/scale"]))
@@ -301,10 +309,10 @@ def _load_weights(model: VisionTransformer, checkpoint_path: str, prefix: str = 
         block.norm1.weight.copy_(_n2p(w[f"{block_prefix}LayerNorm_0/scale"]))
         block.norm1.bias.copy_(_n2p(w[f"{block_prefix}LayerNorm_0/bias"]))
         block.attn.qkv.weight.copy_(
-            torch.cat([_n2p(w[f"{mha_prefix}{n}/kernel"], t=False).flatten(1).T for n in ("query", "key", "value")])
+            torch.cat([_n2p(w[f"{mha_prefix}{n}/kernel"], t=False).flatten(1).T for n in ("query", "key", "value")]),
         )
         block.attn.qkv.bias.copy_(
-            torch.cat([_n2p(w[f"{mha_prefix}{n}/bias"], t=False).reshape(-1) for n in ("query", "key", "value")])
+            torch.cat([_n2p(w[f"{mha_prefix}{n}/bias"], t=False).reshape(-1) for n in ("query", "key", "value")]),
         )
         block.attn.proj.weight.copy_(_n2p(w[f"{mha_prefix}out/kernel"]).flatten(1))
         block.attn.proj.bias.copy_(_n2p(w[f"{mha_prefix}out/bias"]))
@@ -332,7 +340,10 @@ def interpolate_pos_embed(pos_embed_checkpoint, visual_encoder):
         pos_tokens = pos_embed_checkpoint[:, num_extra_tokens:]
         pos_tokens = pos_tokens.reshape(-1, orig_size, orig_size, embedding_size).permute(0, 3, 1, 2)
         pos_tokens = torch.nn.functional.interpolate(
-            pos_tokens, size=(new_size, new_size), mode="bicubic", align_corners=False
+            pos_tokens,
+            size=(new_size, new_size),
+            mode="bicubic",
+            align_corners=False,
         )
         pos_tokens = pos_tokens.permute(0, 2, 3, 1).flatten(1, 2)
         new_pos_embed = torch.cat((extra_tokens, pos_tokens), dim=1)
