@@ -8,11 +8,11 @@ from hordelib.shared_model_manager import SharedModelManager
 
 
 class TestHordeClip:
-    @pytest.fixture(autouse=True)
+    @pytest.fixture(autouse=True, scope="class")
     def setup_and_teardown(self):
-        self.horde = HordeLib()
+        TestHordeClip.horde = HordeLib()
 
-        self.default_model_manager_args = {
+        TestHordeClip.default_model_manager_args = {
             # aitemplate
             # "blip": True,
             "clip": True,
@@ -24,12 +24,12 @@ class TestHordeClip:
             # "gfpgan": True,
             # "safety_checker": True,
         }
-        self.image = Image.open("images/test_db0.jpg")
+        TestHordeClip.image = Image.open("images/test_db0.jpg")
         SharedModelManager.loadModelManagers(**self.default_model_manager_args)
         assert SharedModelManager.manager is not None
         SharedModelManager.manager.load("ViT-L/14")
         yield
-        del self.horde
+        del TestHordeClip.horde
         SharedModelManager._instance = None
         SharedModelManager.manager = None
 
@@ -54,6 +54,8 @@ class TestHordeClip:
         interrogator = Interrogator(model_info)
         ranking_result = interrogator(
             image=self.image,
-            similarity=False,
+            rank=True,
         )
-        assert ranking_result is None
+        assert type(ranking_result) is dict
+        assert "artists" in ranking_result
+        assert "mediums" in ranking_result
