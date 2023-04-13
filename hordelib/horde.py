@@ -80,7 +80,6 @@ class HordeLib:
 
     SOURCE_IMAGE_PROCESSING_OPTIONS = ["img2img", "inpainting", "outpainting"]
 
-<<<<<<< HEAD
     # We are a singleton
     def __new__(cls):
         if cls._instance is None:
@@ -92,10 +91,6 @@ class HordeLib:
         if not self._initialised:
             self.generator = Comfy_Horde()
             self.__class__._initialised = True
-=======
-    def __init__(self):
-        pass
->>>>>>> main
 
     def _parameter_remap(self, payload: dict[str, str | None]) -> dict[str, str | None]:
         params = {}
