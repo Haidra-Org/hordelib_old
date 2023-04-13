@@ -16,7 +16,7 @@ class Interrogator:
     def __init__(self, model_info):
         """
         :param model: Loaded model from ModelManager
-        For each data list in model["data_lists"], check if all items are cached.
+        For each data list in model["ranking_lists"], check if all items are cached.
         If not, embed all items and save to cache.
         If yes, load all text embeds from cache.
         """
@@ -218,7 +218,7 @@ class Interrogator:
             * If rank is True, returns list of tuples of (text, similarity)
             See rank() for more details
             See similarity() for more details
-        If text_array is None, uses default text_array from model["data_lists"]
+        If text_array is None, uses default text_array from model["ranking_lists"]
         """
         if image is None and filename is None:
             logger.error("Either image or filename must be set")
@@ -233,7 +233,7 @@ class Interrogator:
             logger.error("Must specify similarity or rank")
             return
         if text_array is None:
-            text_array = self.model_info["data_lists"]
+            text_array = self.model_info["ranking_lists"]
         if isinstance(text_array, list):
             text_array = {"default": text_array}
         elif isinstance(text_array, dict):
