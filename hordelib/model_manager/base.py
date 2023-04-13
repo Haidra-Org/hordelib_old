@@ -84,12 +84,22 @@ class BaseModelManager(ABC):
         if self.download_reference:
             self.model_reference = self.download_model_reference()
             logger.info(
-                f"Downloaded model reference. Got {len(self.model_reference)} models for {self.models_db_name}.",
+                " ".join(
+                    [
+                        "Downloaded model reference.",
+                        f"Got {len(self.model_reference)} models for {self.models_db_name}.",
+                    ],
+                ),
             )
         else:
             self.model_reference = json.loads((self.models_db_path).read_text())
             logger.info(
-                f"Loaded model reference from disk. Got {len(self.model_reference)} models for {self.models_db_name}.",
+                " ".join(
+                    [
+                        "Loaded model reference from disk.",
+                        f"Got {len(self.model_reference)} models for {self.models_db_name}.",
+                    ],
+                ),
             )
         if list_models:
             for model in self.model_reference:
@@ -128,6 +138,7 @@ class BaseModelManager(ABC):
         half_precision: bool = True,
         gpu_id: int | None = None,
         cpu_only: bool = False,
+        **kwargs,
     ):  # XXX # FIXME
         if model_name not in self.model_reference:
             logger.error(f"{model_name} not found")
@@ -140,7 +151,7 @@ class BaseModelManager(ABC):
             tic = time.time()
             logger.init(f"{model_name}", status="Loading")  # logger.init
 
-            self.loaded_models[model_name] = self.modelToRam(model_name)
+            self.loaded_models[model_name] = self.modelToRam(model_name, **kwargs)
             toc = time.time()
             logger.init_ok(
                 f"{model_name}: {round(toc-tic,2)} seconds",
@@ -157,10 +168,25 @@ class BaseModelManager(ABC):
     @abstractmethod
     def modelToRam(
         self,
+        *,
         model_name: str,
-        **kwargs,
+        half_precision: bool = True,
+        gpu_id: int | None = None,
+        cpu_only: bool = False,
+        **kwargs,  # XXX I'd like to refactor the need for this away
     ) -> dict[str, typing.Any]:  # XXX Flesh out signature
-        """"""  # XXX # FIXME These functions need something resembling error detection/logging.
+        """Load a model into RAM. Returns a dict with at least key 'model'.
+
+        Args:
+            model_name (str): The name of the model to load.
+            half_precision (bool, optional): Whether to use half precision. Defaults to True.
+            gpu_id (int | None, optional): The GPU to load into. Defaults to None.
+            cpu_only (bool, optional): Whether to only use CPU + System RAM. Defaults to False.
+            kwargs (dict[str, typing.Any]): Additional arguments.
+
+        Returns:
+            dict[str, typing.Any]: A dict with at least key 'model'.
+        """
 
     def get_model(self, model_name: str):
         return self.model_reference.get(model_name)
@@ -212,20 +238,28 @@ class BaseModelManager(ABC):
         """
         return self.loaded_models[model_name]
 
-    def get_loaded_models_names(self, string=False):  # XXX Rework 'string' param
-        """
-        :param string: If True, returns concatenated string of model names
-        Returns a list of the loaded model names
+    def get_loaded_models_names(self, string=False) -> list[str] | str:  # XXX Rework 'string' param
+        """Return a list of loaded model names.
+
+        Args:
+            string (bool, optional): Return as a comma separated string. Defaults to False.
+
+        Returns:
+            list[str] | str: The list of models, as a `list` or a comma separated string.
         """
         # return ["Deliberate"]
         if string:
             return ", ".join(self.loaded_models.keys())
         return list(self.loaded_models.keys())
 
-    def is_model_loaded(self, model_name: str):
-        """
-        :param model_name: Name of the model
-        Returns whether the model is loaded
+    def is_model_loaded(self, model_name: str) -> bool:
+        """Returns True if the model is loaded, False otherwise.
+
+        Args:
+            model_name (str): The name of the model to check.
+
+        Returns:
+            _type_: _description_
         """
         return model_name in self.loaded_models
 

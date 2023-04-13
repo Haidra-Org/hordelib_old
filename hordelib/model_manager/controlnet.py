@@ -1,6 +1,8 @@
 import os
+import typing
 
 from loguru import logger
+from typing_extensions import override
 
 from hordelib.comfy_horde import horde_load_controlnet
 from hordelib.consts import MODEL_CATEGORY_NAMES, MODEL_DB_NAMES
@@ -15,9 +17,14 @@ class ControlNetModelManager(BaseModelManager):
         )
         self.control_nets = {}
 
-    def modelToRam(self, model_name: str):
+    @override
+    def modelToRam(
+        self,
+        model_name: str,
+        **kwargs,
+    ) -> dict[str, typing.Any]:
         raise NotImplementedError(
-            "Controlnet requires special handling. Use `ControlNetModelManager.merge_controlnet(...)` instead of `load()`.",
+            "Controlnet requires special handling. Use `ControlNetModelManager.merge_controlnet(...)` instead of `ModelManager.load(...)`.",
         )  # XXX # TODO There might be way to avoid this.
 
     def merge_controlnet(
@@ -26,6 +33,7 @@ class ControlNetModelManager(BaseModelManager):
         model,
         model_baseline="stable diffusion 1",
     ):
+        # XXX would be nice to get the model name passed as a parameter
         controlnet_name = self.get_controlnet_name(control_type, model_baseline)
         if controlnet_name not in self.model_reference:
             logger.error(f"{controlnet_name} not found")

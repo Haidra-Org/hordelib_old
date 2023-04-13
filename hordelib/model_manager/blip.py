@@ -2,9 +2,11 @@ import importlib.resources as importlib_resources
 import time
 import typing
 from pathlib import Path
+import typing
 
 import torch
 from loguru import logger
+from typing_extensions import override
 
 from hordelib.config_path import get_hordelib_path
 from hordelib.consts import MODEL_CATEGORY_NAMES, MODEL_DB_NAMES
@@ -19,6 +21,7 @@ class BlipModelManager(BaseModelManager):
             download_reference=download_reference,
         )
 
+    @override
     def modelToRam(
         self,
         model_name,
@@ -26,7 +29,8 @@ class BlipModelManager(BaseModelManager):
         gpu_id=0,
         cpu_only=False,
         blip_image_eval_size=512,
-    ):
+        **kwargs,
+    ) -> dict[str, typing.Any]:
         if not self.cuda_available:
             cpu_only = True
         vit = "base" if model_name == "BLIP" else "large"

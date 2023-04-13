@@ -1,10 +1,12 @@
 import time
+import typing
 from pathlib import Path
 
 import clip
 import open_clip
 import torch
 from loguru import logger
+from typing_extensions import override
 
 from hordelib.config_path import get_hordelib_path
 from hordelib.consts import MODEL_CATEGORY_NAMES, MODEL_DB_NAMES
@@ -106,13 +108,15 @@ class ClipModelManager(BaseModelManager):
             "cache_name": model_name.replace("/", "_"),
         }
 
+    @override
     def modelToRam(
         self,
         model_name: str,
         half_precision=True,
         gpu_id=0,
         cpu_only=False,
-    ):
+        **kwargs,
+    ) -> dict[str, typing.Any]:
         """
         model_name: str. Name of the model to load. See available_models for a list of available models.
         half_precision: bool. If True, the model will be loaded in half precision.
@@ -152,10 +156,10 @@ class ClipModelManager(BaseModelManager):
             logger.error(
                 f"Unknown model type: {self.model_reference[model_name]['type']}",
             )
-            return None
+            return {}  # XXX # FIXME
         if not loaded_model_info:
             logger.init_error(f"Failed to load {model_name}", status="Error")
-            return None
+            return {}  # XXX # FIXME
 
         logger.init_ok(f"Loading {model_name}", status="Success")  # logger.init_ok
         toc = time.time()
