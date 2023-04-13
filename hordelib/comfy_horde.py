@@ -25,7 +25,7 @@ from comfy_extras.chainner_models import model_loading as _comfy_model_loading
 
 # isort: on
 
-_mutex = threading.Lock()
+_mutex = threading.RLock()
 
 
 def load_torch_file(filename):
