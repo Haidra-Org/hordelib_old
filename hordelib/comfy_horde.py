@@ -25,17 +25,17 @@ from comfy_extras.chainner_models import model_loading as _comfy_model_loading
 
 # isort: on
 
-__mutex = threading.Lock()
+_mutex = threading.Lock()
 
 
 def load_torch_file(filename):
-    with __mutex:
+    with _mutex:
         result = __comfy_load_torch_file(filename)
     return result
 
 
 def load_state_dict(state_dict):
-    with __mutex:
+    with _mutex:
         result = _comfy_model_loading.load_state_dict(state_dict)
     return result
 
@@ -50,7 +50,7 @@ def horde_load_checkpoint(
     # XXX # TODO One day this signature should be generic, and not comfy specific
     # XXX # This can remain a comfy call, but the rest of the code should be able
     # XXX # to pretend it isn't
-    with __mutex:
+    with _mutex:
         # Redirect IO
         stdio = OutputCollector()
         with contextlib.redirect_stdout(stdio):
@@ -70,7 +70,7 @@ def horde_load_checkpoint(
 
 
 def horde_load_controlnet(controlnet_path: str, target_model):  # XXX Needs docstring
-    with __mutex:
+    with _mutex:
         # Redirect IO
         stdio = OutputCollector()
         with contextlib.redirect_stdout(stdio):
@@ -358,7 +358,7 @@ class Comfy_Horde:
 
         # The client_id parameter here is just so we receive comfy callbacks for debugging.
         # We pretend we are a web client and want async callbacks.
-        with __mutex:
+        with _mutex:
             stdio = OutputCollector()
             with contextlib.redirect_stdout(stdio):
                 with contextlib.redirect_stderr(stdio):
