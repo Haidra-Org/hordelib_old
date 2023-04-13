@@ -34,7 +34,7 @@ class TestHordeClip:
         SharedModelManager.manager = None
 
     def test_clip_similarities(self):
-        assert SharedModelManager.manager.clip.is_model_loaded("ViT-L/14") is True
+        assert SharedModelManager.manager.is_model_loaded("ViT-L/14") is True
         word_list = ["outlaw", "explosion", "underwater"]
         model_info = SharedModelManager.manager.loaded_models["ViT-L/14"]
         interrogator = Interrogator(model_info)
@@ -47,3 +47,13 @@ class TestHordeClip:
         assert similarity_result["default"]["outlaw"] > 0.15
         assert similarity_result["default"]["explosion"] > 0.15
         assert similarity_result["default"]["underwater"] < 0.15
+
+    def test_clip_rankings(self):
+        assert SharedModelManager.manager.is_model_loaded("ViT-L/14") is True
+        model_info = SharedModelManager.manager.loaded_models["ViT-L/14"]
+        interrogator = Interrogator(model_info)
+        ranking_result = interrogator(
+            image=self.image,
+            similarity=False,
+        )
+        assert ranking_result is None
