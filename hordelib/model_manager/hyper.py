@@ -47,6 +47,7 @@ class ModelManager:
     esrgan: EsrganModelManager | None = None
     gfpgan: GfpganModelManager | None = None
     safety_checker: SafetyCheckerModelManager | None = None
+    # XXX I think this can be reworked into an array of BaseModelManager instances
 
     models: dict  # XXX unclear as to purpose... unused in AI-Horde-Worker?
     available_models: list
@@ -86,7 +87,9 @@ class ModelManager:
 
         for argName, argValue in args_passed.items():
             if not (argName in allModelMangerTypeKeys and hasattr(self, argName)):
-                raise Exception  # XXX better guarantees need to be made
+                raise Exception(
+                    f"{argName} is not a valid model manager type!",
+                )  # XXX better guarantees need to be made
             if not argValue:
                 continue
             if getattr(self, argName) is not None:

@@ -81,6 +81,12 @@ class BaseModelManager(ABC):
         self.loadModelDatabase()
 
     def loadModelDatabase(self, list_models=False):
+        if self.model_reference:
+            logger.info(
+                f"Model reference was already loaded. Got {len(self.model_reference)} models for {self.models_db_name}.",
+            )
+            logger.info("Reloading model reference...")
+
         if self.download_reference:
             self.model_reference = self.download_model_reference()
             logger.info(
@@ -118,17 +124,17 @@ class BaseModelManager(ABC):
 
     def download_model_reference(self):
         try:
-            logger.init("Model Reference", status="Downloading")  # logger.init
+            logger.init("Model Reference", status="Downloading")
             response = requests.get(self.remote_db)
-            logger.init_ok("Model Reference", status="OK")  # logger.init_ok
+            logger.init_ok("Model Reference", status="OK")
             models = response.json()
             return models
         except Exception as e:  # XXX Double check and/or rework this
             logger.init_err(
                 "Model Reference",
                 status=f"Download failed: {e}",
-            )  # logger.init_err
-            logger.init_warn("Model Reference", status="Local")  # logger.init_warn
+            )
+            logger.init_warn("Model Reference", status="Local")
             return json.loads((self.models_db_path).read_text())
 
     def load(
@@ -146,17 +152,23 @@ class BaseModelManager(ABC):
         if model_name not in self.available_models:
             logger.error(f"{model_name} not available")
             self.download_model(model_name)
-            logger.init_ok(f"{model_name}", status="Downloaded")  # logger.init_ok
+            logger.init_ok(f"{model_name}", status="Downloaded")
         if model_name not in self.loaded_models:
-            tic = time.time()
-            logger.init(f"{model_name}", status="Loading")  # logger.init
+            logger.init(f"{model_name}", status="Loading")
 
-            self.loaded_models[model_name] = self.modelToRam(model_name, **kwargs)
+            tic = time.time()
+            logger.init(f"{model_name}", status="Loading")
+
+            self.loaded_models[model_name] = self.modelToRam(
+                model_name,
+                half_precision=half_precision,
+                gpu_id=gpu_id,
+                cpu_only=cpu_only,
+                **kwargs,
+            )
             toc = time.time()
-            logger.init_ok(
-                f"{model_name}: {round(toc-tic,2)} seconds",
-                status="Loaded",
-            )  # logger.init_ok
+
+            logger.init_ok(f"{model_name}: {round(toc-tic,2)} seconds", status="Loaded")
             return True
         return None
 
@@ -417,6 +429,8 @@ class BaseModelManager(ABC):
         # THIS IS A SECURITY RISK, EVENTUALLY WE SHOULD RETURN FALSE
         # But currently not all models specify hashes
         # XXX this warning preexists me (@tazlin), probably should look into it
+
+        logger.debug(f"Model {file_details['path']} doesn't have a checksum, skipping validation!")
 
         return True
 
