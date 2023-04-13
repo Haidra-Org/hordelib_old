@@ -142,7 +142,7 @@ class BaseModelManager(ABC):
         model_name: str,
         *,
         half_precision: bool = True,
-        gpu_id: int | None = None,
+        gpu_id: int | None = 0,
         cpu_only: bool = False,
         **kwargs,
     ):  # XXX # FIXME

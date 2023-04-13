@@ -382,6 +382,7 @@ class ModelManager:
         if self.safety_checker is not None and model_name in self.safety_checker.model_reference:
             success = self.safety_checker.load(
                 model_name=model_name,
+                cpu_only=True,
             )
             if success:
                 self.loaded_models.update(
