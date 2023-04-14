@@ -14,7 +14,9 @@ from loguru import logger
 
 from hordelib.utils.ioredirect import OutputCollector
 
-# Do not change the order of these imports
+# Note these imports are intentionally somewhat obfuscated as a reminder to other modules
+# that they should never call through this module into comfy directly. All calls into
+# comfy should be abstracted through functions in this module.
 # isort: off
 from execution import nodes as _comfy_nodes
 from execution import PromptExecutor as _comfy_PromptExecutor
@@ -106,7 +108,6 @@ class Comfy_Horde:
     def __init__(self) -> None:
         self.client_id = None  # used for receiving comfyUI async events
         self.pipelines = {}
-        self.executors = {}
 
         # Load our pipelines
         self._load_pipelines()
@@ -128,12 +129,8 @@ class Comfy_Horde:
         _comfy_nodes.load_custom_nodes(self._this_dir("nodes"))
 
     def _get_executor(self, pipeline):
-        if executor := self.executors.get("pipeline"):
-            return executor
-        else:
-            executor = _comfy_PromptExecutor(self)
-            self.executors[pipeline] = executor
-            return executor
+        executor = _comfy_PromptExecutor(self)
+        return executor
 
     def _fix_pipeline_types(self, data: dict) -> dict:
         # We have a list of nodes and each node has a class type, which we may want to change
@@ -305,7 +302,7 @@ class Comfy_Horde:
         logger.info(f"Running pipeline {pipeline_name}")
 
         # Grab a copy of the pipeline
-        pipeline = copy.copy(self.pipelines[pipeline_name])
+        pipeline = copy.deepcopy(self.pipelines[pipeline_name])
 
         # Inject our model manager if required
         from hordelib.shared_model_manager import SharedModelManager
@@ -378,7 +375,8 @@ class Comfy_Horde:
         #   },
         # ]
         # See node_image_output.py
-        result = self.run_pipeline(pipeline_name, params)
+        with _mutex:
+            result = self.run_pipeline(pipeline_name, params)
 
         if result:
             return result["output_image"]["images"]
