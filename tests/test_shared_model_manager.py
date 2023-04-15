@@ -110,5 +110,4 @@ class TestSharedModelManager:
         assert SharedModelManager.manager is not None
         for model_manager in SharedModelManager.manager.active_model_managers:
             for model in model_manager.available_models:
-                model_manager.validate_model(model)
-                # print(f"{path}: {hash}")
+                assert model_manager.validate_model(model)

@@ -328,8 +328,13 @@ class BaseModelManager(ABC):
                 return False
             if not skip_checksum and not self.validate_file(file_details):
                 logger.error(f"File {file_details['path']} has invalid checksum")
-                logger.error(f"Deleting {file_details['path']}...")
-                os.remove(os.path.join(self.modelFolderPath, file_details["path"]))
+                try:
+                    modelPath = Path(self.modelFolderPath).joinpath(file_details["path"])
+                    logger.error(f"Deleting {file_details['path']}.")
+                    modelPath.unlink(True)
+                except OSError as e:
+                    logger.error(f"Unable to delete {file_details['path']}: {e}.")
+                    logger.error(f"Please delete {file_details['path']} if this error persists.")
                 return False
         return True
 
@@ -558,10 +563,7 @@ class BaseModelManager(ABC):
                     exist_ok=True,
                 )
                 with open(
-                    os.path.join(
-                        self.modelFolderPath,
-                        os.path.join(download_path, download_name),
-                    ),
+                    os.path.join(self.modelFolderPath, os.path.join(download_path, download_name)),
                     "w",
                 ) as f:
                     f.write(file_content)
