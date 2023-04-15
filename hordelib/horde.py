@@ -9,6 +9,7 @@ from hordelib.comfy_horde import Comfy_Horde
 from hordelib.shared_model_manager import SharedModelManager
 
 
+
 class HordeLib:
     _instance = None
     _initialised = False
