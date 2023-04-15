@@ -23,10 +23,23 @@ from execution import nodes as _comfy_nodes
 from execution import PromptExecutor as _comfy_PromptExecutor
 from comfy.sd import load_checkpoint_guess_config as __comfy_load_checkpoint_guess_config
 from comfy.sd import load_controlnet as __comfy_load_controlnet
+from comfy.model_management import model_manager as __comfy_model_manager
 from comfy.utils import load_torch_file as __comfy_load_torch_file
 from comfy_extras.chainner_models import model_loading as _comfy_model_loading
 
 # isort: on
+
+
+def get_models_on_gpu():
+    return __comfy_model_manager.get_models_on_gpu()
+
+
+def unload_model_from_gpu(model):
+    return __comfy_model_manager.unload_model(model)
+
+
+def is_model_in_use(model):
+    return __comfy_model_manager.model_in_use(model)
 
 
 def load_torch_file(filename):
@@ -50,14 +63,18 @@ def horde_load_checkpoint(
     # XXX # This can remain a comfy call, but the rest of the code should be able
     # XXX # to pretend it isn't
     # Redirect IO
-    stdio = OutputCollector()
-    with contextlib.redirect_stdout(stdio):
-        (modelPatcher, clipModel, vae, clipVisionModel) = __comfy_load_checkpoint_guess_config(
-            ckpt_path=ckpt_path,
-            output_vae=output_vae,
-            output_clip=output_clip,
-            embedding_directory=embeddings_path,
-        )
+    try:
+        stdio = OutputCollector()
+        with contextlib.redirect_stdout(stdio):
+            (modelPatcher, clipModel, vae, clipVisionModel) = __comfy_load_checkpoint_guess_config(
+                ckpt_path=ckpt_path,
+                output_vae=output_vae,
+                output_clip=output_clip,
+                embedding_directory=embeddings_path,
+            )
+    except RuntimeError:
+        # Failed, hard to tell why, bad checkpoint, not enough ram, for example
+        raise
 
     return {
         "model": modelPatcher,
