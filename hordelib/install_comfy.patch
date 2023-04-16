@@ -1,5 +1,5 @@
 ﻿diff --git a/comfy/model_management.py b/comfy/model_management.py
-index 76455e4..cb2064b 100644
+index 76455e4..12eaa4c 100644
 --- a/comfy/model_management.py
 +++ b/comfy/model_management.py
 @@ -1,6 +1,8 @@
@@ -135,11 +135,11 @@ index 76455e4..cb2064b 100644
 +        global vram_state
 +        with self._mutex:
 +            if model not in self.current_loaded_models:
-+                logger.warning("Skip GPU unload as not on the GPU")
++                logger.debug("Skip GPU unload as not on the GPU")
 +                return
 +
 +            if model in self.models_in_use:
-+                logger.warning("Not unloaded model as it is in use right now")
++                logger.debug("Not unloaded model as it is in use right now")
 +                return
 +
 +            if model in self.models_accelerated:
@@ -164,12 +164,12 @@ index 76455e4..cb2064b 100644
 +            # Don't run out of vram
 +            if self.current_loaded_models:
 +                freemem = round(get_free_memory(get_torch_device()) / (1024 * 1024))
-+                logger.warning(f"Free VRAM is: {freemem}MB ({len(self.current_loaded_models)} models loaded on GPU)")
++                logger.debug(f"Free VRAM is: {freemem}MB ({len(self.current_loaded_models)} models loaded on GPU)")
 +                if freemem < (self.system_reserved_vram_mb + self.user_reserved_vram_mb):
 +                    # release the least used model
 +                    self.unload_model(self.current_loaded_models[-1])
 +                    freemem = round(get_free_memory(get_torch_device()) / (1024 * 1024))
-+                    logger.warning(f"Unloaded a model, free VRAM is now: {freemem}MB ({len(self.current_loaded_models)} models loaded on GPU)")
++                    logger.debug(f"Unloaded a model, free VRAM is now: {freemem}MB ({len(self.current_loaded_models)} models loaded on GPU)")
 +
 +            if model in self.current_loaded_models:
 +                # Move this model to the top of the list

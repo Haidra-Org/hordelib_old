@@ -152,10 +152,10 @@ class BaseModelManager(ABC):
             return
         # If we have less than the minimum RAM free, free some up
         freemem = round(psutil.virtual_memory().available / (1024 * 1024))
-        logger.warning(f"Free RAM is: {freemem} MB, ({len(self.loaded_models)} models loaded in RAM)")
+        logger.debug(f"Free RAM is: {freemem} MB, ({len(self.loaded_models)} models loaded in RAM)")
         if freemem > UserSettings.ram_to_leave_free_mb + 4096:
             return
-        logger.warning(f"Not enough free RAM attempting to free some")
+        logger.debug(f"Not enough free RAM attempting to free some")
         # Grab a list of models (ModelPatcher) that are loaded on the gpu
         # These are actually returned with the least important at the bottom of the list
         busy_models = get_models_on_gpu()
@@ -171,11 +171,11 @@ class BaseModelManager(ABC):
             idle_model = self._modelref_to_name(busy_models[-1])
 
         if idle_model:
-            logger.warning(f"Moving model {idle_model} to disk to free up RAM")
+            logger.debug(f"Moving model {idle_model} to disk to free up RAM")
             self.move_to_disk_cache(idle_model)
         else:
             # Nothing else to release
-            logger.warning(f"Could not find a model to free RAM")
+            logger.debug(f"Could not find a model to free RAM")
 
     def move_to_disk_cache(self, model_name):
         pass
