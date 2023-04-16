@@ -41,8 +41,7 @@ class CompVisModelManager(BaseModelManager):
         return True
 
     def get_model_cache_filename(self, model_name):
-        # FIXME this is a nonsense location, just testing
-        cache_dir = os.getenv("RAY_TEMP_DIR", "./ray")
+        cache_dir = os.getenv("AIWORKER_TEMP_DIR", "./tmp")
         # Create cache directory if it doesn't already exist
         if not os.path.isdir(cache_dir):
             os.makedirs(cache_dir, exist_ok=True)
