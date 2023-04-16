@@ -1,5 +1,5 @@
 ﻿diff --git a/comfy/model_management.py b/comfy/model_management.py
-index 8303cb4..970aacd 100644
+index 8303cb4..e632c1f 100644
 --- a/comfy/model_management.py
 +++ b/comfy/model_management.py
 @@ -1,6 +1,8 @@
@@ -135,9 +135,11 @@ index 8303cb4..970aacd 100644
 +        global vram_state
 +        with self._mutex:
 +            if model not in self.current_loaded_models:
++                logger.warning("Skip GPU unload as not on the GPU")
 +                return
 +
 +            if model in self.models_in_use:
++                logger.warning("Not unloaded model as it is in use right now")
 +                return
 +
 +            if model in self.models_accelerated:
@@ -158,8 +160,6 @@ index 8303cb4..970aacd 100644
 +        global vram_state
 +
 +        with self._mutex:
-+
-+            self.models_in_use.append(model)
 +
 +            # Don't run out of vram
 +            if self.current_loaded_models:
@@ -394,27 +394,20 @@ index 9c0a3d8..1e786bf 100644
      hijack_progress(server)
  
 diff --git a/nodes.py b/nodes.py
-index 6468ac6..deb6480 100644
+index 6468ac6..c6002cc 100644
 --- a/nodes.py
 +++ b/nodes.py
-@@ -10,7 +10,6 @@ from PIL import Image
- from PIL.PngImagePlugin import PngInfo
- import numpy as np
- 
--
- sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), "comfy"))
- 
- 
-@@ -696,7 +695,7 @@ def common_ksampler(model, seed, steps, cfg, sampler_name, scheduler, positive,
+@@ -696,7 +696,8 @@ def common_ksampler(model, seed, steps, cfg, sampler_name, scheduler, positive,
          noise_mask = noise_mask.to(device)
  
      real_model = None
 -    model_management.load_model_gpu(model)
++    model_management.model_manager.model_in_use(model)
 +    model_management.model_manager.load_model_gpu(model)
      real_model = model.model
  
      noise = noise.to(device)
-@@ -726,7 +725,7 @@ def common_ksampler(model, seed, steps, cfg, sampler_name, scheduler, positive,
+@@ -726,7 +727,7 @@ def common_ksampler(model, seed, steps, cfg, sampler_name, scheduler, positive,
      control_net_models = []
      for x in control_nets:
          control_net_models += x.get_control_models()
@@ -423,7 +416,7 @@ index 6468ac6..deb6480 100644
  
      if sampler_name in comfy.samplers.KSampler.SAMPLERS:
          sampler = comfy.samplers.KSampler(real_model, steps=steps, device=device, sampler=sampler_name, scheduler=scheduler, denoise=denoise, model_options=model.model_options)
-@@ -741,6 +740,7 @@ def common_ksampler(model, seed, steps, cfg, sampler_name, scheduler, positive,
+@@ -741,6 +742,7 @@ def common_ksampler(model, seed, steps, cfg, sampler_name, scheduler, positive,
  
      out = latent.copy()
      out["samples"] = samples
@@ -431,7 +424,7 @@ index 6468ac6..deb6480 100644
      return (out, )
  
  class KSampler:
-@@ -1177,8 +1177,10 @@ def load_custom_node(module_path):
+@@ -1177,8 +1179,10 @@ def load_custom_node(module_path):
          print(traceback.format_exc())
          print(f"Cannot import {module_path} module for custom nodes:", e)
  
