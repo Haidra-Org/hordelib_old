@@ -1,5 +1,5 @@
 ﻿diff --git a/comfy/model_management.py b/comfy/model_management.py
-index 8303cb4..e632c1f 100644
+index 76455e4..cb2064b 100644
 --- a/comfy/model_management.py
 +++ b/comfy/model_management.py
 @@ -1,6 +1,8 @@
@@ -224,7 +224,7 @@ index 8303cb4..e632c1f 100644
  
  def load_if_low_vram(model):
 diff --git a/comfy/samplers.py b/comfy/samplers.py
-index 93f5d36..73fac9b 100644
+index ed36442..6b10249 100644
 --- a/comfy/samplers.py
 +++ b/comfy/samplers.py
 @@ -497,51 +497,52 @@ class KSampler:
@@ -325,10 +325,10 @@ index 93f5d36..73fac9b 100644
  
          return samples.to(torch.float32)
 diff --git a/comfy/sd.py b/comfy/sd.py
-index 2d7ff5a..37e02ae 100644
+index 9c632e2..3ec8e7a 100644
 --- a/comfy/sd.py
 +++ b/comfy/sd.py
-@@ -409,7 +409,6 @@ class VAE:
+@@ -415,7 +415,6 @@ class VAE:
          return output
  
      def decode(self, samples_in):
@@ -336,7 +336,7 @@ index 2d7ff5a..37e02ae 100644
          self.first_stage_model = self.first_stage_model.to(self.device)
          try:
              free_memory = model_management.get_free_memory(self.device)
-@@ -429,14 +428,12 @@ class VAE:
+@@ -435,14 +434,12 @@ class VAE:
          return pixel_samples
  
      def decode_tiled(self, samples, tile_x=64, tile_y=64, overlap = 16):
@@ -351,7 +351,7 @@ index 2d7ff5a..37e02ae 100644
          self.first_stage_model = self.first_stage_model.to(self.device)
          pixel_samples = pixel_samples.movedim(-1,1).to(self.device)
          samples = self.first_stage_model.encode(2. * pixel_samples - 1.).sample() * self.scale_factor
-@@ -445,7 +442,6 @@ class VAE:
+@@ -451,7 +448,6 @@ class VAE:
          return samples
  
      def encode_tiled(self, pixel_samples, tile_x=512, tile_y=512, overlap = 64):
@@ -360,10 +360,10 @@ index 2d7ff5a..37e02ae 100644
          pixel_samples = pixel_samples.movedim(-1,1).to(self.device)
          samples = utils.tiled_scale(pixel_samples, lambda a: self.first_stage_model.encode(2. * a - 1.).sample() * self.scale_factor, tile_x, tile_y, overlap, upscale_amount = (1/8), out_channels=4)
 diff --git a/execution.py b/execution.py
-index 79c9a3a..fec1ff1 100644
+index 73be6db..3fe16c6 100644
 --- a/execution.py
 +++ b/execution.py
-@@ -289,6 +289,8 @@ def validate_prompt(prompt):
+@@ -288,6 +288,8 @@ def validate_prompt(prompt):
          errors_list = "\n".join(set(map(lambda a: "{}".format(a[1]), errors)))
          return (False, "Prompt has no properly connected outputs\n {}".format(errors_list))
  
@@ -373,7 +373,7 @@ index 79c9a3a..fec1ff1 100644
  
  
 diff --git a/main.py b/main.py
-index 9c0a3d8..1e786bf 100644
+index 02c700e..27a3324 100644
 --- a/main.py
 +++ b/main.py
 @@ -25,7 +25,7 @@ import yaml
@@ -385,8 +385,8 @@ index 9c0a3d8..1e786bf 100644
  
  
  def prompt_worker(q, server):
-@@ -82,6 +82,7 @@ if __name__ == "__main__":
-     q = execution.PromptQueue(server)
+@@ -90,6 +90,7 @@ if __name__ == "__main__":
+             load_extra_path_config(config_path)
  
      init_custom_nodes()
 +    load_custom_nodes(os.getenv("AIWORKER_CUSTOM_NODES"))
@@ -394,16 +394,16 @@ index 9c0a3d8..1e786bf 100644
      hijack_progress(server)
  
 diff --git a/nodes.py b/nodes.py
-index 6468ac6..c6002cc 100644
+index c775da0..75abed0 100644
 --- a/nodes.py
 +++ b/nodes.py
 @@ -696,7 +696,8 @@ def common_ksampler(model, seed, steps, cfg, sampler_name, scheduler, positive,
          noise_mask = noise_mask.to(device)
  
      real_model = None
--    model_management.load_model_gpu(model)
-+    model_management.model_manager.model_in_use(model)
-+    model_management.model_manager.load_model_gpu(model)
+-    comfy.model_management.load_model_gpu(model)
++    comfy.model_management.model_manager.model_in_use(model)
++    comfy.model_management.model_manager.load_model_gpu(model)
      real_model = model.model
  
      noise = noise.to(device)
@@ -411,8 +411,8 @@ index 6468ac6..c6002cc 100644
      control_net_models = []
      for x in control_nets:
          control_net_models += x.get_control_models()
--    model_management.load_controlnet_gpu(control_net_models)
-+    model_management.model_manager.load_controlnet_gpu(control_net_models)
+-    comfy.model_management.load_controlnet_gpu(control_net_models)
++    comfy.model_management.model_manager.load_controlnet_gpu(control_net_models)
  
      if sampler_name in comfy.samplers.KSampler.SAMPLERS:
          sampler = comfy.samplers.KSampler(real_model, steps=steps, device=device, sampler=sampler_name, scheduler=scheduler, denoise=denoise, model_options=model.model_options)
@@ -420,20 +420,7 @@ index 6468ac6..c6002cc 100644
  
      out = latent.copy()
      out["samples"] = samples
-+    model_management.model_manager.done_with_model(model)
++    comfy.model_management.model_manager.done_with_model(model)
      return (out, )
  
  class KSampler:
-@@ -1177,8 +1179,10 @@ def load_custom_node(module_path):
-         print(traceback.format_exc())
-         print(f"Cannot import {module_path} module for custom nodes:", e)
- 
--def load_custom_nodes():
--    CUSTOM_NODE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "custom_nodes")
-+def load_custom_nodes(path=os.path.join(os.path.dirname(os.path.realpath(__file__)), "custom_nodes")):
-+    if not path:
-+        return
-+    CUSTOM_NODE_PATH = path
-     possible_modules = os.listdir(CUSTOM_NODE_PATH)
-     if "__pycache__" in possible_modules:
-         possible_modules.remove("__pycache__")

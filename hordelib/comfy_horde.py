@@ -16,6 +16,7 @@ from loguru import logger
 
 from hordelib.settings import UserSettings
 from hordelib.utils.ioredirect import OutputCollector
+from hordelib.config_path import get_hordelib_path
 
 # Note these imports are intentionally somewhat obfuscated as a reminder to other modules
 # that they should never call through this module into comfy directly. All calls into
@@ -23,6 +24,7 @@ from hordelib.utils.ioredirect import OutputCollector
 # isort: off
 from execution import nodes as _comfy_nodes
 from execution import PromptExecutor as _comfy_PromptExecutor
+from folder_paths import folder_names_and_paths as _comfy_folder_paths
 from comfy.sd import load_checkpoint_guess_config as __comfy_load_checkpoint_guess_config
 from comfy.sd import load_controlnet as __comfy_load_controlnet
 from comfy.model_management import model_manager as _comfy_model_manager
@@ -141,6 +143,8 @@ class Comfy_Horde:
         self.client_id = None  # used for receiving comfyUI async events
         self.pipelines = {}
         self.exit_time = 0
+        # Set custom node path
+        _comfy_folder_paths["custom_nodes"] = ([os.path.join(get_hordelib_path(), "nodes")], [])
         # Load our pipelines
         self._load_pipelines()
 
@@ -158,7 +162,6 @@ class Comfy_Horde:
 
     def _load_custom_nodes(self) -> None:
         _comfy_nodes.init_custom_nodes()
-        _comfy_nodes.load_custom_nodes(self._this_dir("nodes"))
 
     def _get_executor(self, pipeline):
         executor = _comfy_PromptExecutor(self)
