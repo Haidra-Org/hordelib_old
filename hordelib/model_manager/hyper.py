@@ -56,6 +56,7 @@ class ModelManager:
         for model_manager in self.active_model_managers:
             model_manager.model_reference
             _models.update(model_manager.model_reference)
+        return _models
 
     @property
     def available_models(self) -> list[str]:

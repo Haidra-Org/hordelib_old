@@ -37,31 +37,26 @@ class HordeCheckpointLoader:
             logger.error(f"Model {model_name} is not loaded")
             raise RuntimeError  # XXX better guarantees need to be made
 
-        logger.info(f"{model_manager.manager.loaded_models[model_name]}")
-        model = model_manager.manager.loaded_models[model_name]["model"]
-        clip = model_manager.manager.loaded_models[model_name]["clip"]
-        vae = model_manager.manager.loaded_models[model_name]["vae"]
+        model = model_manager.manager.compvis.loaded_models[model_name]["model"]
+        clip = model_manager.manager.compvis.loaded_models[model_name]["clip"]
+        vae = model_manager.manager.compvis.loaded_models[model_name]["vae"]
 
         # If we got strings, not objects, it's a cache reference, load the cache
         if type(model) is str:
             logger.info("Loading model data from disk cache")
-            modelcache = model
+            model_cache = model
             try:
                 with open(model, "rb") as cache:
                     model = pickle.load(cache)
-                with open(clip, "rb") as cache:
-                    clip = pickle.load(cache)
-                with open(vae, "rb") as cache:
                     vae = pickle.load(cache)
+                    clip = pickle.load(cache)
             except (pickle.PickleError, EOFError):
                 # Most likely corrupt cache file, remove the file
                 try:
                     os.remove(model)
-                    os.remove(clip)
-                    os.remove(vae)
                 except OSError:
                     pass  # we tried
-                raise Exception(f"Model cache file {modelcache} was corrupt. It has been removed.")
+                raise Exception(f"Model cache file {model_cache} was corrupt. It has been removed.")
 
         # XXX # TODO I would like to revisit this dict->tuple conversion at some point soon
         return (model, clip, vae)

@@ -40,30 +40,38 @@ class CompVisModelManager(BaseModelManager):
         """Can this of type model be cached on disk?"""
         return True
 
-    def move_to_disk_cache(self, model_name):
+    def get_model_cache_filename(self, model_name):
         # FIXME this is a nonsense location, just testing
-        cachedir = os.getenv("RAY_TEMP_DIR", "./ray")
-
-        cachefile = os.path.join(cachedir, model_name)
+        cache_dir = os.getenv("RAY_TEMP_DIR", "./ray")
         # Create cache directory if it doesn't already exist
-        if not os.path.isdir(cachedir):
-            os.makedirs(cachedir, exist_ok=True)
+        if not os.path.isdir(cache_dir):
+            os.makedirs(cache_dir, exist_ok=True)
+        cache_file = os.path.join(cache_dir, model_name)
+        return f"{cache_file}.hordelib.cache"
+
+    def have_model_cache(self, model_name):
+        model_filename = self.getFullModelPath(model_name)
+        cache_file = self.get_model_cache_filename(model_name)
+        if os.path.exists(cache_file):
+            # We have a cache file but only consider it valid if it's up to date
+            model_timestamp = os.path.getmtime(model_filename)
+            cache_timestamp = os.path.getmtime(cache_file)
+            if model_timestamp <= cache_timestamp:
+                return True
+        return False
+
+    def move_to_disk_cache(self, model_name):
+        cache_file = self.get_model_cache_filename(model_name)
         # Serialise our objects
-        if not os.path.exists(cachefile + ".model"):
-            with open(cachefile + ".model", "wb") as cache:
-                pickle.dump(self.loaded_models[model_name]["model"], cache, protocol=pickle.HIGHEST_PROTOCOL)
-        if not os.path.exists(cachefile + ".vae"):
-            with open(cachefile + ".vae", "wb") as cache:
-                pickle.dump(self.loaded_models[model_name]["vae"], cache, protocol=pickle.HIGHEST_PROTOCOL)
-        if not os.path.exists(cachefile + ".clip"):
-            with open(cachefile + ".clip", "wb") as cache:
-                pickle.dump(self.loaded_models[model_name]["clip"], cache, protocol=pickle.HIGHEST_PROTOCOL)
-        # Remember the cache locations
-        modeldata = copy.copy(self.loaded_models[model_name])
-        modeldata["model"] = cachefile + ".model"
-        modeldata["vae"] = cachefile + ".vae"
-        modeldata["clip"] = cachefile + ".clip"
+        model_data = copy.copy(self.loaded_models[model_name])
+        components = ["model", "vae", "clip"]
+        if not self.have_model_cache(model_name):
+            with open(cache_file, "wb") as cache:
+                for component in components:
+                    pickle.dump(self.loaded_models[model_name][component], cache, protocol=pickle.HIGHEST_PROTOCOL)
+        for component in components:
+            model_data[component] = cache_file
         # Remove from ram
         self.remove_model_from_ram(model_name)
         # Point the model to the cache
-        self.loaded_models[model_name] = modeldata
+        self.loaded_models[model_name] = model_data
