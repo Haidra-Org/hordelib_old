@@ -37,12 +37,14 @@ class HordeCheckpointLoader:
             logger.error(f"Model {model_name} is not loaded")
             raise RuntimeError  # XXX better guarantees need to be made
 
+        logger.info(f"{model_manager.manager.loaded_models[model_name]}")
         model = model_manager.manager.loaded_models[model_name]["model"]
         clip = model_manager.manager.loaded_models[model_name]["clip"]
         vae = model_manager.manager.loaded_models[model_name]["vae"]
 
         # If we got strings, not objects, it's a cache reference, load the cache
         if type(model) is str:
+            logger.info("Loading model data from disk cache")
             modelcache = model
             try:
                 with open(model, "rb") as cache:

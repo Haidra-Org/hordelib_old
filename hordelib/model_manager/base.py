@@ -1,10 +1,8 @@
-import copy
 import gc
 import hashlib
 import importlib.resources as importlib_resources
 import json
 import os
-import pickle
 import shutil
 import time
 import typing
@@ -148,6 +146,9 @@ class BaseModelManager(ABC):
                 return name
 
     def ensure_memory_available(self):
+        # Can this type of model be cached?
+        if not self.can_cache_on_disk():
+            return
         # If we have less than the minimum RAM free, free some up
         freemem = round(psutil.virtual_memory().available / (1024 * 1024))
         logger.warning(f"Free RAM is: {freemem} MB, ({len(self.loaded_models)} models loaded in RAM)")
@@ -176,32 +177,11 @@ class BaseModelManager(ABC):
             logger.warning(f"Could not find a model to free RAM")
 
     def move_to_disk_cache(self, model_name):
-        # FIXME this is a nonsense location, just testing
-        cachedir = os.getenv("RAY_TEMP_DIR", "./ray")
+        pass
 
-        cachefile = os.path.join(cachedir, model_name)
-        # Create cache directory if it doesn't already exist
-        if not os.path.isdir(cachedir):
-            os.makedirs(cachedir, exist_ok=True)
-        # Serialise our objects
-        if not os.path.exists(cachefile + ".model"):
-            with open(cachefile + ".model", "wb") as cache:
-                pickle.dump(self.loaded_models[model_name]["model"], cache, protocol=pickle.HIGHEST_PROTOCOL)
-        if not os.path.exists(cachefile + ".vae"):
-            with open(cachefile + ".vae", "wb") as cache:
-                pickle.dump(self.loaded_models[model_name]["vae"], cache, protocol=pickle.HIGHEST_PROTOCOL)
-        if not os.path.exists(cachefile + ".clip"):
-            with open(cachefile + ".clip", "wb") as cache:
-                pickle.dump(self.loaded_models[model_name]["clip"], cache, protocol=pickle.HIGHEST_PROTOCOL)
-        # Remember the cache locations
-        modeldata = copy.copy(self.loaded_models[model_name])
-        modeldata["model"] = cachefile + ".model"
-        modeldata["vae"] = cachefile + ".vae"
-        modeldata["clip"] = cachefile + ".clip"
-        # Remove from ram
-        self.remove_model_from_ram(model_name)
-        # Point the model to the cache
-        self.loaded_models[model_name] = modeldata
+    def can_cache_on_disk(self):
+        """Can this of type model be cached on disk?"""
+        return False
 
     def load(
         self,
