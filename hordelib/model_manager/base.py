@@ -144,6 +144,7 @@ class BaseModelManager(ABC):
         for name, data in self.loaded_models.items():
             if modelref and data["model"] is modelref:
                 return name
+        return None
 
     def ensure_memory_available(self):
         # Can this type of model be cached?
@@ -361,11 +362,15 @@ class BaseModelManager(ABC):
         if model_name in self.loaded_models:
             if not is_model_in_use(self.loaded_models[model_name]["model"]):
                 # Unload it from the GPU if it has been loaded there
-                unload_model_from_gpu(self.loaded_models[model_name]["model"])
-                # Free it's ram
-                self.remove_model_from_ram(model_name)
-                return True
-        return False
+                try:
+                    unload_model_from_gpu(self.loaded_models[model_name]["model"])
+                    # Free it's ram
+                    self.remove_model_from_ram(model_name)
+                    return True
+                except Exception as e:
+                    logger.warning(f"Failed to unload model {model_name}: {e}")
+                    return False
+        return None
 
     def unload_all_models(self):
         """
