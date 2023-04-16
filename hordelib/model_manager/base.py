@@ -1,8 +1,10 @@
+import copy
+import gc
 import hashlib
 import importlib.resources as importlib_resources
 import json
 import os
-import gc
+import pickle
 import shutil
 import time
 import typing
@@ -21,7 +23,8 @@ from tqdm import tqdm
 from transformers import logging
 
 from hordelib.cache import get_cache_directory
-from hordelib.comfy_horde import get_models_on_gpu, is_model_in_use, unload_model_from_gpu
+from hordelib.comfy_horde import (get_models_on_gpu, is_model_in_use,
+                                  unload_model_from_gpu)
 from hordelib.config_path import get_hordelib_path
 from hordelib.consts import REMOTE_MODEL_DB
 from hordelib.settings import UserSettings
@@ -158,7 +161,7 @@ class BaseModelManager(ABC):
         # Try to find one we have in ram that isn't on the gpu
         idle_model = None
         for ram_model_name, ram_model_data in self.loaded_models.items():
-            if ram_model_data["model"] not in busy_models:
+            if type(ram_model_data["model"]) is not str and ram_model_data["model"] not in busy_models:
                 idle_model = ram_model_name
                 break
         # If we didn't have one hanging around in ram not on the gpu
@@ -167,11 +170,39 @@ class BaseModelManager(ABC):
             idle_model = self._modelref_to_name(busy_models[-1])
 
         if idle_model:
-            logger.warning(f"Unloading model {idle_model} to free RAM")
-            self.unload_model(idle_model)
+            logger.warning(f"Moving model {idle_model} to disk to free up RAM")
+            self.move_to_disk_cache(idle_model)
         else:
             # Nothing else to release
-            logger.warning(f"Could not find a model to unload")
+            logger.warning(f"Could not find a model to free RAM")
+
+    def move_to_disk_cache(self, model_name):
+        # FIXME this is a nonsense location, just testing
+        cachedir = os.getenv("RAY_TEMP_DIR", "./ray")
+
+        cachefile = os.path.join(cachedir, model_name)
+        # Create cache directory if it doesn't already exist
+        if not os.path.isdir(cachedir):
+            os.makedirs(cachedir, exist_ok=True)
+        # Serialise our objects
+        if not os.path.exists(cachefile+".model"):
+            with open(cachefile+".model", "wb") as cache:
+                pickle.dump(self.loaded_models[model_name]["model"], cache, protocol=pickle.HIGHEST_PROTOCOL)
+        if not os.path.exists(cachefile+".vae"):
+            with open(cachefile+".vae", "wb") as cache:
+                pickle.dump(self.loaded_models[model_name]["vae"], cache, protocol=pickle.HIGHEST_PROTOCOL)
+        if not os.path.exists(cachefile+".clip"):
+            with open(cachefile+".clip", "wb") as cache:
+                pickle.dump(self.loaded_models[model_name]["clip"], cache, protocol=pickle.HIGHEST_PROTOCOL)
+        # Remember the cache locations
+        modeldata = copy.copy(self.loaded_models[model_name])
+        modeldata["model"] = cachefile+".model"
+        modeldata["vae"] = cachefile+".vae"
+        modeldata["clip"] = cachefile+".clip"
+        # Remove from ram
+        self.remove_model_from_ram(model_name)
+        # Point the model to the cache
+        self.loaded_models[model_name] = modeldata
 
     def load(
         self,
@@ -325,28 +356,35 @@ class BaseModelManager(ABC):
         """
         return model_name in self.loaded_models
 
+    def remove_model_from_ram(self, model_name):
+        if model_name not in self.loaded_models:
+            return
+        # Remove the model from ram. Just removing from the dictionary
+        # wasn't actually releasing the RAM
+        model = self.loaded_models[model_name]
+        del self.loaded_models[model_name]
+        if "model" in model:
+            del model["model"]
+        if "clip" in model:
+            del model["clip"]
+        if "vae" in model:
+            del model["vae"]
+        if "clipVisionModel" in model: 
+            del model["clipVisionModel"]
+        del model                
+        gc.collect()
+
     def unload_model(self, model_name: str):
         """
         :param model_name: Name of the model
-        Unloads a model
+        Unloads a model. Completely remove it, free all resources, forget it exists.
         """
         if model_name in self.loaded_models:
             if not is_model_in_use(self.loaded_models[model_name]["model"]):
                 # Unload it from the GPU if it has been loaded there
                 unload_model_from_gpu(self.loaded_models[model_name]["model"])
-                # Remove the model from ram
-                model = self.loaded_models[model_name]
-                del self.loaded_models[model_name]
-                if "model" in model:
-                    del model["model"]
-                if "clip" in model:
-                    del model["clip"]
-                if "vae" in model:
-                    del model["vae"]
-                if "clipVisionModel" in model: 
-                    del model["clipVisionModel"]
-                del model                
-                gc.collect()
+                # Free it's ram
+                self.remove_model_from_ram(model_name)
                 return True
         return False
 

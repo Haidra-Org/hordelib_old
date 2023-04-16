@@ -1,6 +1,8 @@
 # node_model_loader.py
 # Simple proof of concept custom node to load models.
 
+import os
+import pickle
 from loguru import logger
 
 
@@ -37,6 +39,27 @@ class HordeCheckpointLoader:
         model = model_manager.manager.loaded_models[model_name]["model"]
         clip = model_manager.manager.loaded_models[model_name]["clip"]
         vae = model_manager.manager.loaded_models[model_name]["vae"]
+
+        # If we got strings, not objects, it's a cache reference, load the cache
+        if type(model) is str:
+            modelcache = model
+            try:
+                with open(model, "rb") as cache:
+                    model = pickle.load(cache)
+                with open(clip, "rb") as cache:
+                    clip = pickle.load(cache)
+                with open(vae, "rb") as cache:
+                    vae = pickle.load(cache)
+            except (pickle.PickleError, EOFError):
+                # Most likely corrupt cache file, remove the file
+                try:
+                    os.remove(model)
+                    os.remove(clip)
+                    os.remove(vae)
+                except OSError:
+                    pass  # we tried
+                raise Exception(f"Model cache file {modelcache} was corrupt. It has been removed.")
+
         # XXX # TODO I would like to revisit this dict->tuple conversion at some point soon
         return (model, clip, vae)
 
