@@ -23,4 +23,4 @@ class UserSettings:
     vram_to_leave_free_mb = 2048
 
     # Hordelib will try to leave at least this much system RAM free
-    ram_to_leave_free_mb = 32 * 1024
+    ram_to_leave_free_mb = 4 * 1024
