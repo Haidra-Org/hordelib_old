@@ -3,6 +3,7 @@ from hordelib.utils.switch import Switch
 
 class UserSettings:
     """Container class for all worker settings."""
+
     _instance = None
 
     def __new__(cls):
@@ -23,4 +24,3 @@ class UserSettings:
 
     # Hordelib will try to leave at least this much system RAM free
     ram_to_leave_free_mb = 32 * 1024
-

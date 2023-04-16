@@ -2,19 +2,20 @@
 # Wrapper around comfy to allow usage by the horde worker.
 import contextlib
 import copy
+import gc
 import glob
 import json
 import os
 import re
 import time
-import threading
 import typing
 from pprint import pformat
 
+import torch
 from loguru import logger
 
-from hordelib.utils.ioredirect import OutputCollector
 from hordelib.settings import UserSettings
+from hordelib.utils.ioredirect import OutputCollector
 
 # Note these imports are intentionally somewhat obfuscated as a reminder to other modules
 # that they should never call through this module into comfy directly. All calls into
@@ -36,7 +37,12 @@ def get_models_on_gpu():
 
 
 def unload_model_from_gpu(model):
-    return _comfy_model_manager.unload_model(model)
+    _comfy_model_manager.unload_model(model)
+    gc.collect()
+    if torch.cuda.is_available():
+        if torch.version.cuda:  # This seems to make things worse on ROCm so I only do it for cuda
+            torch.cuda.empty_cache()
+            torch.cuda.ipc_collect()
 
 
 def is_model_in_use(model):
