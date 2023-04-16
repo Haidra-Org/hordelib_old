@@ -1,5 +1,5 @@
 ﻿diff --git a/comfy/model_management.py b/comfy/model_management.py
-index 8303cb4..98a9878 100644
+index 8303cb4..970aacd 100644
 --- a/comfy/model_management.py
 +++ b/comfy/model_management.py
 @@ -1,6 +1,8 @@
@@ -11,7 +11,7 @@ index 8303cb4..98a9878 100644
  
  class VRAMState(Enum):
      CPU = 0
-@@ -113,87 +115,124 @@ if args.cpu:
+@@ -113,87 +115,130 @@ if args.cpu:
  print(f"Set vram state to: {vram_state.name}")
  
  
@@ -101,6 +101,8 @@ index 8303cb4..98a9878 100644
 +    _initialised = False
 +    _mutex = threading.RLock()
 +    sampler_mutex = threading.RLock()
++    system_reserved_vram_mb = 6 * 1024
++    user_reserved_vram_mb = 0
 +
 +    # We are a singleton
 +    def __new__(cls):
@@ -116,6 +118,10 @@ index 8303cb4..98a9878 100644
 +            self.current_gpu_controlnets = []
 +            self.models_accelerated = []
 +            self.__class__._initialised = True    
++
++    def set_user_reserved_vram(self, vram_mb):
++        with self._mutex:
++            self.user_reserved_vram_mb = vram_mb
 +
 +    def get_models_on_gpu(self):
 +        with self._mutex:
@@ -159,7 +165,7 @@ index 8303cb4..98a9878 100644
 +            if self.current_loaded_models:
 +                freemem = round(get_free_memory(get_torch_device()) / (1024 * 1024))
 +                logger.warning(f"Free VRAM is: {freemem}MB ({len(self.current_loaded_models)} models loaded on GPU)")
-+                if freemem < (1024 * 6):
++                if freemem < (self.system_reserved_vram_mb + self.user_reserved_vram_mb):
 +                    # release the least used model
 +                    self.unload_model(self.current_loaded_models[-1])
 +                    freemem = round(get_free_memory(get_torch_device()) / (1024 * 1024))
