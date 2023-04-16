@@ -285,6 +285,17 @@ class ModelManager:
         """
         return self.available_models
 
+    def ensure_memory_available(self, specific_type=None):
+        """Asserts minimum amount of RAM is available. Unloads models if necessary."""
+        for model_manager_type in MODEL_MANAGERS_TYPE_LOOKUP:
+            if specific_type and specific_type != model_manager_type:
+                continue
+            model_manager: BaseModelManager = getattr(self, model_manager_type)
+            if model_manager is None:
+                continue
+            model_manager.ensure_memory_available()
+        return None
+
     def load(
         self,
         model_name: str,

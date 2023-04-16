@@ -11,7 +11,7 @@ from tqdm import tqdm
 from hordelib.cache import Cache
 from hordelib.clip.image import ImageEmbed
 from hordelib.model_manager.clip import ClipModelManager
-from hordelib.settings import WorkerSettings
+from hordelib.settings import UserSettings
 
 
 class BulkImageEmbedder:
@@ -62,6 +62,6 @@ class BulkImageEmbedder:
         logger.info(f"Found {len(filtered_list)} files to embed.")
         for image in tqdm(
             filtered_list,
-            disable=WorkerSettings.disable_progress.active,
+            disable=UserSettings.disable_progress.active,
         ):
             self.insert(image, input_directory)

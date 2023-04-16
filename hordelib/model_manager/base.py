@@ -23,7 +23,7 @@ from hordelib.cache import get_cache_directory
 from hordelib.comfy_horde import get_models_on_gpu, is_model_in_use, unload_model_from_gpu
 from hordelib.config_path import get_hordelib_path
 from hordelib.consts import REMOTE_MODEL_DB
-from hordelib.settings import WorkerSettings
+from hordelib.settings import UserSettings
 
 logging.set_verbosity_error()
 
@@ -144,12 +144,11 @@ class BaseModelManager(ABC):
             if modelref and data["model"] is modelref:
                 return name
 
-    def _assert_ram_limits(self):
+    def ensure_memory_available(self):
         # If we have less than the minimum RAM free, free some up
-        # FIXME this arbitrary amount of 4GB obviously needs to be configurable.
         freemem = round(psutil.virtual_memory().available / (1024 * 1024))
         logger.warning(f"Free RAM is: {freemem} MB, ({len(self.loaded_models)} models loaded in RAM)")
-        if freemem > (1024 * 6):
+        if freemem > min(UserSettings.ram_to_leave_free_mb, 4096):
             return
         logger.warning(f"Not enough free RAM attempting to free some")
         # Grab a list of models (ModelPatcher) that are loaded on the gpu
@@ -182,7 +181,7 @@ class BaseModelManager(ABC):
         cpu_only: bool = False,
         **kwargs,
     ):  # XXX # FIXME
-        self._assert_ram_limits()
+        self.ensure_memory_available()
         if model_name not in self.model_reference:
             logger.error(f"{model_name} not found")
             return False
@@ -210,6 +209,7 @@ class BaseModelManager(ABC):
                     cpu_only=cpu_only,
                     **kwargs,
                 )
+
             except RuntimeError:
                 # It failed, it happens.
                 logger.error(f"Failed to load model {model_name}")
@@ -290,7 +290,7 @@ class BaseModelManager(ABC):
         """
         Returns the loaded models
         """
-        return self.loaded_models
+        return self.loaded_models[:]
 
     def get_loaded_model(self, model_name: str):
         """
@@ -343,7 +343,7 @@ class BaseModelManager(ABC):
         Unloads all models
         """
         for model in self.loaded_models:
-            del self.loaded_models[model]
+            self.unload_model(model)
         return True
 
     def taint_model(self, model_name: str):
@@ -537,7 +537,7 @@ class BaseModelManager(ABC):
                 miniters=1,
                 desc=pbar_desc,
                 total=int(response.headers.get("content-length", 0)),
-                disable=WorkerSettings.disable_download_progress.active,
+                disable=UserSettings.disable_download_progress.active,
             ) as pbar:
                 for chunk in response.iter_content(chunk_size=16 * 1024):
                     response.raise_for_status()

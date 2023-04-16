@@ -14,6 +14,7 @@ from pprint import pformat
 from loguru import logger
 
 from hordelib.utils.ioredirect import OutputCollector
+from hordelib.settings import UserSettings
 
 # Note these imports are intentionally somewhat obfuscated as a reminder to other modules
 # that they should never call through this module into comfy directly. All calls into
@@ -23,7 +24,7 @@ from execution import nodes as _comfy_nodes
 from execution import PromptExecutor as _comfy_PromptExecutor
 from comfy.sd import load_checkpoint_guess_config as __comfy_load_checkpoint_guess_config
 from comfy.sd import load_controlnet as __comfy_load_controlnet
-from comfy.model_management import model_manager as __comfy_model_manager
+from comfy.model_management import model_manager as _comfy_model_manager
 from comfy.utils import load_torch_file as __comfy_load_torch_file
 from comfy_extras.chainner_models import model_loading as _comfy_model_loading
 
@@ -31,15 +32,15 @@ from comfy_extras.chainner_models import model_loading as _comfy_model_loading
 
 
 def get_models_on_gpu():
-    return __comfy_model_manager.get_models_on_gpu()
+    return _comfy_model_manager.get_models_on_gpu()
 
 
 def unload_model_from_gpu(model):
-    return __comfy_model_manager.unload_model(model)
+    return _comfy_model_manager.unload_model(model)
 
 
 def is_model_in_use(model):
-    return __comfy_model_manager.model_in_use(model)
+    return _comfy_model_manager.model_in_use(model)
 
 
 def load_torch_file(filename):
@@ -333,6 +334,9 @@ class Comfy_Horde:
         if pipeline_name not in self.pipelines:
             logger.error(f"Unknown inference pipeline: {pipeline_name}")
             return None
+
+        # Update user settings
+        _comfy_model_manager.set_user_reserved_vram(UserSettings.vram_to_leave_free_mb)
 
         logger.info(f"Running pipeline {pipeline_name}")
 
