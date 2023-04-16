@@ -166,7 +166,7 @@ class BaseModelManager(ABC):
                 break
         # If we didn't have one hanging around in ram not on the gpu
         # pick the least used gpu model
-        if not idle_model:
+        if not idle_model and busy_models:
             idle_model = self._modelref_to_name(busy_models[-1])
 
         if idle_model:
