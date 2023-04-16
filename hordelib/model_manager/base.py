@@ -2,6 +2,7 @@ import hashlib
 import importlib.resources as importlib_resources
 import json
 import os
+import gc
 import shutil
 import time
 import typing
@@ -148,7 +149,7 @@ class BaseModelManager(ABC):
         # If we have less than the minimum RAM free, free some up
         freemem = round(psutil.virtual_memory().available / (1024 * 1024))
         logger.warning(f"Free RAM is: {freemem} MB, ({len(self.loaded_models)} models loaded in RAM)")
-        if freemem > min(UserSettings.ram_to_leave_free_mb, 4096):
+        if freemem > UserSettings.ram_to_leave_free_mb + 4096:
             return
         logger.warning(f"Not enough free RAM attempting to free some")
         # Grab a list of models (ModelPatcher) that are loaded on the gpu
@@ -334,7 +335,18 @@ class BaseModelManager(ABC):
                 # Unload it from the GPU if it has been loaded there
                 unload_model_from_gpu(self.loaded_models[model_name]["model"])
                 # Remove the model from ram
+                model = self.loaded_models[model_name]
                 del self.loaded_models[model_name]
+                if "model" in model:
+                    del model["model"]
+                if "clip" in model:
+                    del model["clip"]
+                if "vae" in model:
+                    del model["vae"]
+                if "clipVisionModel" in model: 
+                    del model["clipVisionModel"]
+                del model                
+                gc.collect()
                 return True
         return False
 
