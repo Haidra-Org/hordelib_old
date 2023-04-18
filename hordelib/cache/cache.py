@@ -1,4 +1,5 @@
 import hashlib
+import importlib.resources as importlib_resources
 import os
 import sqlite3
 import sys
@@ -9,11 +10,6 @@ from PIL import Image
 from tqdm import tqdm
 
 from hordelib.settings import UserSettings
-
-if sys.version_info < (3, 9):  # XXX is <3.9 support going to be a thing?
-    import importlib_resources
-else:
-    import importlib.resources as importlib_resources
 
 
 def get_package():
