@@ -200,9 +200,9 @@ class Interrogator:
 
     def __call__(
         self,
-        image: Image.Image = None,
-        filename: str = None,
-        directory: str = None,
+        image: Image.Image | None = None,
+        filename: str | None = None,
+        directory: str | None = None,
         text_array: list[str] | dict[str, list[str]] | None = None,
         similarity=False,
         rank=False,

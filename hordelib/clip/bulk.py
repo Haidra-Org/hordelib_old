@@ -62,6 +62,6 @@ class BulkImageEmbedder:
         logger.info(f"Found {len(filtered_list)} files to embed.")
         for image in tqdm(
             filtered_list,
-            disable=UserSettings.disable_progress.active,
+            disable=UserSettings.disable_download_progress.active,
         ):
             self.insert(image, input_directory)
