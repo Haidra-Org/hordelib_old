@@ -5,6 +5,7 @@ import json
 import os
 import shutil
 import time
+import threading
 import typing
 import zipfile
 from abc import ABC, abstractmethod
@@ -34,7 +35,7 @@ class BaseModelManager(ABC):
     """The path to the directory to store this model type."""
     model_reference: dict  # XXX is this even wanted/used/useful?
     available_models: list[str]  # XXX rework as a property?
-    loaded_models: dict[str, dict]
+    _loaded_models: dict[str, dict]
     """The models available for immediate use."""
     tainted_models: list
     models_db_name: str
@@ -44,6 +45,20 @@ class BaseModelManager(ABC):
     recommended_gpu: list
     download_reference: bool
     remote_db: str
+    _mutex = threading.RLock()
+
+    def get_loaded_models(self):
+        logger.debug(f"get_loaded_models() -> {self._loaded_models.keys()}")
+        return self._loaded_models.copy()
+
+    def add_loaded_model(self, model_name, model_data):
+        with self._mutex:
+            self._loaded_models[model_name] = model_data
+
+    def remove_loaded_model(self, model_name):
+        with self._mutex:
+            if model_name in self._loaded_models:
+                del self._loaded_models[model_name]
 
     def __init__(
         self,
@@ -68,7 +83,7 @@ class BaseModelManager(ABC):
 
         self.model_reference = {}
         self.available_models = []
-        self.loaded_models = {}
+        self._loaded_models = {}
         self.tainted_models = []
         self.pkg = importlib_resources.files("hordelib")  # XXX Remove
         self.models_db_name = models_db_name
@@ -144,41 +159,43 @@ class BaseModelManager(ABC):
             return json.loads((self.models_db_path).read_text())
 
     def _modelref_to_name(self, modelref):
-        for name, data in self.loaded_models.items():
-            if modelref and data["model"] is modelref:
-                return name
-        return None
+        with self._mutex:
+            for name, data in self.get_loaded_models().items():
+                if modelref and data["model"] is modelref:
+                    return name
+            return None
 
     def ensure_memory_available(self):
         # Can this type of model be cached?
         if not self.can_cache_on_disk():
             return
-        # If we have less than the minimum RAM free, free some up
-        freemem = round(psutil.virtual_memory().available / (1024 * 1024))
-        logger.debug(f"Free RAM is: {freemem} MB, ({len(self.loaded_models)} models loaded in RAM)")
-        if freemem > UserSettings.ram_to_leave_free_mb + 4096:
-            return
-        logger.debug("Not enough free RAM attempting to free some")
-        # Grab a list of models (ModelPatcher) that are loaded on the gpu
-        # These are actually returned with the least important at the bottom of the list
-        busy_models = get_models_on_gpu()
-        # Try to find one we have in ram that isn't on the gpu
-        idle_model = None
-        for ram_model_name, ram_model_data in self.loaded_models.items():
-            if type(ram_model_data["model"]) is not str and ram_model_data["model"] not in busy_models:
-                idle_model = ram_model_name
-                break
-        # If we didn't have one hanging around in ram not on the gpu
-        # pick the least used gpu model
-        if not idle_model and busy_models:
-            idle_model = self._modelref_to_name(busy_models[-1])
+        with self._mutex:
+            # If we have less than the minimum RAM free, free some up
+            freemem = round(psutil.virtual_memory().available / (1024 * 1024))
+            logger.debug(f"Free RAM is: {freemem} MB, ({len(self.get_loaded_models())} models loaded in RAM)")
+            if freemem > UserSettings.ram_to_leave_free_mb + 4096:
+                return
+            logger.debug("Not enough free RAM attempting to free some")
+            # Grab a list of models (ModelPatcher) that are loaded on the gpu
+            # These are actually returned with the least important at the bottom of the list
+            busy_models = get_models_on_gpu()
+            # Try to find one we have in ram that isn't on the gpu
+            idle_model = None
+            for ram_model_name, ram_model_data in self.get_loaded_models().items():
+                if type(ram_model_data["model"]) is not str and ram_model_data["model"] not in busy_models:
+                    idle_model = ram_model_name
+                    break
+            # If we didn't have one hanging around in ram not on the gpu
+            # pick the least used gpu model
+            if not idle_model and busy_models:
+                idle_model = self._modelref_to_name(busy_models[-1])
 
-        if idle_model:
-            logger.debug(f"Moving model {idle_model} to disk to free up RAM")
-            self.move_to_disk_cache(idle_model)
-        else:
-            # Nothing else to release
-            logger.debug("Could not find a model to free RAM")
+            if idle_model:
+                logger.debug(f"Moving model {idle_model} to disk to free up RAM")
+                self.move_to_disk_cache(idle_model)
+            else:
+                # Nothing else to release
+                logger.debug("Could not find a model to free RAM")
 
     # @abstractmethod # TODO
     def move_to_disk_cache(self, model_name):
@@ -197,45 +214,49 @@ class BaseModelManager(ABC):
         cpu_only: bool = False,
         **kwargs,
     ):  # XXX # FIXME
-        self.ensure_memory_available()
-        if model_name not in self.model_reference:
-            logger.error(f"{model_name} not found")
-            return False
-        if model_name not in self.available_models:
-            logger.error(f"{model_name} not available")
-            download_succeeded = self.download_model(model_name)
-            if not download_succeeded:
-                logger.init_err(f"{model_name} failed to download", status="Error")
+        with self._mutex:
+            self.ensure_memory_available()
+            if model_name not in self.model_reference:
+                logger.error(f"{model_name} not found")
                 return False
-            logger.init_ok(f"{model_name}", status="Downloaded")
-        if model_name not in self.loaded_models:
-            model_validated = self.validate_model(model_name)
-            if not model_validated:
-                return False
-            logger.init(f"{model_name}", status="Loading")
+            if model_name not in self.available_models:
+                logger.error(f"{model_name} not available")
+                download_succeeded = self.download_model(model_name)
+                if not download_succeeded:
+                    logger.init_err(f"{model_name} failed to download", status="Error")
+                    return False
+                logger.init_ok(f"{model_name}", status="Downloaded")
+            if model_name not in self.get_loaded_models():
+                model_validated = self.validate_model(model_name)
+                if not model_validated:
+                    return False
+                logger.init(f"{model_name}", status="Loading")
 
-            tic = time.time()
-            logger.init(f"{model_name}", status="Loading")
+                tic = time.time()
+                logger.init(f"{model_name}", status="Loading")
 
-            try:
-                self.loaded_models[model_name] = self.modelToRam(
-                    model_name=model_name,
-                    half_precision=half_precision,
-                    gpu_id=gpu_id,
-                    cpu_only=cpu_only,
-                    **kwargs,
-                )
+                try:
+                    self.add_loaded_model(
+                        model_name,
+                        self.modelToRam(
+                            model_name=model_name,
+                            half_precision=half_precision,
+                            gpu_id=gpu_id,
+                            cpu_only=cpu_only,
+                            **kwargs,
+                        ),
+                    )
 
-            except RuntimeError:
-                # It failed, it happens.
-                logger.error(f"Failed to load model {model_name}")
-                return None
+                except RuntimeError:
+                    # It failed, it happens.
+                    logger.error(f"Failed to load model {model_name}")
+                    return None
 
-            toc = time.time()
+                toc = time.time()
 
-            logger.init_ok(f"{model_name}: {round(toc-tic,2)} seconds", status="Loaded")
-            return True
-        return None
+                logger.init_ok(f"{model_name}: {round(toc-tic,2)} seconds", status="Loaded")
+                return True
+            return None
 
     def getFullModelPath(self, model_name: str):
         """Returns the fully qualified filename for the specified model."""
@@ -302,18 +323,12 @@ class BaseModelManager(ABC):
     def count_available_models_by_types(self, model_types: list[str] | None = None):
         return len(self.get_available_models_by_types(model_types))
 
-    def get_loaded_models(self):
-        """
-        Returns the loaded models
-        """
-        return self.loaded_models[:]
-
     def get_loaded_model(self, model_name: str):
         """
         :param model_name: Name of the model
         Returns the loaded model
         """
-        return self.loaded_models[model_name]
+        return self.get_loaded_models()[model_name]
 
     def get_loaded_models_names(self, string=False) -> list[str] | str:  # XXX Rework 'string' param
         """Return a list of loaded model names.
@@ -325,9 +340,10 @@ class BaseModelManager(ABC):
             list[str] | str: The list of models, as a `list` or a comma separated string.
         """
         # return ["Deliberate"]
-        if string:
-            return ", ".join(self.loaded_models.keys())
-        return list(self.loaded_models.keys())
+        with self._mutex:
+            if string:
+                return ", ".join(self.get_loaded_models().keys())
+            return list(self.get_loaded_models().keys())
 
     def is_model_loaded(self, model_name: str) -> bool:
         """Returns True if the model is loaded, False otherwise.
@@ -338,7 +354,8 @@ class BaseModelManager(ABC):
         Returns:
             _type_: _description_
         """
-        return model_name in self.loaded_models
+        with self._mutex:
+            return model_name in self.get_loaded_models()
 
     def unload_model(self, model_name: str):
         """
@@ -347,21 +364,26 @@ class BaseModelManager(ABC):
         This may not be possible right now, as it may be being used, so we actually issue a request for it to
         be unloaded at the earliest opportunity.
         """
-        if model_name in self.loaded_models:
-            self.free_model_resources(model_name)
-            del self.loaded_models[model_name]
-        return None
+        logger.warning(f"unload_model({model_name})")
+        with self._mutex:
+            if model_name in self._loaded_models:
+                self.free_model_resources(model_name)
+                self.remove_loaded_model(model_name)
+                logger.warning(f"  done unload_model({model_name})")
+            return None
 
     def free_model_resources(self, model_name: str):
-        remove_model_from_memory(model_name, self.loaded_models[model_name])
+        with self._mutex:
+            remove_model_from_memory(model_name, self.get_loaded_model(model_name))
 
     def unload_all_models(self):
         """
         Unloads all models
         """
-        for model in self.loaded_models:
-            self.unload_model(model)
-        return True
+        with self._mutex:
+            for model in self.get_loaded_models():
+                self.unload_model(model)
+            return True
 
     def taint_model(self, model_name: str):
         """Marks a model as not valid by removing it from available_models"""

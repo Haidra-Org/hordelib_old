@@ -43,7 +43,7 @@ def cleanup():
         # Do we have any models waiting to be released?
         if not __models_to_release:
             return
-        
+
         # Can we release any of them?
         for model_name, model_data in __models_to_release.copy().items():
             if is_model_in_use(model_data["model"]):
@@ -62,7 +62,7 @@ def cleanup():
                 del model_data["clipVisionModel"]
             del model_data
             del __models_to_release[model_name]
-            gc.collect()            
+            gc.collect()
 
 
 def remove_model_from_memory(model_name, model_data):
