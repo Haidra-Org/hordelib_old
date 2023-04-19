@@ -21,7 +21,7 @@ from tqdm import tqdm
 from transformers import logging
 
 from hordelib.cache import get_cache_directory
-from hordelib.comfy_horde import get_models_on_gpu, is_model_in_use, unload_model_from_gpu
+from hordelib.comfy_horde import get_models_on_gpu, remove_model_from_memory
 from hordelib.config_path import get_hordelib_path
 from hordelib.consts import REMOTE_MODEL_DB
 from hordelib.settings import UserSettings
@@ -340,41 +340,20 @@ class BaseModelManager(ABC):
         """
         return model_name in self.loaded_models
 
-    def remove_model_from_ram(self, model_name):
-        if model_name not in self.loaded_models:
-            return
-        # Remove the model from ram. Just removing from the dictionary
-        # wasn't actually releasing the RAM
-        model = self.loaded_models[model_name]
-        del self.loaded_models[model_name]
-        if "model" in model:
-            del model["model"]
-        if "clip" in model:
-            del model["clip"]
-        if "vae" in model:
-            del model["vae"]
-        if "clipVisionModel" in model:
-            del model["clipVisionModel"]
-        del model
-        gc.collect()
-
     def unload_model(self, model_name: str):
         """
         :param model_name: Name of the model
-        Unloads a model. Completely remove it, free all resources, forget it exists.
+        Issue a request to unload a model, completely remove it, free all resources, forget it exists.
+        This may not be possible right now, as it may be being used, so we actually issue a request for it to
+        be unloaded at the earliest opportunity.
         """
         if model_name in self.loaded_models:
-            if not is_model_in_use(self.loaded_models[model_name]["model"]):
-                # Unload it from the GPU if it has been loaded there
-                try:
-                    unload_model_from_gpu(self.loaded_models[model_name]["model"])
-                    # Free it's ram
-                    self.remove_model_from_ram(model_name)
-                    return True
-                except Exception as e:
-                    logger.warning(f"Failed to unload model {model_name}: {e}")
-                    return False
+            self.free_model_resources(model_name)
+            del self.loaded_models[model_name]
         return None
+
+    def free_model_resources(self, model_name: str):
+        remove_model_from_memory(model_name, self.loaded_models[model_name])
 
     def unload_all_models(self):
         """

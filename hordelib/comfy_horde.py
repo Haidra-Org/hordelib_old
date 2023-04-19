@@ -35,6 +35,41 @@ from comfy_extras.chainner_models import model_loading as _comfy_model_loading
 
 # isort: on
 
+__models_to_release = {}
+
+
+def cleanup():
+    with _comfy_model_manager.sampler_mutex:
+        # Do we have any models waiting to be released?
+        if not __models_to_release:
+            return
+        
+        # Can we release any of them?
+        for model_name, model_data in __models_to_release.copy().items():
+            if is_model_in_use(model_data["model"]):
+                # We're in the middle of using it, nothing we can do
+                continue
+            # Unload the model from the GPU
+            unload_model_from_gpu(model_data["model"])
+            # Free ram
+            if "model" in model_data:
+                del model_data["model"]
+            if "clip" in model_data:
+                del model_data["clip"]
+            if "vae" in model_data:
+                del model_data["vae"]
+            if "clipVisionModel" in model_data:
+                del model_data["clipVisionModel"]
+            del model_data
+            del __models_to_release[model_name]
+            gc.collect()            
+
+
+def remove_model_from_memory(model_name, model_data):
+    with _comfy_model_manager.sampler_mutex:
+        if model_name not in __models_to_release:
+            __models_to_release[model_name] = model_data
+
 
 def get_models_on_gpu():
     return _comfy_model_manager.get_models_on_gpu()
@@ -45,7 +80,7 @@ def unload_model_from_gpu(model):
     gc.collect()
     if not torch.cuda.is_available():
         return None
-    if torch.version.cuda:  # This seems to make things worse on ROCm so I only do it for cuda
+    if torch.version.cuda:
         torch.cuda.empty_cache()
         torch.cuda.ipc_collect()
 
@@ -416,6 +451,9 @@ class Comfy_Horde:
         with contextlib.redirect_stdout(stdio), contextlib.redirect_stderr(stdio):
             inference.execute(pipeline, extra_data={"client_id": random.randint(0, sys.maxsize)})
         stdio.replay()
+
+        # Check if there are any resource to clean up
+        cleanup()
 
         return inference.outputs
 

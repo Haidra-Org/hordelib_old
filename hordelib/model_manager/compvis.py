@@ -70,7 +70,7 @@ class CompVisModelManager(BaseModelManager):
                     pickle.dump(self.loaded_models[model_name][component], cache, protocol=pickle.HIGHEST_PROTOCOL)
         for component in components:
             model_data[component] = cache_file
-        # Remove from ram
-        self.remove_model_from_ram(model_name)
+        # Remove from vram/ram
+        self.free_model_resources(model_name)
         # Point the model to the cache
         self.loaded_models[model_name] = model_data

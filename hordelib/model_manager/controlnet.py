@@ -80,6 +80,8 @@ class ControlNetModelManager(BaseModelManager):
             self.modelFolderPath,
             self.get_controlnet_filename(controlnet_name),
         )
+        # FIXME This works, but we need a way to unload from the GPU when the model is unloaded
+        # FIXME and remove from this cache when not needed.
         controlnet = self.control_nets.get(f"{control_type}.{model}")
         if controlnet:
             logger.debug(f"Got cached control net {control_type}.{model}")
