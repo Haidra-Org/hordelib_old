@@ -69,7 +69,9 @@ class CompVisModelManager(BaseModelManager):
                 with open(cache_file, "wb") as cache:
                     for component in components:
                         pickle.dump(
-                            self.get_loaded_model(model_name)[component], cache, protocol=pickle.HIGHEST_PROTOCOL
+                            self.get_loaded_model(model_name)[component],
+                            cache,
+                            protocol=pickle.HIGHEST_PROTOCOL,
                         )
             for component in components:
                 model_data[component] = cache_file
