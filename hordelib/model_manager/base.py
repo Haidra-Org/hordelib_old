@@ -370,7 +370,7 @@ class BaseModelManager(ABC):
                 self.free_model_resources(model_name)
                 self.remove_loaded_model(model_name)
                 logger.warning(f"  done unload_model({model_name})")
-            return None
+                return True
 
     def free_model_resources(self, model_name: str):
         with self._mutex:
