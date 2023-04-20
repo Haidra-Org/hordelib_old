@@ -12,7 +12,7 @@ class CoCa:
         self.device = device
         self.half_precision = half_precision
 
-    def __call__(self, input_image: Union[str, Image.Image]):
+    def __call__(self, input_image: str | Image.Image):
         if isinstance(input_image, str):
             if not os.path.exists(input_image):
                 raise ValueError(f"Image path {input_image} does not exist")

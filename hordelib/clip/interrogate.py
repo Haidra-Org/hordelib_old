@@ -1,6 +1,5 @@
 import hashlib
 import os
-from typing import Dict, List, Union
 
 import numpy as np
 import torch
@@ -36,7 +35,7 @@ class Interrogator:
     def load(
         self,
         key: str,
-        text_array: List[str],
+        text_array: list[str],
         individual: bool = True,
         device: str = "cuda",
     ):
@@ -197,14 +196,14 @@ class Interrogator:
             }
             for i in range(top_count)
         ]
-        return top  # noqa: RET504
+        return top
 
     def __call__(
         self,
-        image: Image.Image = None,
-        filename: str = None,
-        directory: str = None,
-        text_array: Union[List[str], Dict[str, List[str]], None] = None,
+        image: Image.Image | None = None,
+        filename: str | None = None,
+        directory: str | None = None,
+        text_array: list[str] | dict[str, list[str]] | None = None,
         similarity=False,
         rank=False,
         top_count=2,
@@ -242,7 +241,7 @@ class Interrogator:
         image_hash = image_embed(image, filename, directory)
         image_embed_array = np.load(f"{self.cache_image.cache_dir}/{image_hash}.npy")
         image_features = torch.from_numpy(image_embed_array).float().to(self.model_info["device"])
-        if similarity and not rank:
+        if similarity and not rank:  # XXX # TODO: Refactor this
             results = {}
             for k in text_array:
                 results[k] = self.similarity(
@@ -265,7 +264,7 @@ class Interrogator:
                 )
                 logger.debug(f"{k}: {results[k]}")
             return results
-        else:  # noqa: RET505
+        else:
             similarity = {}
             for k in text_array:
                 similarity[k] = self.similarity(
