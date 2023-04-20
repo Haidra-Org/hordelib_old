@@ -31,12 +31,15 @@ from folder_paths import folder_names_and_paths as _comfy_folder_paths
 from comfy.sd import load_checkpoint_guess_config as __comfy_load_checkpoint_guess_config
 from comfy.sd import load_controlnet as __comfy_load_controlnet
 from comfy.model_management import model_manager as _comfy_model_manager
+from comfy.model_management import get_torch_device as __comfy_get_torch_device
 from comfy.utils import load_torch_file as __comfy_load_torch_file
 from comfy_extras.chainner_models import model_loading as _comfy_model_loading
 
 # isort: on
 
 __models_to_release = {}
+_controlnet_mutex = threading.Lock()
+_facefix_mutex = threading.Lock()
 
 
 def cleanup():
@@ -74,6 +77,10 @@ def remove_model_from_memory(model_name, model_data):
 
 def get_models_on_gpu():
     return _comfy_model_manager.get_models_on_gpu()
+
+
+def get_torch_device():
+    return __comfy_get_torch_device()
 
 
 def unload_model_from_gpu(model):
@@ -177,8 +184,6 @@ class Comfy_Horde:
         "latent_upscale.width": (64, 8192),
         "latent_upscale.height": (64, 8192),
     }
-
-    _controlnet_mutex = threading.Lock()
 
     def __init__(self) -> None:
         self.client_id = None  # used for receiving comfyUI async events
@@ -415,7 +420,7 @@ class Comfy_Horde:
         mutex = None
         if "control_type" in params:
             # FIXME Only allow one controlnet job at a time
-            mutex = self._controlnet_mutex
+            mutex = _controlnet_mutex
             # Inject control net model manager
             if "controlnet_model_loader.model_manager" not in params:
                 logger.debug("Injecting controlnet model manager")
@@ -451,6 +456,10 @@ class Comfy_Horde:
         pretty_pipeline = pformat(pipeline)
         if False:  # This isn't here Tazlin :)
             logger.error(pretty_pipeline)
+
+        # Last minute mutex setup
+        if pipeline_name == "image_facefix":
+            mutex = _facefix_mutex
 
         # The client_id parameter here is just so we receive comfy callbacks for debugging.
         # We pretend we are a web client and want async callbacks.

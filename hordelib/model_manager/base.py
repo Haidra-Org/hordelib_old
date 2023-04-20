@@ -23,6 +23,7 @@ from transformers import logging
 
 from hordelib.cache import get_cache_directory
 from hordelib.comfy_horde import get_models_on_gpu, remove_model_from_memory
+from hordelib.comfy_horde import get_torch_device as _get_torch_device
 from hordelib.config_path import get_hordelib_path
 from hordelib.consts import REMOTE_MODEL_DB
 from hordelib.settings import UserSettings
@@ -47,12 +48,14 @@ class BaseModelManager(ABC):
     remote_db: str
     _mutex = threading.RLock()
 
+    def get_torch_device(self):
+        return _get_torch_device()
+
     def get_loaded_models(self):
         return self._loaded_models.copy()
 
     def add_loaded_model(self, model_name, model_data):
         with self._mutex:
-            logger.warning(f"add_loaded_model({model_name})")
             self._loaded_models[model_name] = model_data
 
     def remove_loaded_model(self, model_name):
@@ -364,12 +367,10 @@ class BaseModelManager(ABC):
         This may not be possible right now, as it may be being used, so we actually issue a request for it to
         be unloaded at the earliest opportunity.
         """
-        logger.warning(f"unload_model({model_name})")
         with self._mutex:
             if model_name in self._loaded_models:
                 self.free_model_resources(model_name)
                 self.remove_loaded_model(model_name)
-                logger.warning(f"  done unload_model({model_name})")
                 return True
 
     def free_model_resources(self, model_name: str):
