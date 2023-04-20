@@ -11,6 +11,7 @@ import time
 import sys
 import typing
 import random
+import threading
 from pprint import pformat
 
 import torch
@@ -176,6 +177,8 @@ class Comfy_Horde:
         "latent_upscale.width": (64, 8192),
         "latent_upscale.height": (64, 8192),
     }
+
+    _controlnet_mutex = threading.Lock()
 
     def __init__(self) -> None:
         self.client_id = None  # used for receiving comfyUI async events
@@ -409,7 +412,10 @@ class Comfy_Horde:
         # XXX This shouldn't be here either, but it's not clear to me yet where the
         # XXX correct place for dynamic connection of nodes is. Need to do a few more
         # XXX pipelines to see.
+        mutex = None
         if "control_type" in params:
+            # FIXME Only allow one controlnet job at a time
+            mutex = self._controlnet_mutex
             # Inject control net model manager
             if "controlnet_model_loader.model_manager" not in params:
                 logger.debug("Injecting controlnet model manager")
@@ -450,7 +456,12 @@ class Comfy_Horde:
         # We pretend we are a web client and want async callbacks.
         stdio = OutputCollector()
         with contextlib.redirect_stdout(stdio), contextlib.redirect_stderr(stdio):
-            inference.execute(pipeline, extra_data={"client_id": random.randint(0, sys.maxsize)})
+            if mutex:
+                with mutex:
+                    inference.execute(pipeline, extra_data={"client_id": random.randint(0, sys.maxsize)})
+            else:
+                inference.execute(pipeline, extra_data={"client_id": random.randint(0, sys.maxsize)})
+
         stdio.replay()
 
         # Check if there are any resource to clean up

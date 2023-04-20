@@ -48,11 +48,11 @@ class BaseModelManager(ABC):
     _mutex = threading.RLock()
 
     def get_loaded_models(self):
-        logger.debug(f"get_loaded_models() -> {self._loaded_models.keys()}")
         return self._loaded_models.copy()
 
     def add_loaded_model(self, model_name, model_data):
         with self._mutex:
+            logger.warning(f"add_loaded_model({model_name})")
             self._loaded_models[model_name] = model_data
 
     def remove_loaded_model(self, model_name):
