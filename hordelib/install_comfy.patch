@@ -1,5 +1,5 @@
 ﻿diff --git a/comfy/model_management.py b/comfy/model_management.py
-index 76455e4..5f4daf8 100644
+index 76455e4..5ef1499 100644
 --- a/comfy/model_management.py
 +++ b/comfy/model_management.py
 @@ -1,6 +1,8 @@
@@ -11,7 +11,7 @@ index 76455e4..5f4daf8 100644
  
  class VRAMState(Enum):
      CPU = 0
-@@ -113,87 +115,145 @@ if args.cpu:
+@@ -113,87 +115,143 @@ if args.cpu:
  print(f"Set vram state to: {vram_state.name}")
  
  
@@ -205,34 +205,32 @@ index 76455e4..5f4daf8 100644
 +
 +    def load_controlnet_gpu(self, models):        
 +        global vram_state
-+        with self._mutex:
-+            if vram_state == VRAMState.CPU:
-+                return
++        if vram_state == VRAMState.CPU:
++            return
 +
-+            if vram_state == VRAMState.LOW_VRAM or vram_state == VRAMState.NO_VRAM:
-+                #don't load controlnets like this if low vram because they will be loaded right before running and unloaded right after
-+                return
++        if vram_state == VRAMState.LOW_VRAM or vram_state == VRAMState.NO_VRAM:
++            #don't load controlnets like this if low vram because they will be loaded right before running and unloaded right after
++            return
 +
-+            device = get_torch_device()
-+            for m in models:
-+                if m not in self.current_gpu_controlnets:
-+                    self.current_gpu_controlnets.append(m.to(device))
++        device = get_torch_device()
++        for m in models:
++            if m not in self.current_gpu_controlnets:
++                self.current_gpu_controlnets.append(m.to(device))
 +
 +    def unload_controlnet_gpu(self, models):        
 +        global vram_state
-+        with self._mutex:
-+            if vram_state == VRAMState.CPU:
-+                return
++        if vram_state == VRAMState.CPU:
++            return
 +
-+            if vram_state == VRAMState.LOW_VRAM or vram_state == VRAMState.NO_VRAM:
-+                #don't load controlnets like this if low vram because they will be loaded right before running and unloaded right after
-+                return
++        if vram_state == VRAMState.LOW_VRAM or vram_state == VRAMState.NO_VRAM:
++            #don't load controlnets like this if low vram because they will be loaded right before running and unloaded right after
++            return
 +
-+            for m in models:
-+                if m in self.current_gpu_controlnets:
-+                    m.cpu()
-+                    self.current_gpu_controlnets.remove(m)
-+                    del m
++        for m in models:
++            if m in self.current_gpu_controlnets:
++                m.cpu()
++                self.current_gpu_controlnets.remove(m)
++                del m
 +
 +model_manager = ModelManager()
  
@@ -340,7 +338,7 @@ index ed36442..6b10249 100644
  
          return samples.to(torch.float32)
 diff --git a/comfy/sd.py b/comfy/sd.py
-index 9c632e2..5b82f11 100644
+index 9c632e2..cff81f5 100644
 --- a/comfy/sd.py
 +++ b/comfy/sd.py
 @@ -1,6 +1,7 @@
@@ -382,21 +380,20 @@ index 9c632e2..5b82f11 100644
          self.first_stage_model = self.first_stage_model.to(self.device)
          pixel_samples = pixel_samples.movedim(-1,1).to(self.device)
          samples = utils.tiled_scale(pixel_samples, lambda a: self.first_stage_model.encode(2. * a - 1.).sample() * self.scale_factor, tile_x, tile_y, overlap, upscale_amount = (1/8), out_channels=4)
-@@ -568,8 +565,17 @@ class ControlNet:
+@@ -568,8 +565,16 @@ class ControlNet:
          out.append(self.control_model)
          return out
  
 +_controlnet_models = {}
-+_mutex = threading.Lock()
 +
  def load_controlnet(ckpt_path, model=None):
 -    controlnet_data = utils.load_torch_file(ckpt_path)
-+    with _mutex:
-+        if ckpt_path in _controlnet_models:
-+            controlnet_data = copy.deepcopy(_controlnet_models.get(ckpt_path))
-+        else:
-+            controlnet_data = utils.load_torch_file(ckpt_path)
-+            _controlnet_models[ckpt_path] = copy.deepcopy(controlnet_data)
++    model = copy.deepcopy(model)
++    if ckpt_path in _controlnet_models:
++        controlnet_data = copy.deepcopy(_controlnet_models.get(ckpt_path))
++    else:
++        controlnet_data = utils.load_torch_file(ckpt_path)
++        _controlnet_models[ckpt_path] = copy.deepcopy(controlnet_data)
 +
      pth_key = 'control_model.input_blocks.1.1.transformer_blocks.0.attn2.to_k.weight'
      pth = False

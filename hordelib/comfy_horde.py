@@ -38,7 +38,6 @@ from comfy_extras.chainner_models import model_loading as _comfy_model_loading
 # isort: on
 
 __models_to_release = {}
-_controlnet_mutex = threading.Lock()
 
 
 def cleanup():
@@ -416,10 +415,7 @@ class Comfy_Horde:
         # XXX This shouldn't be here either, but it's not clear to me yet where the
         # XXX correct place for dynamic connection of nodes is. Need to do a few more
         # XXX pipelines to see.
-        mutex = None
         if "control_type" in params:
-            # FIXME Only allow one controlnet job at a time
-            mutex = _controlnet_mutex
             # Inject control net model manager
             if "controlnet_model_loader.model_manager" not in params:
                 logger.debug("Injecting controlnet model manager")
@@ -460,11 +456,7 @@ class Comfy_Horde:
         # We pretend we are a web client and want async callbacks.
         stdio = OutputCollector()
         with contextlib.redirect_stdout(stdio), contextlib.redirect_stderr(stdio):
-            if mutex:
-                with mutex:
-                    inference.execute(pipeline, extra_data={"client_id": random.randint(0, sys.maxsize)})
-            else:
-                inference.execute(pipeline, extra_data={"client_id": random.randint(0, sys.maxsize)})
+            inference.execute(pipeline, extra_data={"client_id": random.randint(0, sys.maxsize)})
 
         stdio.replay()
 

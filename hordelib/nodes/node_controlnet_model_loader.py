@@ -6,7 +6,6 @@ from loguru import logger
 
 
 class HordeDiffControlNetLoader:
-    _mutex = threading.Lock()
 
     @classmethod
     def INPUT_TYPES(s):
@@ -30,13 +29,12 @@ class HordeDiffControlNetLoader:
             logger.error("controlnet model_manager appears to be missing!")
             raise RuntimeError  # XXX better guarantees need to be made
 
-        with HordeDiffControlNetLoader._mutex:
-            merged_model = model_manager.manager.controlnet.merge_controlnet(
-                control_net_name,
-                model,
-            )
+        merged_model = model_manager.manager.controlnet.merge_controlnet(
+            control_net_name,
+            model,
+        )
 
-            return merged_model
+        return merged_model
 
 
 NODE_CLASS_MAPPINGS = {"HordeDiffControlNetLoader": HordeDiffControlNetLoader}
