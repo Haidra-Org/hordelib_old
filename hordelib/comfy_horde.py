@@ -39,7 +39,6 @@ from comfy_extras.chainner_models import model_loading as _comfy_model_loading
 
 __models_to_release = {}
 _controlnet_mutex = threading.Lock()
-_facefix_mutex = threading.Lock()
 
 
 def cleanup():
@@ -456,10 +455,6 @@ class Comfy_Horde:
         pretty_pipeline = pformat(pipeline)
         if False:  # This isn't here Tazlin :)
             logger.error(pretty_pipeline)
-
-        # Last minute mutex setup
-        if pipeline_name == "image_facefix":
-            mutex = _facefix_mutex
 
         # The client_id parameter here is just so we receive comfy callbacks for debugging.
         # We pretend we are a web client and want async callbacks.

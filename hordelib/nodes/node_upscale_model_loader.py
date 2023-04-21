@@ -26,7 +26,7 @@ class HordeUpscaleModelLoader:
         if model_name not in model_manager.manager.loaded_models:
             logger.error(f"Model {model_name} is not loaded")
             raise RuntimeError  # XXX better guarantees need to be made
-        model = model_manager.manager.loaded_models[model_name]["model"]
+        model = model_manager.manager.get_model_copy(model_name, "model")
         # XXX # TODO I would like to revisit this dict->tuple conversion at some point soon
         return (model,)
 
