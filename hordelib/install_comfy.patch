@@ -381,9 +381,10 @@ index ed36442..cbcc135 100644
 +                model_management.model_manager.sampler_mutex.release()
  
 -                model_management.throw_exception_if_processing_interrupted()
+-
 +                #logger.warning(f"{threading.current_thread().ident}: calc_cond_uncond_batch() 3d(comfy)")
 +                # model_management.throw_exception_if_processing_interrupted()
-                 
++                
 +                #logger.warning("calc_cond_uncond_batch() 3f")
                  for o in range(batch_chunks):
                      if cond_or_uncond[o] == COND:
@@ -395,8 +396,8 @@ index ed36442..cbcc135 100644
 +                #logger.warning("calc_cond_uncond_batch() 3g")
                  del mult
 +                #logger.warning("calc_cond_uncond_batch() 3h")
- 
 +
+ 
 +            #logger.warning("calc_cond_uncond_batch() 4")
              out_cond /= out_count
              del out_count
