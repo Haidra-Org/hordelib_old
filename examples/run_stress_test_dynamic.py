@@ -158,10 +158,7 @@ def swap_models():
 
 def run_iterations():
     for i in range(ITERATIONS):
-        funcs = [
-            generate_images,
-            generate_images_cnet
-        ]
+        funcs = [generate_images, generate_images_cnet]
         random.choice(funcs)()
 
 
