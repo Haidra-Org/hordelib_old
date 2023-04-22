@@ -1,3 +1,4 @@
+import copy
 import os
 import threading
 
@@ -6,7 +7,6 @@ from loguru import logger
 
 
 class HordeDiffControlNetLoader:
-
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -28,6 +28,9 @@ class HordeDiffControlNetLoader:
         if not model_manager or not model_manager.manager or not model_manager.manager.controlnet:
             logger.error("controlnet model_manager appears to be missing!")
             raise RuntimeError  # XXX better guarantees need to be made
+
+        model = model.clone()
+        model.model = copy.deepcopy(model.model)
 
         merged_model = model_manager.manager.controlnet.merge_controlnet(
             control_net_name,
