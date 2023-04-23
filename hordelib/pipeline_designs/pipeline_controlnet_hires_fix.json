@@ -1,6 +1,6 @@
 {
   "last_node_id": 51,
-  "last_link_id": 105,
+  "last_link_id": 104,
   "nodes": [
     {
       "id": 5,
@@ -363,6 +363,46 @@
       ]
     },
     {
+      "id": 7,
+      "type": "CLIPTextEncode",
+      "pos": [
+        433,
+        -283
+      ],
+      "size": {
+        "0": 262.2586975097656,
+        "1": 76
+      },
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 81
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            6,
+            99
+          ],
+          "slot_index": 0
+        }
+      ],
+      "title": "negative_prompt",
+      "properties": {
+        "Node name for S&R": "CLIPTextEncode"
+      },
+      "widgets_values": [
+        ""
+      ]
+    },
+    {
       "id": 47,
       "type": "CheckpointLoaderSimple",
       "pos": [
@@ -707,90 +747,11 @@
       ]
     },
     {
-      "id": 7,
-      "type": "CLIPTextEncode",
-      "pos": [
-        426,
-        -294
-      ],
-      "size": {
-        "0": 262.2586975097656,
-        "1": 76
-      },
-      "flags": {},
-      "order": 4,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "clip",
-          "type": "CLIP",
-          "link": 81
-        }
-      ],
-      "outputs": [
-        {
-          "name": "CONDITIONING",
-          "type": "CONDITIONING",
-          "links": [
-            6,
-            99
-          ],
-          "slot_index": 0
-        }
-      ],
-      "title": "negative_prompt",
-      "properties": {
-        "Node name for S&R": "CLIPTextEncode"
-      },
-      "widgets_values": [
-        ""
-      ]
-    },
-    {
-      "id": 24,
-      "type": "CLIPTextEncode",
-      "pos": [
-        324,
-        -166
-      ],
-      "size": {
-        "0": 286.6666259765625,
-        "1": 110.00003051757812
-      },
-      "flags": {},
-      "order": 5,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "clip",
-          "type": "CLIP",
-          "link": 82
-        }
-      ],
-      "outputs": [
-        {
-          "name": "CONDITIONING",
-          "type": "CONDITIONING",
-          "links": [
-            77
-          ],
-          "slot_index": 0
-        }
-      ],
-      "title": "prompt",
-      "properties": {
-        "Node name for S&R": "CLIPTextEncode"
-      },
-      "widgets_values": [
-        "a man walking in the jungle\n\n\n"
-      ]
-    },
-    {
       "id": 23,
       "type": "ControlNetApply",
       "pos": [
-        669,
-        -102
+        670,
+        -141
       ],
       "size": {
         "0": 317.4000244140625,
@@ -821,8 +782,7 @@
           "name": "CONDITIONING",
           "type": "CONDITIONING",
           "links": [
-            40,
-            105
+            40
           ],
           "slot_index": 0
         }
@@ -833,6 +793,46 @@
       },
       "widgets_values": [
         0.8500000000000003
+      ]
+    },
+    {
+      "id": 24,
+      "type": "CLIPTextEncode",
+      "pos": [
+        301,
+        -135
+      ],
+      "size": {
+        "0": 286.6666259765625,
+        "1": 110.00003051757812
+      },
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 82
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            77,
+            104
+          ],
+          "slot_index": 0
+        }
+      ],
+      "title": "prompt",
+      "properties": {
+        "Node name for S&R": "CLIPTextEncode"
+      },
+      "widgets_values": [
+        "a man walking in the jungle\n\n\n"
       ]
     },
     {
@@ -858,7 +858,7 @@
         {
           "name": "positive",
           "type": "CONDITIONING",
-          "link": 105
+          "link": 104
         },
         {
           "name": "negative",
@@ -892,7 +892,7 @@
         8,
         "dpmpp_2m",
         "simple",
-        0.5
+        0.6
       ]
     }
   ],
@@ -1114,8 +1114,8 @@
       "*"
     ],
     [
-      105,
-      23,
+      104,
+      24,
       0,
       50,
       1,
