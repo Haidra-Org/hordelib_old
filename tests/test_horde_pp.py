@@ -83,12 +83,7 @@ class TestHordeUpscaling:
     def test_image_upscale_NMKD_Siax_resize(self):
         SharedModelManager.manager.load("NMKD_Siax")
         assert SharedModelManager.manager.esrgan.is_model_loaded("NMKD_Siax") is True
-        data = {
-            "model": "NMKD_Siax",
-            "source_image": self.real_image,
-            "width": 1280,
-            "height": 1280
-        }
+        data = {"model": "NMKD_Siax", "source_image": self.real_image, "width": 1280, "height": 1280}
         pil_image = self.horde.image_upscale(data)
         assert pil_image is not None
         width, height = pil_image.size
