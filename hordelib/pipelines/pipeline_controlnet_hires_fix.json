@@ -229,13 +229,13 @@
             "cfg": 8.0,
             "sampler_name": "dpmpp_2m",
             "scheduler": "simple",
-            "denoise": 0.6,
+            "denoise": 0.5,
             "model": [
                 "47",
                 0
             ],
             "positive": [
-                "24",
+                "23",
                 0
             ],
             "negative": [
