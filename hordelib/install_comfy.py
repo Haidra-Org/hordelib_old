@@ -8,7 +8,6 @@ from loguru import logger
 from hordelib.config_path import get_comfyui_path, get_hordelib_path
 from hordelib.consts import RELEASE_VERSION
 
-
 CUSTOM_NODE_YAML = """
 hordelib:
     base_path: ../
