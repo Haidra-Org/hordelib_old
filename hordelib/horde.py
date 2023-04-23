@@ -95,8 +95,30 @@ class HordeLib:
             self.generator = Comfy_Horde()
             self.__class__._initialised = True
 
+    def _check_payload(self, payload):
+        # valid width
+        if not isinstance(payload.get("width"), int):
+            try:
+                payload["width"] = int(payload.get("width", 64))
+            except ValueError:
+                payload["width"] = 512
+        else:
+            if payload["width"] < 64:
+                payload["width"] = 64
+        # valid height
+        if not isinstance(payload.get("height"), int):
+            try:
+                payload["height"] = int(payload.get("height", 64))
+            except ValueError:
+                payload["height"] = 512
+        else:
+            if payload["height"] < 64:
+                payload["height"] = 64
+
     def _parameter_remap(self, payload: dict[str, str | None]) -> dict[str, str | None]:
         params = {}
+        # Check payload types
+        self._check_payload(payload)
         # Extract from the payload things we understand
         for key, value in payload.items():
             newkey = HordeLib.BASIC_INFERENCE_PARAMS.get(key, None)
