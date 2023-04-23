@@ -69,7 +69,7 @@
     },
     "20": {
         "inputs": {
-            "image": "test_db0 (2).jpg",
+            "image": "test_db0 (5).jpg",
             "choose file to upload": "image"
         },
         "class_type": "LoadImage"
@@ -104,7 +104,7 @@
     },
     "33": {
         "inputs": {
-            "control_net_name": "control_scribble_fp16.safetensors",
+            "control_net_name": "diff_control_sd15_canny_fp16.safetensors",
             "model": [
                 "47",
                 0
@@ -224,18 +224,18 @@
     },
     "50": {
         "inputs": {
-            "seed": 287046928977701,
-            "steps": 15,
-            "cfg": 8.0,
+            "seed": 123456789,
+            "steps": 25,
+            "cfg": 7.5,
             "sampler_name": "dpmpp_2m",
-            "scheduler": "simple",
-            "denoise": 0.5,
+            "scheduler": "karras",
+            "denoise": 0.4999999999999998,
             "model": [
                 "47",
                 0
             ],
             "positive": [
-                "23",
+                "24",
                 0
             ],
             "negative": [
@@ -248,5 +248,36 @@
             ]
         },
         "class_type": "KSampler"
+    },
+    "53": {
+        "inputs": {
+            "images": [
+                "34",
+                0
+            ]
+        },
+        "class_type": "PreviewImage"
+    },
+    "54": {
+        "inputs": {
+            "samples": [
+                "3",
+                0
+            ],
+            "vae": [
+                "47",
+                2
+            ]
+        },
+        "class_type": "VAEDecode"
+    },
+    "55": {
+        "inputs": {
+            "images": [
+                "54",
+                0
+            ]
+        },
+        "class_type": "PreviewImage"
     }
 }
