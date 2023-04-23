@@ -117,8 +117,6 @@ class HordeLib:
 
     def _parameter_remap(self, payload: dict[str, str | None]) -> dict[str, str | None]:
         params = {}
-        # Check payload types
-        self._check_payload(payload)
         # Extract from the payload things we understand
         for key, value in payload.items():
             newkey = HordeLib.BASIC_INFERENCE_PARAMS.get(key, None)
@@ -328,6 +326,8 @@ class HordeLib:
             payload["source_image"] = self._add_image_alpha_channel(payload["source_image"], payload["source_mask"])
 
     def basic_inference(self, payload: dict[str, str | None]) -> Image.Image | None:
+        # Check payload types
+        self._check_payload(payload)
         # Validate our payload parameters
         self._validate_BASIC_INFERENCE_PARAMS(payload)
         self._resize_sources_to_request(payload)
@@ -343,6 +343,8 @@ class HordeLib:
         return Image.open(images[0]["imagedata"])
 
     def image_upscale(self, payload: dict[str, str | None]) -> Image.Image | None:
+        # Check payload types
+        self._check_payload(payload)
         # Determine our parameters
         params = self._parameter_remap(payload)
         # Determine the correct pipeline
@@ -355,6 +357,8 @@ class HordeLib:
         return Image.open(images[0]["imagedata"])
 
     def image_facefix(self, payload: dict[str, str | None]) -> Image.Image | None:
+        # Check payload types
+        self._check_payload(payload)
         # Determine our parameters
         params = self._parameter_remap(payload)
         # Determine the correct pipeline
