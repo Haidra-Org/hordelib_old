@@ -58,7 +58,7 @@ class HordeLib:
         "source_mask": None,
         "source_processing": "source_processing",
         "control_strength": "controlnet_apply.strength",
-        "hires_fix_denoising_strength": "upscale_sampler.denoise"
+        "hires_fix_denoising_strength": "upscale_sampler.denoise",
     }
 
     # Horde names on the left, our node names on the right
@@ -250,14 +250,14 @@ class HordeLib:
         # ControlNet
         if params.get("control_type"):
             if params.get("return_control_map", False):
-                pipeline = "controlnet_annotator" 
+                pipeline = "controlnet_annotator"
             else:
                 if "hires_fix" in params:
                     del params["hires_fix"]
                     pipeline = "controlnet_hires_fix"
                 else:
                     pipeline = "controlnet"
-                    
+
             return pipeline
 
         # Hires fix
