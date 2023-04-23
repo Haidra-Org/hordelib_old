@@ -366,8 +366,12 @@ class HordeLib:
         images = self.generator.run_image_pipeline(pipeline, params)
         if images is None:
             return None  # XXX Log error and/or raise Exception here
-        # XXX Assumes the horde only asks for and wants 1 image
-        return Image.open(images[0]["imagedata"])
+        # Return image(s)
+        results = [Image.open(x["imagedata"]) for x in images]
+        if len(results) == 1:
+            return results[0]
+        else:
+            return results
 
     def image_upscale(self, payload: dict[str, str | None]) -> Image.Image | None:
         # Check payload types
@@ -385,8 +389,12 @@ class HordeLib:
         height = payload.get("height")
         if width or height:
             return self._shrink_image(Image.open(images[0]["imagedata"]), width, height)
-        # XXX Assumes the horde only asks for and wants 1 image
-        return Image.open(images[0]["imagedata"])
+        # Return image(s)
+        results = [Image.open(x["imagedata"]) for x in images]
+        if len(results) == 1:
+            return results[0]
+        else:
+            return results
 
     def image_facefix(self, payload: dict[str, str | None]) -> Image.Image | None:
         # Check payload types
@@ -399,5 +407,9 @@ class HordeLib:
         images = self.generator.run_image_pipeline(pipeline, params)
         if images is None:
             return None  # XXX Log error and/or raise Exception here
-        # XXX Assumes the horde only asks for and wants 1 image
-        return Image.open(images[0]["imagedata"])
+        # Return image(s)
+        results = [Image.open(x["imagedata"]) for x in images]
+        if len(results) == 1:
+            return results[0]
+        else:
+            return results
