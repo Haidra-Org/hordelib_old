@@ -3,7 +3,9 @@
 # You need all the deps in whatever environment you are running this.
 import os
 import time
+
 from loguru import logger
+
 import hordelib
 
 
@@ -43,10 +45,11 @@ def main():
     if not pil_image:
         raise Exception("Image generation failed")
 
-    total = round(endtime-starttime, 1)
+    total = round(endtime - starttime, 1)
     itsec = round(ITS / total, 2)
 
     logger.warning(f"Total time was {total} seconds, empirical overall it/s of {itsec}")
+
 
 if __name__ == "__main__":
     main()
