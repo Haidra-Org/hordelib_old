@@ -186,7 +186,7 @@ class HordeLib:
             params["upscale_sampler.steps"] = params["sampler.steps"]
             params["upscale_sampler.sampler_name"] = params["sampler.sampler_name"]
             if not params.get("upscale_sampler.denoise"):
-                params["upscale_sampler.denoise"] = 0.5  # XXX 0.5 default upscaler denoising strength
+                params["upscale_sampler.denoise"] = 0.65  # XXX 0.65 default upscaler denoising strength
             # Adjust image sizes
             width = params.get("empty_latent_image.width", 0)
             height = params.get("empty_latent_image.height", 0)
