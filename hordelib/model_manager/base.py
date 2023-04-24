@@ -447,6 +447,7 @@ class BaseModelManager(ABC):
             return md5_hash
 
         # Calculate the hash of the source file
+        logger.info(f"Calculating file integrity check hash for {file_to_check}")
         with open(file_name, "rb") as file_to_check:
             file_hash = hashlib.md5()
             while True:
@@ -484,6 +485,7 @@ class BaseModelManager(ABC):
             return sha256_hash
 
         # Calculate the hash of the source file
+        logger.info(f"Calculating file integrity check hash for {file_to_check}")
         with open(file_name, "rb") as file_to_check:
             file_hash = hashlib.sha256()
             while True:

@@ -81,6 +81,10 @@ def inc():
 def generate_images():
     i = inc()
     logger.info(f"Thread {threading.current_thread().ident} starting iteration {i}")
+    models = list(SharedModelManager.manager.loaded_models.keys())
+    if not models:
+        time.sleep(1)
+        return
     model = random.choice(models)
     sampler = random.choice(list(SAMPLERS_MAP.keys()))
     data = {
@@ -116,6 +120,11 @@ def generate_images_cnet():
     i = inc()
     logger.info(f"Thread {threading.current_thread().ident} starting iteration {i}")
     cnet_type = random.choice(cnets)
+    models = list(SharedModelManager.manager.loaded_models.keys())
+    print(models)
+    if not models:
+        time.sleep(1)
+        return
     model = random.choice(models)
     sampler = random.choice(list(SAMPLERS_MAP.keys()))
     data = {
