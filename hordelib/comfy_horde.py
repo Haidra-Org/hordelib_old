@@ -211,7 +211,9 @@ class Comfy_Horde:
     def __init__(self) -> None:
         self._client_id = {}
         self.pipelines = {}
-        self.exit_time = 0
+        self._exit_time = 0
+        self._callers = 0
+        self._counter_mutex = threading.Lock()
         # Set custom node path
         _comfy_folder_paths["custom_nodes"] = ([os.path.join(get_hordelib_path(), "nodes")], [])
         # Load our pipelines
@@ -501,13 +503,23 @@ class Comfy_Horde:
         #   },
         # ]
         # See node_image_output.py
-        if self.exit_time:
-            idle_time = time.time() - self.exit_time
+
+        # If no callers for a while, announce it
+        if self._callers == 0 and self._exit_time:
+            idle_time = time.time() - self._exit_time
             if idle_time > 1:
                 logger.warning(f"No job ran for {round(idle_time, 3)} seconds")
 
+        # We have just been entered
+        with self._counter_mutex:
+            self._callers += 1
+
         result = self.run_pipeline(pipeline_name, params)
-        self.exit_time = time.time()
+
+        # We are being exited
+        with self._counter_mutex:
+            self._exit_time = time.time()
+            self._callers -= 1
 
         if result:
             return result["output_image"]["images"]
