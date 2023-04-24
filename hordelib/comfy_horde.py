@@ -38,12 +38,15 @@ from comfy_extras.chainner_models import model_loading as _comfy_model_loading
 # isort: on
 
 __models_to_release = {}
+__model_load_mutex = threading.Lock()
 
 
 def cleanup():
-    with _comfy_model_manager.sampler_mutex:
+    locked = _comfy_model_manager.sampler_mutex.acquire(timeout=0)
+    if locked:
         # Do we have any models waiting to be released?
         if not __models_to_release:
+            _comfy_model_manager.sampler_mutex.release()
             return
 
         # Can we release any of them?
@@ -52,6 +55,7 @@ def cleanup():
                 # We're in the middle of using it, nothing we can do
                 continue
             # Unload the model from the GPU
+            logger.debug(f"Unloading {model_name} from GPU")
             unload_model_from_gpu(model_data["model"])
             # Free ram
             if "model" in model_data:
@@ -63,13 +67,19 @@ def cleanup():
             if "clipVisionModel" in model_data:
                 del model_data["clipVisionModel"]
             del model_data
-            del __models_to_release[model_name]
+            with __model_load_mutex:
+                del __models_to_release[model_name]
             gc.collect()
+            logger.debug(f"Removal of model {model_name} completed")
+
+        _comfy_model_manager.sampler_mutex.release()
 
 
 def remove_model_from_memory(model_name, model_data):
-    with _comfy_model_manager.sampler_mutex:
+    logger.debug(f"Comfy_Horde received request to unload {model_name}")
+    with __model_load_mutex:
         if model_name not in __models_to_release:
+            logger.debug(f"Model {model_name} queued for GPU/RAM unload")
             __models_to_release[model_name] = model_data
 
 
