@@ -51,7 +51,7 @@ class GPUInfo:
         value = 0
         data = self._get_gpu_data()
         if data:
-            value = self.get(data, 'fb_memory_usage.total', '0')
+            value = self.get(data, "fb_memory_usage.total", "0")
             try:
                 value = int(value)
             except ValueError:
@@ -63,7 +63,7 @@ class GPUInfo:
         value = 0
         data = self._get_gpu_data()
         if data:
-            value = self.get(data, 'fb_memory_usage.free', '0')
+            value = self.get(data, "fb_memory_usage.free", "0")
             try:
                 value = int(value)
             except ValueError:

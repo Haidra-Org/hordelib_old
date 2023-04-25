@@ -157,10 +157,7 @@ class BaseModelManager(ABC):
             return
         for model_name in self.available_models:
             if self.have_model_cache(model_name):
-                self.add_loaded_model(
-                    model_name,
-                    self.load_from_disk_cache(model_name)
-                )
+                self.add_loaded_model(model_name, self.load_from_disk_cache(model_name))
 
     def load_from_disk_cache(self, model_name):
         return False

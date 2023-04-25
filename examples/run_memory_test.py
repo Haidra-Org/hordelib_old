@@ -1,19 +1,21 @@
 # This tests running hordelib standalone, as an external caller would use it.
 # Call with: python -m test.run_memory_test
 # You need all the deps in whatever environment you are running this.
-import psutil
-from loguru import logger
 import random
 import threading
 
+import psutil
+from loguru import logger
+
 import hordelib
+
 hordelib.initialise(setup_logging=True)
 
-from hordelib.horde import HordeLib
-from hordelib.shared_model_manager import SharedModelManager
-from hordelib.settings import UserSettings
-from hordelib.utils.gpuinfo import GPUInfo
 from hordelib.comfy_horde import cleanup
+from hordelib.horde import HordeLib
+from hordelib.settings import UserSettings
+from hordelib.shared_model_manager import SharedModelManager
+from hordelib.utils.gpuinfo import GPUInfo
 
 
 def get_ram():
@@ -90,8 +92,8 @@ def do_background_inference():
 
 
 def main():
-    horde = HordeLib()
-    gpu = GPUInfo()
+    HordeLib()
+    GPUInfo()
     SharedModelManager.loadModelManagers(compvis=True)
 
     report_ram()
@@ -125,10 +127,13 @@ def main():
                 break
         logger.warning("Filled VRAM")
         report_ram()
-        if get_free_ram() <= UserSettings.ram_to_leave_free_mb and get_free_vram() <= UserSettings.vram_to_leave_free_mb:
+        if (
+            get_free_ram() <= UserSettings.ram_to_leave_free_mb
+            and get_free_vram() <= UserSettings.vram_to_leave_free_mb
+        ):
             logger.warning("Filled RAM and VRAM")
             break
-    
+
     # From this point, any model loading will push us past our configured resource limits
 
     # Start doing background inference
@@ -146,6 +151,7 @@ def main():
     for i in range(20):
         add_model(models[model_index])
         model_index += 1
+
 
 if __name__ == "__main__":
     main()

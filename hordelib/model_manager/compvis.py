@@ -3,8 +3,8 @@ import os
 import pickle
 import typing
 
-from typing_extensions import override
 from loguru import logger
+from typing_extensions import override
 
 from hordelib.comfy_horde import horde_load_checkpoint
 from hordelib.consts import MODEL_CATEGORY_NAMES, MODEL_DB_NAMES, MODEL_FOLDER_NAMES

@@ -1,10 +1,11 @@
 import re
 
-from typing_extensions import Self
 import psutil
+from typing_extensions import Self
 
-from hordelib.utils.switch import Switch
 from hordelib.utils.gpuinfo import GPUInfo
+from hordelib.utils.switch import Switch
+
 
 class _UserSettings:
     """Container class for all user settings."""
@@ -24,9 +25,9 @@ class _UserSettings:
     def _is_percentage(self, value):
         if isinstance(value, str):
             if re.match(r"^\d+(\.\d+)?%$", value):
-                return float(value.strip('%'))
+                return float(value.strip("%"))
         return False
-    
+
     def _get_total_vram_mb(self):
         try:
             gpu = GPUInfo()
@@ -42,12 +43,12 @@ class _UserSettings:
     @property
     def vram_to_leave_free_mb(self):
         return self._vram_to_leave_free_mb
-    
+
     @vram_to_leave_free_mb.setter
     def vram_to_leave_free_mb(self, value):
         # Allow this to be expressed as a number (in MB) or a percentage
         if perc := self._is_percentage(value):
-            value = int( (perc / 100) * self._get_total_vram_mb())
+            value = int((perc / 100) * self._get_total_vram_mb())
         else:
             try:
                 value = int(value)
@@ -59,12 +60,12 @@ class _UserSettings:
     @property
     def ram_to_leave_free_mb(self):
         return self._ram_to_leave_free_mb
-    
+
     @ram_to_leave_free_mb.setter
     def ram_to_leave_free_mb(self, value):
         # Allow this to be expressed as a number (in MB) or a percentage
         if perc := self._is_percentage(value):
-            value = int( (perc / 100) * self._get_total_ram_mb())
+            value = int((perc / 100) * self._get_total_ram_mb())
         else:
             try:
                 value = int(value)
