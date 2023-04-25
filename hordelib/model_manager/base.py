@@ -172,7 +172,7 @@ class BaseModelManager(ABC):
                     return name
             return None
 
-    def ensure_memory_available(self):
+    def ensure_ram_available(self):
         # Can this type of model be cached?
         if not self.can_cache_on_disk():
             return
@@ -222,7 +222,7 @@ class BaseModelManager(ABC):
         **kwargs,
     ):  # XXX # FIXME
         with self._mutex:
-            self.ensure_memory_available()
+            self.ensure_ram_available()
             local = self.is_local_model(model_name)
             if not local and model_name not in self.model_reference:
                 logger.error(f"{model_name} not found")
