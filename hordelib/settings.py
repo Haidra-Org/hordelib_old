@@ -3,7 +3,7 @@ import re
 import psutil
 from typing_extensions import Self
 
-from hordelib.utils.gpuinfo import GPUInfo
+from hordelib import is_initialised
 from hordelib.utils.switch import Switch
 
 
@@ -30,6 +30,13 @@ class _UserSettings:
         return False
 
     def _get_total_vram_mb(self):
+        # This might not be pretty, but it allows the import of hordelib on systems
+        # which don't actually have a GPU (e.g. github ci containers)
+        if not is_initialised():
+            return 0
+
+        from hordelib.utils.gpuinfo import GPUInfo
+
         try:
             gpu = GPUInfo()
             return gpu.get_total_vram_mb()
