@@ -393,7 +393,7 @@ class BaseModelManager(ABC):
         logger.debug(f"Model manager done with unload request for model {model_name}")
 
     def free_model_resources(self, model_name: str):
-        logger.debug(f"Received request to free model resources for {model_name}")
+        logger.debug(f"Received request to free model memory resources for {model_name}")
         with self._mutex:
             remove_model_from_memory(model_name, self.get_loaded_model(model_name))
 
