@@ -19,8 +19,9 @@ class _UserSettings:
         return cls._instance
 
     def __init__(self):
-        self._vram_to_leave_free_mb = 2048
-        self._ram_to_leave_free_mb = 4 * 1024
+        # Default to 50% resource usage
+        self.vram_to_leave_free_mb = "50%"
+        self.ram_to_leave_free_mb = "50%"
 
     def _is_percentage(self, value):
         if isinstance(value, str):
