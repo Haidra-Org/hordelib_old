@@ -81,5 +81,8 @@ class _UserSettings:
     # FIXME We should enable these, but don't yet
     disable_download_progress = Switch()
 
+    # Disable disk caching completely
+    disable_disk_cache = Switch()
+
 
 UserSettings = _UserSettings()
