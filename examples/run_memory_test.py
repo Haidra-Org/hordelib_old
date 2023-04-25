@@ -21,11 +21,19 @@ def get_ram():
     return (int(total_ram_mb), int(used_ram), int(free_ram))
 
 
-def report_ram():
+def get_free_ram():
+    _, _, free = get_ram()
+    return free
+
+
+def get_free_vram():
     gpu = GPUInfo()
-    total, used, free = get_ram()
-    logger.warning(f"Free RAM {free} MB")
-    logger.warning(f"Free VRAM {gpu.get_free_vram_mb()} MB")
+    return gpu.get_free_vram_mb()
+
+
+def report_ram():
+    logger.warning(f"Free RAM {get_free_ram()} MB")
+    logger.warning(f"Free VRAM {get_free_vram()} MB")
 
 
 def add_model(model_name):
@@ -38,13 +46,37 @@ def get_available_models():
     return models
 
 
+def do_inference(model_name):
+    """Do some work on the GPU"""
+    horde = HordeLib()
+    data = {
+        "sampler_name": "euler_a",
+        "cfg_scale": 7.5,
+        "denoising_strength": 1.0,
+        "seed": 123456789,
+        "height": 512,
+        "width": 512,
+        "karras": True,
+        "tiling": False,
+        "hires_fix": False,
+        "clip_skip": 1,
+        "control_type": None,
+        "image_is_control": False,
+        "return_control_map": False,
+        "prompt": "an ancient llamia monster",
+        "ddim_steps": 15,
+        "n_iter": 1,
+        "model": model_name,
+    }
+    pil_image = horde.basic_inference(data)
+
+
 def main():
     horde = HordeLib()
     gpu = GPUInfo()
     SharedModelManager.loadModelManagers(compvis=True)
 
     report_ram()
-    total, used, free = get_ram()
 
     # Reserve 50% of our ram
     UserSettings.ram_to_leave_free_mb = "50%"
@@ -53,6 +85,35 @@ def main():
     # Reserve 50% of our vram
     UserSettings.vram_to_leave_free_mb = "50%"
     logger.warning(f"Keep {UserSettings.vram_to_leave_free_mb} MB VRAM free")
+
+    # Get to our limits by loading models
+    models = get_available_models()
+    model_index = 0
+    while True:
+        # First we fill ram
+        logger.warning("RAM available. Filling RAM")
+        while get_free_ram() > UserSettings.ram_to_leave_free_mb:
+            add_model(models[model_index])
+            model_index += 1
+        # Move models into VRAM until we reach our limit
+        logger.warning("Filled RAM, now filling VRAM by moving from RAM to VRAM")
+        index = 0
+        while get_free_vram() > UserSettings.vram_to_leave_free_mb:
+            # Move to GPU by using the model
+            do_inference(SharedModelManager.manager.get_loaded_models_names()[index])
+            index += 1
+            if index >= len(SharedModelManager.manager.loaded_models):
+                # Maybe our vram is larger than our ram
+                break
+        logger.warning("Filled VRAM")
+        report_ram()
+        if get_free_ram() <= UserSettings.ram_to_leave_free_mb and get_free_vram() <= UserSettings.vram_to_leave_free_mb:
+            logger.warning("Filled RAM and VRAM")
+            break
+    
+    # From this point, any model loading will push us past our configured limits
+    add_model(models[model_index])
+    model_index += 1
 
 
 if __name__ == "__main__":

@@ -180,7 +180,7 @@ class BaseModelManager(ABC):
             # If we have less than the minimum RAM free, free some up
             freemem = round(psutil.virtual_memory().available / (1024 * 1024))
             logger.debug(f"Free RAM is: {freemem} MB, ({len(self.get_loaded_models())} models loaded in RAM)")
-            if freemem > UserSettings.ram_to_leave_free_mb + 4096:
+            if freemem > UserSettings.ram_to_leave_free_mb:
                 return
             logger.debug("Not enough free RAM attempting to free some")
             # Grab a list of models (ModelPatcher) that are loaded on the gpu
