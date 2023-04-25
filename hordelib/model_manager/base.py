@@ -21,7 +21,7 @@ from tqdm import tqdm
 from transformers import logging
 
 from hordelib.cache import get_cache_directory
-from hordelib.comfy_horde import get_models_on_gpu, remove_model_from_memory
+from hordelib.comfy_horde import cleanup, get_models_on_gpu, remove_model_from_memory
 from hordelib.comfy_horde import get_torch_device as _get_torch_device
 from hordelib.config_path import get_hordelib_path
 from hordelib.consts import REMOTE_MODEL_DB
@@ -184,37 +184,48 @@ class BaseModelManager(ABC):
                     return name
             return None
 
+    def get_free_ram_mb(self):
+        return int(psutil.virtual_memory().available / (1024 * 1024))
+
     def ensure_ram_available(self):
-        # Can this type of model be cached?
-        if not self.can_cache_on_disk():
-            return
         with self._mutex:
             # If we have less than the minimum RAM free, free some up
-            freemem = round(psutil.virtual_memory().available / (1024 * 1024))
-            logger.debug(f"Free RAM is: {freemem} MB, ({len(self.get_loaded_models())} models loaded in RAM)")
-            if freemem > UserSettings.ram_to_leave_free_mb:
-                return
-            logger.debug("Not enough free RAM attempting to free some")
-            # Grab a list of models (ModelPatcher) that are loaded on the gpu
-            # These are actually returned with the least important at the bottom of the list
-            busy_models = get_models_on_gpu()
-            # Try to find one we have in ram that isn't on the gpu
-            idle_model = None
-            for ram_model_name, ram_model_data in self.get_loaded_models().items():
-                if type(ram_model_data["model"]) is not str and ram_model_data["model"] not in busy_models:
-                    idle_model = ram_model_name
-                    break
-            # If we didn't have one hanging around in ram not on the gpu
-            # pick the least used gpu model
-            if not idle_model and busy_models:
-                idle_model = self._modelref_to_name(busy_models[-1])
+            attempts = 2  # if ram isn't being released yet, no point keep trying
+            while freemem := self.get_free_ram_mb() < UserSettings.ram_to_leave_free_mb and attempts:
+                logger.debug(f"Free RAM is: {freemem} MB, ({len(self.get_loaded_models())} models loaded in RAM)")
+                logger.debug("Not enough free RAM attempting to free some")
+                # Grab a list of models (ModelPatcher) that are loaded on the gpu
+                # These are actually returned with the least important at the bottom of the list
+                busy_models = get_models_on_gpu()
+                # Try to find one we have in ram that isn't on the gpu
+                idle_model = None
+                for ram_model_name, ram_model_data in self.get_loaded_models().items():
+                    if type(ram_model_data["model"]) is not str and ram_model_data["model"] not in busy_models:
+                        idle_model = ram_model_name
+                        break
+                # If we didn't have one hanging around in ram not on the gpu
+                # pick the least used gpu model
+                if not idle_model and busy_models:
+                    idle_model = self._modelref_to_name(busy_models[-1])
 
-            if idle_model:
-                logger.debug(f"Moving model {idle_model} to disk to free up RAM")
-                self.move_to_disk_cache(idle_model)
-            else:
-                # Nothing else to release
-                logger.debug("Could not find a model to free RAM")
+                if idle_model:
+                    # Can this type of model be cached?
+                    if self.can_cache_on_disk():
+                        logger.debug(f"Moving model {idle_model} to disk to free up RAM")
+                        self.move_to_disk_cache(idle_model)
+                        # Try to release ram right now
+                        cleanup()
+                    else:
+                        # Unload the model to free ram
+                        self.unload_model(idle_model)
+                        # Try to release ram right now
+                        cleanup()
+                else:
+                    # Nothing else to release
+                    logger.debug("Could not find a model to free RAM")
+
+                # Try again if we must
+                attempts -= 1
 
     # @abstractmethod # TODO
     def move_to_disk_cache(self, model_name):

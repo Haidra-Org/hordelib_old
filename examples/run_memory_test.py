@@ -20,6 +20,8 @@ from hordelib.utils.gpuinfo import GPUInfo
 
 # Set this to where you want the model to go
 os.environ["AIWORKER_TEMP_DIR"] = ""
+# Disable the disk cache
+# UserSettings.disable_disk_cache.activate()
 
 
 def get_ram():
