@@ -6,10 +6,10 @@ import typing
 from loguru import logger
 from typing_extensions import override
 
+from hordelib import UserSettings
 from hordelib.comfy_horde import horde_load_checkpoint
 from hordelib.consts import MODEL_CATEGORY_NAMES, MODEL_DB_NAMES, MODEL_FOLDER_NAMES
 from hordelib.model_manager.base import BaseModelManager
-from hordelib import UserSettings
 
 
 class CompVisModelManager(BaseModelManager):
@@ -51,7 +51,7 @@ class CompVisModelManager(BaseModelManager):
 
     def can_cache_on_disk(self):
         """Can this of type model be cached on disk?"""
-        if UserSettings.disable_disk_cache:
+        if UserSettings.disable_disk_cache.active:
             return False
         return True
 

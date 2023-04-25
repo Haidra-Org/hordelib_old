@@ -10,14 +10,13 @@ from loguru import logger
 
 import hordelib
 
-hordelib.initialise(setup_logging=True)
+hordelib.initialise(setup_logging=False)
 
 from hordelib.comfy_horde import cleanup
 from hordelib.horde import HordeLib
 from hordelib.settings import UserSettings
 from hordelib.shared_model_manager import SharedModelManager
 from hordelib.utils.gpuinfo import GPUInfo
-
 
 # Set this to where you want the model to go
 os.environ["AIWORKER_TEMP_DIR"] = ""
@@ -90,8 +89,9 @@ def do_background_inference():
     """Keep doing inference using random loaded models. To be run in a background thread."""
     count = 1
     while True:
-        model = random.choice(SharedModelManager.manager.get_loaded_models_names())
-        logger.info(f"Doing inference iteraton {count} with model {model}")
+        models = SharedModelManager.manager.get_loaded_models_names()
+        model = random.choice(models)
+        logger.info(f"Doing inference iteraton {count} with model {model} ({len(models)} models loaded)")
         do_inference(model)
         count += 1
 
