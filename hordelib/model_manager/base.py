@@ -104,6 +104,7 @@ class BaseModelManager(ABC):
         self.remote_db = f"{REMOTE_MODEL_DB}{self.models_db_name}.json"
         self.download_reference = download_reference
         self.loadModelDatabase()
+        self.load_disk_cached_models()
 
     def loadModelDatabase(self, list_models=False):
         if self.model_reference:
@@ -149,6 +150,20 @@ class BaseModelManager(ABC):
         if list_models:
             for model in self.available_models:
                 logger.info(model)
+
+    def load_disk_cached_models(self):
+        """Assume we've already loaded any disk cached models"""
+        if not self.can_cache_on_disk():
+            return
+        for model_name in self.available_models:
+            if self.have_model_cache(model_name):
+                self.add_loaded_model(
+                    model_name,
+                    self.load_from_disk_cache(model_name)
+                )
+
+    def load_from_disk_cache(self, model_name):
+        return False
 
     def download_model_reference(self):
         try:

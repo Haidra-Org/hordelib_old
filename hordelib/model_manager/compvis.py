@@ -4,6 +4,7 @@ import pickle
 import typing
 
 from typing_extensions import override
+from loguru import logger
 
 from hordelib.comfy_horde import horde_load_checkpoint
 from hordelib.consts import MODEL_CATEGORY_NAMES, MODEL_DB_NAMES, MODEL_FOLDER_NAMES
@@ -69,6 +70,16 @@ class CompVisModelManager(BaseModelManager):
             if model_timestamp <= cache_timestamp:
                 return True
         return False
+
+    def load_from_disk_cache(self, model_name):
+        filename = self.get_model_cache_filename(model_name)
+        logger.info(f"Model {model_name} warm loaded from disk cache")
+        return {
+            "model": filename,
+            "clip": filename,
+            "vae": filename,
+            "clipVisionModel": None,
+        }
 
     def move_to_disk_cache(self, model_name):
         with self._mutex:

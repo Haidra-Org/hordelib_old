@@ -45,7 +45,7 @@ class HordeCheckpointLoader:
 
         # If we got strings, not objects, it's a cache reference, load the cache
         if type(model) is str:
-            logger.info("Loading model data from disk cache")
+            logger.info(f"Loading from disk cache model {model_name}")
             model_cache = model
             try:
                 with open(model, "rb") as cache:
