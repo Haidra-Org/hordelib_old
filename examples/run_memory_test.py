@@ -106,12 +106,12 @@ def main():
     report_ram()
 
     # Reserve 50% of our ram
-    UserSettings.ram_to_leave_free_mb = "50%"
-    logger.warning(f"Keep {UserSettings.ram_to_leave_free_mb} MB RAM free")
+    UserSettings.set_ram_to_leave_free_mb("50%")
+    logger.warning(f"Keep {UserSettings.get_ram_to_leave_free_mb()} MB RAM free")
 
     # Reserve 50% of our vram
-    UserSettings.vram_to_leave_free_mb = "50%"
-    logger.warning(f"Keep {UserSettings.vram_to_leave_free_mb} MB VRAM free")
+    UserSettings.set_vram_to_leave_free_mb("50%")
+    logger.warning(f"Keep {UserSettings.get_vram_to_leave_free_mb()} MB VRAM free")
 
     # Get to our limits by loading models
     models = get_available_models()
@@ -119,13 +119,13 @@ def main():
     while True:
         # First we fill ram
         logger.warning("RAM available. Filling RAM")
-        while get_free_ram() > UserSettings.ram_to_leave_free_mb:
+        while get_free_ram() > UserSettings.get_ram_to_leave_free_mb():
             add_model(models[model_index])
             model_index += 1
         # Move models into VRAM until we reach our limit
         logger.warning("Filled RAM, now filling VRAM by moving from RAM to VRAM")
         index = 0
-        while get_free_vram() > UserSettings.vram_to_leave_free_mb:
+        while get_free_vram() > UserSettings.get_vram_to_leave_free_mb():
             # Move to GPU by using the model
             do_inference(SharedModelManager.manager.get_loaded_models_names()[index])
             index += 1
@@ -135,8 +135,8 @@ def main():
         logger.warning("Filled VRAM")
         report_ram()
         if (
-            get_free_ram() <= UserSettings.ram_to_leave_free_mb
-            and get_free_vram() <= UserSettings.vram_to_leave_free_mb
+            get_free_ram() <= UserSettings.get_ram_to_leave_free_mb()
+            and get_free_vram() <= UserSettings.get_vram_to_leave_free_mb()
         ):
             logger.warning("Filled RAM and VRAM")
             break

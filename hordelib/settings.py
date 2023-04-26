@@ -12,24 +12,26 @@ class UserSettings:
 
     _instance: Self | None = None
 
+    _ram_to_leave_free_mb: int
+    """The amount of RAM to leave free, defaults to 50%, can be expressed as a number of MB or a percentage."""
+    _vram_to_leave_free_mb: int
+    """The amount of VRAM to leave free, defaults to 50% of the current machines VRAM, can be expressed as a number of
+     MB or a percentage."""
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-
         return cls._instance
 
-    def __init__(self):
-        # Default to 50% resource usage
-        self.vram_to_leave_free_mb = "50%"
-        self.ram_to_leave_free_mb = "50%"
-
-    def _is_percentage(self, value):
+    @staticmethod
+    def _is_percentage(value) -> float | bool:
         if isinstance(value, str):
             if re.match(r"^\d+(\.\d+)?%$", value):
                 return float(value.strip("%"))
         return False
 
-    def _get_total_vram_mb(self):
+    @staticmethod
+    def _get_total_vram_mb() -> int:
         # This might not be pretty, but it allows the import of hordelib on systems
         # which don't actually have a GPU (e.g. github ci containers)
         if not is_initialised():
@@ -43,43 +45,60 @@ class UserSettings:
         except Exception:
             return 0
 
-    def _get_total_ram_mb(self):
+    @staticmethod
+    def _get_total_ram_mb() -> int:
         virtual_memory = psutil.virtual_memory()
         return virtual_memory.total / (1024 * 1024)
 
     # Hordelib will try to leave at least this much VRAM free
-    @property
-    def vram_to_leave_free_mb(self):
-        return self._vram_to_leave_free_mb
 
-    @vram_to_leave_free_mb.setter
-    def vram_to_leave_free_mb(self, value):
+    @classmethod
+    def get_vram_to_leave_free_mb(cls) -> int:
+        """Get the amount of VRAM being left free."""
+        if not hasattr(cls, "_vram_to_leave_free_mb") or cls._vram_to_leave_free_mb is None:
+            cls.set_vram_to_leave_free_mb("50%")
+        return cls._vram_to_leave_free_mb
+
+    @classmethod
+    def set_vram_to_leave_free_mb(cls, value: str | int) -> None:
+        """Set the amount of VRAM to leave free.
+
+        Args:
+            value (str | int): The amount of VRAM to leave free. Can be expressed as a number of MB or a percentage.
+        """
         # Allow this to be expressed as a number (in MB) or a percentage
-        if perc := self._is_percentage(value):
-            value = int((perc / 100) * self._get_total_vram_mb())
+        if perc := cls._is_percentage(value):
+            value = int((perc / 100) * cls._get_total_vram_mb())
         else:
             try:
                 value = int(value)
             except ValueError:
                 value = 0
-        self._vram_to_leave_free_mb = value
+        cls._vram_to_leave_free_mb = value
 
     # Hordelib will try to leave at least this much system RAM free
-    @property
-    def ram_to_leave_free_mb(self):
-        return self._ram_to_leave_free_mb
+    @classmethod
+    def get_ram_to_leave_free_mb(cls) -> int:
+        """Get the amount of RAM being left free."""
+        if not hasattr(cls, "_ram_to_leave_free_mb") or cls._ram_to_leave_free_mb is None:
+            cls.set_ram_to_leave_free_mb("50%")
+        return cls._ram_to_leave_free_mb
 
-    @ram_to_leave_free_mb.setter
-    def ram_to_leave_free_mb(self, value):
-        # Allow this to be expressed as a number (in MB) or a percentage
-        if perc := self._is_percentage(value):
-            value = int((perc / 100) * self._get_total_ram_mb())
+    @classmethod
+    def set_ram_to_leave_free_mb(cls, value) -> None:
+        """Set the amount of VRAM to leave free.
+
+        Args:
+            value (str | int): The amount of VRAM to leave free. Can be expressed as a number of MB or a percentage.
+        """
+        if perc := cls._is_percentage(value):
+            value = int((perc / 100) * cls._get_total_ram_mb())
         else:
             try:
                 value = int(value)
             except ValueError:
                 value = 0
-        self._ram_to_leave_free_mb = value
+        cls._ram_to_leave_free_mb = value
 
     # Disable the use of xformers
     disable_xformers = Switch()
@@ -92,5 +111,4 @@ class UserSettings:
     disable_disk_cache = Switch()
 
 
-# This a singleton, but it needs to be initialised before use, and keeping a reference here keeps it active.
 _UserSettings = UserSettings()

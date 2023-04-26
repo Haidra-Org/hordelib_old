@@ -191,7 +191,7 @@ class BaseModelManager(ABC):
         with self._mutex:
             # If we have less than the minimum RAM free, free some up
             attempts = 2  # if ram isn't being released yet, no point keep trying
-            while freemem := self.get_free_ram_mb() < UserSettings.ram_to_leave_free_mb and attempts:
+            while freemem := self.get_free_ram_mb() < UserSettings.get_ram_to_leave_free_mb() and attempts:
                 logger.debug(f"Free RAM is: {freemem} MB, ({len(self.get_loaded_models())} models loaded in RAM)")
                 logger.debug("Not enough free RAM attempting to free some")
                 # Grab a list of models (ModelPatcher) that are loaded on the gpu
