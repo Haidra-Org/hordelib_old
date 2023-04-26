@@ -37,7 +37,7 @@ class TestSharedModelManager:
         SharedModelManager.manager = None
 
     def test_singleton(self):
-        a = SharedModelManager()
+        a = SharedModelManager._instance
         b = SharedModelManager()
         assert a.manager is b.manager
 

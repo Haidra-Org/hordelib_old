@@ -88,3 +88,7 @@ class SharedModelManager:
             return False
 
         return True
+
+
+# This a singleton, but it may need to be initialised before use, and keeping a reference here keeps it active.
+_SharedModelManager = SharedModelManager()

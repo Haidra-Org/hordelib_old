@@ -7,7 +7,7 @@ from hordelib import is_initialised
 from hordelib.utils.switch import Switch
 
 
-class _UserSettings:
+class UserSettings:
     """Container class for all user settings."""
 
     _instance: Self | None = None
@@ -92,4 +92,5 @@ class _UserSettings:
     disable_disk_cache = Switch()
 
 
-UserSettings = _UserSettings()
+# This a singleton, but it needs to be initialised before use, and keeping a reference here keeps it active.
+_UserSettings = UserSettings()
