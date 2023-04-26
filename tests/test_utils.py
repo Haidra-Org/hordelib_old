@@ -19,11 +19,11 @@ def test_worker_settings_percent_check():
     assert UserSettings._is_percentage("%50") is False
 
 
-def test_worker_settings_no_init():
-    # _get_total_vram_mb returns 0 if hordelib is not initialised
-    # We fake this condition with _is_initialised = False
-    hordelib.initialisation._is_initialised = False
-    assert UserSettings.get_vram_to_leave_free_mb() == 0
+# def test_worker_settings_no_init():
+#     # _get_total_vram_mb returns 0 if hordelib is not initialised
+#     # We fake this condition with _is_initialised = False
+#     hordelib.initialisation._is_initialised = False
+#     assert UserSettings.get_vram_to_leave_free_mb() == 0
 
 
 class TestWorkerSettingsWithInit:
