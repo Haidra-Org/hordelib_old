@@ -1,3 +1,4 @@
+import os
 import platform
 import time
 from io import BytesIO
@@ -55,6 +56,19 @@ def get_os():
 
 
 def main():
+    if not os.getenv("AIWORKER_CACHE_HOME"):
+        print("No model directory found. Environmental variable AIWORKER_CACHE_HOME is not set.")
+        exit(1)
+
+    try:
+        gpu = GPUInfo().get_info()
+        gpu_name = gpu["product"]
+        gpu_vram = gpu["vram_total"]
+    except Exception:
+        gpu = "unknown"
+        gpu_name = ""
+        gpu_vram = ""
+
     delta("initialisation")
     import hordelib
 
@@ -154,13 +168,6 @@ def main():
     cnet_raw_its = round(max_iterations / (last - cnet_overhead), 1)
     if not pil_image:
         raise Exception("Image generation failed")
-
-    try:
-        gpu = GPUInfo().get_info()
-        gpu_name = gpu["product"]
-        gpu_vram = gpu["vram_total"]
-    except Exception:
-        gpu = "unknown"
 
     # Display Results
     print()
