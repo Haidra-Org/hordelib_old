@@ -18,8 +18,8 @@ from hordelib.settings import UserSettings
 from hordelib.shared_model_manager import SharedModelManager
 from hordelib.utils.gpuinfo import GPUInfo
 
-# Set this to where you want the model to go
-os.environ["AIWORKER_TEMP_DIR"] = ""
+# Set this to where you want the model cache to go
+os.environ["AIWORKER_TEMP_DIR"] = "d:/temp/ray"
 # Disable the disk cache
 # UserSettings.disable_disk_cache.activate()
 
@@ -85,6 +85,8 @@ def do_inference(model_name):
     pil_image = horde.basic_inference(data)
     if not pil_image:
         logger.error("Inference is failing to generate images")
+    else:
+        pil_image.save(f"images/stresstest/{model_name}.webp", quality=90)
 
 
 def do_background_inference():
@@ -104,6 +106,17 @@ def main():
     SharedModelManager.loadModelManagers(compvis=True)
 
     report_ram()
+
+    add_model("Papercut Diffusion")
+    SharedModelManager.manager.compvis.move_to_disk_cache("Papercut Diffusion")
+    add_model("Graphic-Art")
+    SharedModelManager.manager.compvis.move_to_disk_cache("Graphic-Art")
+
+    # We may have just fast-loaded a bunch of cached models, do some inference with each of them
+    logger.warning("Validating cached model files")
+    for model in SharedModelManager.manager.get_loaded_models_names():
+        do_inference(model)
+    logger.warning("Model cache files validation completed.")
 
     # Reserve 50% of our ram
     UserSettings.set_ram_to_leave_free_mb("50%")
@@ -125,7 +138,7 @@ def main():
         # Move models into VRAM until we reach our limit
         logger.warning("Filled RAM, now filling VRAM by moving from RAM to VRAM")
         index = 0
-        while get_free_vram() > UserSettings.get_vram_to_leave_free_mb():
+        while get_free_vram() - 2000 > (UserSettings.get_vram_to_leave_free_mb()):
             # Move to GPU by using the model
             do_inference(SharedModelManager.manager.get_loaded_models_names()[index])
             index += 1
@@ -134,18 +147,19 @@ def main():
                 break
         logger.warning("Filled VRAM")
         report_ram()
-        if (
-            get_free_ram() <= UserSettings.get_ram_to_leave_free_mb()
-            and get_free_vram() <= UserSettings.get_vram_to_leave_free_mb()
-        ):
-            logger.warning("Filled RAM and VRAM")
-            break
+        # if (
+        #     get_free_ram() <= UserSettings.get_ram_to_leave_free_mb()
+        #     and get_free_vram() - 2000 <= UserSettings.get_vram_to_leave_free_mb()
+        # ):
+        #     logger.warning("Filled RAM and VRAM")
+        #     break
+        break
 
     # From this point, any model loading will push us past our configured resource limits
 
     # Start doing background inference
-    thread = threading.Thread(daemon=True, target=do_background_inference)
-    thread.start()
+    #thread = threading.Thread(daemon=True, target=do_background_inference)
+    #thread.start()
 
     # Push us past our limits
     add_model(models[model_index])
@@ -155,7 +169,7 @@ def main():
     report_ram()
 
     # Keep loading models whilst doing inference, ram and vram should remain stable
-    for i in range(20):
+    for i in range(200):
         add_model(models[model_index])
         model_index += 1
 
