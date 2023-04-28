@@ -158,8 +158,8 @@ def main():
     # From this point, any model loading will push us past our configured resource limits
 
     # Start doing background inference
-    #thread = threading.Thread(daemon=True, target=do_background_inference)
-    #thread.start()
+    # thread = threading.Thread(daemon=True, target=do_background_inference)
+    # thread.start()
 
     # Push us past our limits
     add_model(models[model_index])
