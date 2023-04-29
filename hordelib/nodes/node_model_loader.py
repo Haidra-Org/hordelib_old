@@ -54,7 +54,9 @@ class HordeCheckpointLoader:
                     model = pickle.load(cache)
                     vae = pickle.load(cache)
                     clip = pickle.load(cache)
-                logger.info(f"Loaded model {model_name} from disk cache in {round(time.time() - start_time, 1)} seconds")
+                logger.info(
+                    f"Loaded model {model_name} from disk cache in {round(time.time() - start_time, 1)} seconds",
+                )
             except (pickle.PickleError, EOFError):
                 # Most likely corrupt cache file, remove the file
                 with contextlib.suppress(OSError):
