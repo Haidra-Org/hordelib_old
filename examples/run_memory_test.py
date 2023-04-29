@@ -4,6 +4,7 @@
 import os
 import random
 import threading
+import time
 
 import psutil
 from loguru import logger
@@ -22,6 +23,9 @@ from hordelib.utils.gpuinfo import GPUInfo
 os.environ["AIWORKER_TEMP_DIR"] = "d:/temp/ray"
 # Disable the disk cache
 # UserSettings.disable_disk_cache.activate()
+
+# Do inference with all cached models
+VALIDATE_ALL_CACHED_MODELS = False
 
 
 def get_ram():
@@ -113,10 +117,11 @@ def main():
     SharedModelManager.manager.compvis.move_to_disk_cache("Graphic-Art")
 
     # We may have just fast-loaded a bunch of cached models, do some inference with each of them
-    logger.warning("Validating cached model files")
-    for model in SharedModelManager.manager.get_loaded_models_names():
-        do_inference(model)
-    logger.warning("Model cache files validation completed.")
+    if VALIDATE_ALL_CACHED_MODELS:
+        logger.warning("Validating cached model files")
+        for model in SharedModelManager.manager.get_loaded_models_names():
+            do_inference(model)
+        logger.warning("Model cache files validation completed.")
 
     # Reserve 50% of our ram
     UserSettings.set_ram_to_leave_free_mb("50%")
@@ -129,12 +134,15 @@ def main():
     # Get to our limits by loading models
     models = get_available_models()
     model_index = 0
-    while True:
+    while model_index < len(SharedModelManager.manager.get_available_models()):
         # First we fill ram
         logger.warning("RAM available. Filling RAM")
         while get_free_ram() > UserSettings.get_ram_to_leave_free_mb():
-            add_model(models[model_index])
-            model_index += 1
+            if model_index < len(SharedModelManager.manager.get_available_models()):
+                add_model(models[model_index])
+                model_index += 1
+            else:
+                break
         # Move models into VRAM until we reach our limit
         logger.warning("Filled RAM, now filling VRAM by moving from RAM to VRAM")
         index = 0
@@ -158,20 +166,27 @@ def main():
     # From this point, any model loading will push us past our configured resource limits
 
     # Start doing background inference
-    # thread = threading.Thread(daemon=True, target=do_background_inference)
-    # thread.start()
+    thread = threading.Thread(daemon=True, target=do_background_inference)
+    thread.start()
 
     # Push us past our limits
-    add_model(models[model_index])
-    model_index += 1
+    if model_index < len(SharedModelManager.manager.get_available_models()):
+        add_model(models[model_index])
+        model_index += 1
     # That would have pushed something to disk, force a memory cleanup
     cleanup()
     report_ram()
 
     # Keep loading models whilst doing inference, ram and vram should remain stable
-    for i in range(200):
+    while model_index < len(SharedModelManager.manager.get_available_models()):
         add_model(models[model_index])
         model_index += 1
+
+    logger.warning("Loaded all models")
+
+    while True:
+        # Keeping doing inference
+        time.sleep(5)
 
 
 if __name__ == "__main__":
