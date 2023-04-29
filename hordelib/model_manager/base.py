@@ -188,6 +188,9 @@ class BaseModelManager(ABC):
         return int(psutil.virtual_memory().available / (1024 * 1024))
 
     def ensure_ram_available(self):
+        # Don't even consider this for models that can't be disk cached
+        if not self.can_cache_on_disk():
+            return
         with self._mutex:
             # If we have less than the minimum RAM free, free some up
             attempts = 2  # if ram isn't being released yet, no point keep trying
