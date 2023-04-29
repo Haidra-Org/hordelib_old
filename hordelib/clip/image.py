@@ -106,11 +106,12 @@ class ImageEmbed:
         if not skip_cache:
             cached = self.cache.get(pil_hash=image_hash)
             if cached:
-                logger.debug(f"Image {image_hash} already in cache")
+                # logger.debug(f"Image {image_hash} already in cache")
                 return image_hash
         else:
-            logger.debug(f"Skipping cache for image {image_hash}")
-        logger.debug(f"Embedding image {image_hash}")
+            pass
+            # logger.debug(f"Skipping cache for image {image_hash}")
+        # logger.debug(f"Embedding image {image_hash}")
         with torch.no_grad():
             preprocess_image = self.model["preprocess"](pil_image).unsqueeze(0).to(self.model["device"])
         image_features = self.model["model"].encode_image(preprocess_image).float()
