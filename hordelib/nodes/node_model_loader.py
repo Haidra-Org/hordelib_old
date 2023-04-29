@@ -4,6 +4,7 @@
 import contextlib
 import os
 import pickle
+import time
 
 from loguru import logger
 
@@ -45,6 +46,7 @@ class HordeCheckpointLoader:
 
         # If we got strings, not objects, it's a cache reference, load the cache
         if type(model) is str:
+            start_time = time.time()
             logger.info(f"Loading from disk cache model {model_name}")
             model_cache = model
             try:
@@ -52,6 +54,7 @@ class HordeCheckpointLoader:
                     model = pickle.load(cache)
                     vae = pickle.load(cache)
                     clip = pickle.load(cache)
+                logger.info(f"Loaded model {model_name} from disk cache in {round(time.time() - start_time, 1)} seconds")
             except (pickle.PickleError, EOFError):
                 # Most likely corrupt cache file, remove the file
                 with contextlib.suppress(OSError):
