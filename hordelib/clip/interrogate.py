@@ -46,23 +46,24 @@ class Interrogator:
         If individual is True, self.embed_lists[key] will be a dict with text as key and embed as value.
         If individual is False, self.embed_lists[key] will be a tensor of all text embeds concatenated.
         """
-        logger.debug(f"key: {key}, text_array: {text_array}, individual: {individual}")
+        # logger.debug(f"key: {key}, text_array: {text_array}, individual: {individual}")
         cached = True
         for text in text_array:
             text_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
             if self.cache.get(file_hash=text_hash) is None:
                 cached = False
-                logger.debug(f"{text} not cached")
+                # logger.debug(f"{text} not cached")
                 break
         if not cached:
-            logger.debug(f"Embedding {key}...")
+            # logger.debug(f"Embedding {key}...")
             text_embed = TextEmbed(self.model_info, self.cache)
             for text in text_array:
-                logger.debug(f"Embedding {text}")
+                # logger.debug(f"Embedding {text}")
                 text_embed(text)
         else:
-            logger.debug(f"{key} embeds already cached")
-        logger.debug(f"Loading {key} embeds")
+            pass
+            # logger.debug(f"{key} embeds already cached")
+        # logger.debug(f"Loading {key} embeds")
         if individual:
             self.embed_lists[key] = {}
             for text in text_array:
@@ -146,9 +147,9 @@ class Interrogator:
         :return: dict of {text: similarity}
         """
         if key not in self.embed_lists:
-            logger.debug(f"Loading {key} embeds")
+            # logger.debug(f"Loading {key} embeds")
             self.load(key, text_array, individual=True, device=device)
-        logger.debug(f"{len(text_array)} text_array: {text_array}")
+        # logger.debug(f"{len(text_array)} text_array: {text_array}")
         similarity = {}
         for text in text_array:
             text_features = self.embed_lists[key][text].to(device)
@@ -250,7 +251,7 @@ class Interrogator:
                     k,
                     self.model_info["device"],
                 )
-                logger.debug(f"{k}: {results[k]}")
+                # logger.debug(f"{k}: {results[k]}")
             return results
         if rank and not similarity:
             results = {}
@@ -262,7 +263,7 @@ class Interrogator:
                     self.model_info["device"],
                     top_count,
                 )
-                logger.debug(f"{k}: {results[k]}")
+                # logger.debug(f"{k}: {results[k]}")
             return results
         else:
             similarity = {}
@@ -273,7 +274,7 @@ class Interrogator:
                     k,
                     self.model_info["device"],
                 )
-                logger.debug(f"{k}: {similarity[k]}")
+                # logger.debug(f"{k}: {similarity[k]}")
             rank = {}
             for k in text_array:
                 rank[k] = self.rank(
@@ -283,7 +284,7 @@ class Interrogator:
                     self.model_info["device"],
                     top_count,
                 )
-                logger.debug(f"{k}: {rank[k]}")
+                # logger.debug(f"{k}: {rank[k]}")
             return {
                 "similarity": similarity,
                 "rank": rank,
