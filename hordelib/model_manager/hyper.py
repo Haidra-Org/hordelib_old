@@ -3,6 +3,7 @@ import copy
 
 import torch
 from loguru import logger
+import threading
 
 from hordelib.consts import MODEL_CATEGORY_NAMES
 
@@ -103,6 +104,10 @@ class ModelManager:
         """Create a new instance of model manager."""
         self.cuda_available = torch.cuda.is_available()
         """DEPRECATED: Use `torch.cuda.is_available()` instead."""
+
+        # We use this to serialise disk reads as no point in 
+        # doing more than one at a time as this will slow down the sequential read op.
+        self.disk_read_mutex = threading.Lock()
 
     def get_model_copy(self, model_name, model_component=None):
         if not model_component:
