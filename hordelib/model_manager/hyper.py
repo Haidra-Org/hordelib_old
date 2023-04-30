@@ -1,9 +1,9 @@
 """Home for the controller class ModelManager, and related meta information."""
 import copy
+import threading
 
 import torch
 from loguru import logger
-import threading
 
 from hordelib.consts import MODEL_CATEGORY_NAMES
 
@@ -105,7 +105,7 @@ class ModelManager:
         self.cuda_available = torch.cuda.is_available()
         """DEPRECATED: Use `torch.cuda.is_available()` instead."""
 
-        # We use this to serialise disk reads as no point in 
+        # We use this to serialise disk reads as no point in
         # doing more than one at a time as this will slow down the sequential read op.
         self.disk_read_mutex = threading.Lock()
 
