@@ -11,6 +11,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
+from contextlib import nullcontext
 
 import git
 import psutil
@@ -46,6 +47,8 @@ class BaseModelManager(ABC):
     download_reference: bool
     remote_db: str
     _mutex = threading.RLock()
+    _mutex = nullcontext()
+    _disk_write_mutex = threading.Lock()
 
     def get_torch_device(self):
         return _get_torch_device()
