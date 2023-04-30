@@ -1,6 +1,7 @@
 import os
 import subprocess
 import sys
+from loguru import logger
 
 # The shell command you want to run
 tests = [
@@ -29,6 +30,7 @@ else:
 # Run the shell command and store the result in a CompletedProcess instance
 try:
     for test in tests:
+        logger.warning(f"Running stress test: {test}")
         result = subprocess.run(
             f"python -m examples.{test} {ITERATIONS}",
             text=True,
