@@ -140,6 +140,56 @@ class TestHordeInference:
         assert pil_image is not None
         pil_image.save("images/horde_text_to_image.webp", quality=90)
 
+    def test_text_to_image_long_prompt(self):
+        data = {
+            "sampler_name": "k_dpmpp_2m",
+            "cfg_scale": 7.5,
+            "denoising_strength": 1.0,
+            "seed": 123456789,
+            "height": 512.1,  # test param fix
+            "width": 512.1,  # test param fix
+            "karras": True,
+            "tiling": False,
+            "hires_fix": False,
+            "clip_skip": 1,
+            "control_type": None,
+            "image_is_control": False,
+            "return_control_map": False,
+            "prompt": "a tree in a field with stars and fire and grass and rain and lightning and birds and a monkey jumping on a lion which is running away from a rhino in a painting on the wall of a haunted house which itself is in a 3d game created by ai image generation software which is trying to exceed the token length of stable diffusion which is hard to keep coming up with ideas",
+            "ddim_steps": 25,
+            "n_iter": 1,
+            "model": "Deliberate",
+        }
+        assert self.horde is not None
+        pil_image = self.horde.basic_inference(data)
+        assert pil_image is not None
+        pil_image.save("images/horde_text_to_image_long_prompt.webp", quality=90)
+
+    def test_text_to_image_long_prompt_heun(self):
+        data = {
+            "sampler_name": "k_heun",
+            "cfg_scale": 7.5,
+            "denoising_strength": 1.0,
+            "seed": 123456789,
+            "height": 512.1,  # test param fix
+            "width": 512.1,  # test param fix
+            "karras": True,
+            "tiling": False,
+            "hires_fix": False,
+            "clip_skip": 1,
+            "control_type": None,
+            "image_is_control": False,
+            "return_control_map": False,
+            "prompt": "a tree in a field with stars and fire and grass and rain and lightning and birds and a monkey jumping on a lion which is running away from a rhino in a painting on the wall of a haunted house which itself is in a 3d game created by ai image generation software which is trying to exceed the token length of stable diffusion which is hard to keep coming up with ideas",
+            "ddim_steps": 25,
+            "n_iter": 1,
+            "model": "Deliberate",
+        }
+        assert self.horde is not None
+        pil_image = self.horde.basic_inference(data)
+        assert pil_image is not None
+        pil_image.save("images/horde_text_to_image_long_prompt_heun.webp", quality=90)
+
     def test_text_to_image_small(self):
         data = {
             "sampler_name": "k_dpmpp_2m",
