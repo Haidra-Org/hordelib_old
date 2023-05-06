@@ -4,19 +4,17 @@
 # automatically work together on the training. We are training with torch and searching
 # through network hyper parameters using Optuna.
 #
-# This has exotic dependencies so is disabled by default to avoid these
-# being a runtime requirement of hordelib.
-#
 # Requires two input files (both exactly the same format) which can be created by enabling
 # the SAVE_KUDOS_TRAINING_DATA constant in the worker.
 #   - inference-time-data.json
 #   - inference-time-data-validation.json
 #
-# The output is a series of model checkpoints, "kudos_models/kudos-n.ckpt" Where n is the number of
-# the trial. Once the best trial number is identified simply select the appropriate file.
+# The output is a series of model checkpoints, "kudos_models/kudos-X-n.ckpt" Where n is the
+# number of the trial and X is the study version. Once the best trial number is identified
+# simply select the appropriate file.
 #
 # Requires also a local mysql database named "optuna" and assumes it can connect
-# with user "root" password "root"
+# with user "root" password "root". Change to your needs.
 #
 # For visualisation with optuna dashboard:
 #   optuna-dashboard mysql://root:root@localhost/optuna
@@ -26,7 +24,6 @@ import os
 import random
 import sys
 
-import optuna
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -41,7 +38,16 @@ import pickle
 
 from hordelib.horde import HordeLib
 
+ENABLE_TRAINING = False
+
+if ENABLE_TRAINING:
+    import optuna
+
+
 random.seed()
+
+# Database connection string for Optuna
+DB_CONNECTION_STRING = "mysql://root:root@localhost/optuna"
 
 # Where is our training data?
 TRAINING_DATA_FILENAME = "f:/ai/dev/AI-Horde-Worker/inference-time-data.json"
@@ -49,10 +55,10 @@ VALIDATION_DATA_FILENAME = "f:/ai/dev/AI-Horde-Worker/inference-time-data-valida
 
 # Number of trials to run.
 # Each trial generates a new neural network topology with new hyper parameters and trains it.
-NUMBER_OF_STUDY_TRIALS = 5
+NUMBER_OF_STUDY_TRIALS = 100
 
 # The version number of our study. Bump for different model versions.
-STUDY_VERSION = "v5"
+STUDY_VERSION = "v8"
 
 # We have the following 14 inputs to our kudos calculation, for example:
 PAYLOAD_EXAMPLE = {
@@ -96,7 +102,7 @@ KNOWN_SOURCE_PROCESSING.sort()
 
 # This is an example of how to use the final model, pass in a horde payload, get back a predicted time in seconds
 def payload_to_time(model, payload):
-    inputs = TrainingDataset.payload_to_tensor(payload)[0]
+    inputs = KudosDataset.payload_to_tensor(payload).squeeze()
     with torch.no_grad():
         output = model(inputs)
     return round(float(output.item()), 2)
@@ -132,7 +138,7 @@ def test_one_by_one(model_filename):
         # Print the data if very inaccurate prediction
         if percentage_accuracy < 60:
             print(data)
-        print(f"{predicted} predicated, {actual} actual ({round(percentage_accuracy, 1)}%)")
+        print(f"{predicted} predicted, {actual} actual ({round(percentage_accuracy, 1)}%)")
 
     avg_perc = round(sum(perc) / len(perc), 1)
     print(f"Average accuracy = {avg_perc}")
@@ -163,14 +169,14 @@ class SimpleNeuralNetwork(nn.Module):
         return self.stack(x)
 
 
-class TrainingDataset(Dataset):
+class KudosDataset(Dataset):
     def __init__(self, filename):
         self.data = []
         self.labels = []
         with open(filename) as infile:
             while line := infile.readline().strip():
                 line = json.loads(line)
-                self.data.append(TrainingDataset.payload_to_tensor(line)[0])
+                self.data.append(KudosDataset.payload_to_tensor(line)[0])
                 self.labels.append(line["time"])
 
         self.labels = torch.tensor(self.labels).float()
@@ -235,84 +241,89 @@ class TrainingDataset(Dataset):
         return self.mixed_data[idx], self.labels[idx]
 
 
-def objective(trial):
+if ENABLE_TRAINING:
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    trial.set_user_attr("name", "predict_kudos")
+    def objective(trial):
 
-    # Network topology
-    input_size = len(TrainingDataset.payload_to_tensor(PAYLOAD_EXAMPLE)[0])
-    num_hidden_layers = trial.suggest_int("hidden_layers", 1, 4)
-    layers = []
-    for i in range(num_hidden_layers):
-        layers.append(trial.suggest_int(f"hidden_layer_{i}_size", 8, 512))
-    output_size = 1  # we want just the predicated time in seconds
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        trial.set_user_attr("name", "predict_kudos")
 
-    # Create the network
-    model = SimpleNeuralNetwork(input_size, output_size, layers).to(device)
+        # Network topology
+        input_size = len(KudosDataset.payload_to_tensor(PAYLOAD_EXAMPLE)[0])
+        num_hidden_layers = trial.suggest_int("hidden_layers", 1, 6)
+        layers = []
+        for i in range(num_hidden_layers):
+            layers.append(trial.suggest_int(f"hidden_layer_{i}_size", 8, 512))
+        output_size = 1  # we want just the predicted time in seconds
 
-    # Optimiser
-    optimizer_name = trial.suggest_categorical("optimizer", ["Adam", "RMSprop", "SGD"])
-    lr = trial.suggest_loguniform("lr", 1e-5, 1e-2)
-    weight_decay = trial.suggest_loguniform("weight_decay", 1e-5, 1e-2)
+        # Create the network
+        model = SimpleNeuralNetwork(input_size, output_size, layers).to(device)
 
-    if optimizer_name == "Adam":
-        optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
-    elif optimizer_name == "RMSprop":
-        optimizer = optim.RMSprop(model.parameters(), lr=lr, weight_decay=weight_decay)
-    elif optimizer_name == "SGD":
-        optimizer = optim.SGD(model.parameters(), lr=lr, weight_decay=weight_decay)
+        # Optimiser
+        optimizer_name = trial.suggest_categorical("optimizer", ["Adam", "RMSprop", "SGD"])
+        lr = trial.suggest_loguniform("lr", 1e-5, 1e-2)
+        weight_decay = trial.suggest_loguniform("weight_decay", 1e-5, 1e-2)
 
-    # Load training dataset
-    train_dataset = TrainingDataset(TRAINING_DATA_FILENAME)
-    batch = trial.suggest_int("batch_size", 16, 256)
-    train_loader = DataLoader(train_dataset, batch_size=batch, shuffle=True)
+        if optimizer_name == "Adam":
+            optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+        elif optimizer_name == "RMSprop":
+            optimizer = optim.RMSprop(model.parameters(), lr=lr, weight_decay=weight_decay)
+        elif optimizer_name == "SGD":
+            optimizer = optim.SGD(model.parameters(), lr=lr, weight_decay=weight_decay)
 
-    # Load the validation dataset
-    validate_dataset = TrainingDataset(VALIDATION_DATA_FILENAME)
-    validate_loader = DataLoader(validate_dataset, batch_size=64, shuffle=False)
+        # Load training dataset
+        train_dataset = KudosDataset(TRAINING_DATA_FILENAME)
+        batch = trial.suggest_int("batch_size", 16, 256)
+        train_loader = DataLoader(train_dataset, batch_size=batch, shuffle=True)
 
-    # Loss function
-    criterion = nn.MSELoss()
+        # Load the validation dataset
+        validate_dataset = KudosDataset(VALIDATION_DATA_FILENAME)
+        validate_loader = DataLoader(validate_dataset, batch_size=64, shuffle=True)
 
-    num_epochs = trial.suggest_int("num_epochs", 50, 500)
-    for epoch in range(num_epochs):
+        # Loss function
+        criterion = nn.MSELoss()
 
-        # Train the model
-        model.train()
-        for data, labels in train_loader:
-            data = data.to(device)
-            labels = labels.to(device)
-            labels = labels.unsqueeze(1)
-            outputs = model(data)
-            optimizer.zero_grad()
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
+        num_epochs = trial.suggest_int("num_epochs", 50, 1000)
+        for epoch in range(num_epochs):
 
-        model.eval()
-        total_loss = 0
-        with torch.no_grad():
-            for data, labels in validate_loader:
+            # Train the model
+            model.train()
+            for data, labels in train_loader:
                 data = data.to(device)
                 labels = labels.to(device)
-                outputs = model(data)
                 labels = labels.unsqueeze(1)
+                outputs = model(data)
+                optimizer.zero_grad()
                 loss = criterion(outputs, labels)
-                total_loss += loss
+                loss.backward()
+                optimizer.step()
 
-        total_loss /= len(validate_loader)
-        total_loss = round(float(total_loss), 2)
+            model.eval()
+            total_loss = 0
+            with torch.no_grad():
+                for data, labels in validate_loader:
+                    data = data.to(device)
+                    labels = labels.to(device)
+                    outputs = model(data)
+                    labels = labels.unsqueeze(1)
+                    loss = criterion(outputs, labels)
+                    total_loss += loss
 
-    # Pickle it as we'll forget the model architecture
-    filename = f"kudos_models/kudos-{trial.number}.ckpt"
-    with open(filename, "wb") as outfile:
-        pickle.dump(model.to("cpu"), outfile)
+            total_loss /= len(validate_loader)
+            total_loss = round(float(total_loss), 2)
 
-    return total_loss
+        # Pickle it as we'll forget the model architecture
+        filename = f"kudos_models/kudos-{STUDY_VERSION}-{trial.number}.ckpt"
+        with open(filename, "wb") as outfile:
+            pickle.dump(model.to("cpu"), outfile)
+
+        return total_loss
 
 
 if __name__ == "__main__":
+
+    if not ENABLE_TRAINING:
+        exit(0)
 
     # Make our model output dir
     os.makedirs("kudos_models", exist_ok=True)
@@ -324,8 +335,9 @@ if __name__ == "__main__":
     study = optuna.create_study(
         direction="minimize",
         study_name=f"kudos_model_{STUDY_VERSION}",
-        storage="mysql://root:root@localhost/optuna",
+        storage=DB_CONNECTION_STRING,
         load_if_exists=True,
+        sampler=optuna.samplers.NSGAIISampler(),
     )
     study.optimize(objective, n_trials=NUMBER_OF_STUDY_TRIALS)
 
@@ -338,6 +350,6 @@ if __name__ == "__main__":
         print(f"{key}: {value}")
 
     # Calculate the accuracy of the best model
-    best_filename = f"kudos_models/kudos-{trial.number}.ckpt"
+    best_filename = f"kudos_models/kudos-{STUDY_VERSION}-{trial.number}.ckpt"
     model = test_one_by_one(best_filename)
     print(f"Best model file is: {best_filename}")
