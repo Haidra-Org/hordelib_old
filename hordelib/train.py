@@ -38,7 +38,7 @@ import pickle
 
 from hordelib.horde import HordeLib
 
-ENABLE_TRAINING = False
+ENABLE_TRAINING = True
 
 if ENABLE_TRAINING:
     import optuna
@@ -58,7 +58,7 @@ VALIDATION_DATA_FILENAME = "f:/ai/dev/AI-Horde-Worker/inference-time-data-valida
 NUMBER_OF_STUDY_TRIALS = 100
 
 # The version number of our study. Bump for different model versions.
-STUDY_VERSION = "v8"
+STUDY_VERSION = "v9"
 
 # We have the following 14 inputs to our kudos calculation, for example:
 PAYLOAD_EXAMPLE = {
@@ -72,6 +72,7 @@ PAYLOAD_EXAMPLE = {
     "hires_fix": False,
     "source_image": False,
     "source_mask": False,
+    "long_prompt": False,
     "source_processing": "txt2img",
     "sampler_name": "k_dpm_2_a",
     "control_type": "canny",
@@ -201,6 +202,7 @@ class KudosDataset(Dataset):
                 1.0 if payload.get("hires_fix", False) else 0.0,
                 1.0 if payload.get("source_image", False) else 0.0,
                 1.0 if payload.get("source_mask", False) else 0.0,
+                1.0 if payload.get("long_prompt", False) else 0.0,
             ]
         )
         data_samplers.append(payload["sampler_name"] if payload["sampler_name"] in KNOWN_SAMPLERS else "k_euler")
@@ -337,7 +339,7 @@ if __name__ == "__main__":
         study_name=f"kudos_model_{STUDY_VERSION}",
         storage=DB_CONNECTION_STRING,
         load_if_exists=True,
-        sampler=optuna.samplers.NSGAIISampler(),
+        #sampler=optuna.samplers.NSGAIISampler(),
     )
     study.optimize(objective, n_trials=NUMBER_OF_STUDY_TRIALS)
 
