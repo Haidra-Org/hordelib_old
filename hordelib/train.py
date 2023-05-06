@@ -1,0 +1,343 @@
+# Train a predictive model from horde payload inputs to predict inference time.
+#
+# Supports multi-processing, just run this multiple times and the processes will
+# automatically work together on the training. We are training with torch and searching
+# through network hyper parameters using Optuna.
+#
+# This has exotic dependencies so is disabled by default to avoid these
+# being a runtime requirement of hordelib.
+#
+# Requires two input files (both exactly the same format) which can be created by enabling
+# the SAVE_KUDOS_TRAINING_DATA constant in the worker.
+#   - inference-time-data.json
+#   - inference-time-data-validation.json
+#
+# The output is a series of model checkpoints, "kudos_models/kudos-n.ckpt" Where n is the number of
+# the trial. Once the best trial number is identified simply select the appropriate file.
+#
+# Requires also a local mysql database named "optuna" and assumes it can connect
+# with user "root" password "root"
+#
+# For visualisation with optuna dashboard:
+#   optuna-dashboard mysql://root:root@localhost/optuna
+#
+# This is a quick hack to assist with kudos calculation.
+import os
+import random
+import sys
+
+import optuna
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch import optim
+from torch.utils.data import DataLoader, Dataset
+
+import hordelib
+
+hordelib.initialise()
+import json
+import pickle
+
+from hordelib.horde import HordeLib
+
+random.seed()
+
+# Where is our training data?
+TRAINING_DATA_FILENAME = "f:/ai/dev/AI-Horde-Worker/inference-time-data.json"
+VALIDATION_DATA_FILENAME = "f:/ai/dev/AI-Horde-Worker/inference-time-data-validation.json"
+
+# Number of trials to run.
+# Each trial generates a new neural network topology with new hyper parameters and trains it.
+NUMBER_OF_STUDY_TRIALS = 5
+
+# The version number of our study. Bump for different model versions.
+STUDY_VERSION = "v5"
+
+# We have the following 14 inputs to our kudos calculation, for example:
+PAYLOAD_EXAMPLE = {
+    "height": 576,
+    "width": 1024,
+    "ddim_steps": 35,
+    "cfg_scale": 9.0,
+    "denoising_strength": 0.75,
+    "control_strength": 1.0,
+    "karras": True,
+    "hires_fix": False,
+    "source_image": False,
+    "source_mask": False,
+    "source_processing": "txt2img",
+    "sampler_name": "k_dpm_2_a",
+    "control_type": "canny",
+    "post_processing": ["RealESRGAN_x4plus", "CodeFormers"],
+}
+# And one output
+# "time": 13.2032
+
+
+KNOWN_POST_PROCESSORS = [
+    "RealESRGAN_x4plus",
+    "RealESRGAN_x2plus",
+    "RealESRGAN_x4plus_anime_6B",
+    "NMKD_Siax",
+    "4x_AnimeSharp",
+    "strip_background",
+    "GFPGAN",
+    "CodeFormers",
+]
+KNOWN_SAMPLERS = sorted(list(set(HordeLib.SAMPLERS_MAP.keys())))
+KNOWN_CONTROL_TYPES = list(set(HordeLib.CONTROLNET_IMAGE_PREPROCESSOR_MAP.keys()))
+KNOWN_CONTROL_TYPES.append("None")
+KNOWN_CONTROL_TYPES.sort()
+KNOWN_SOURCE_PROCESSING = HordeLib.SOURCE_IMAGE_PROCESSING_OPTIONS[:]
+KNOWN_SOURCE_PROCESSING.append("txt2img")
+KNOWN_SOURCE_PROCESSING.sort()
+
+
+# This is an example of how to use the final model, pass in a horde payload, get back a predicted time in seconds
+def payload_to_time(model, payload):
+    inputs = TrainingDataset.payload_to_tensor(payload)[0]
+    with torch.no_grad():
+        output = model(inputs)
+    return round(float(output.item()), 2)
+
+
+# This is how to load the model required above
+def load_model(model_filename):
+    with open(model_filename, "rb") as infile:
+        model = pickle.load(infile)
+    return model
+
+
+# This is just an helper for walking through the validation dataset one line at a time
+# and using the methods above to calculate an overall average percentage accuracy
+def test_one_by_one(model_filename):
+    dataset = []
+    with open(VALIDATION_DATA_FILENAME) as infile:
+        while line := infile.readline():
+            dataset.append(json.loads(line))
+
+    model = load_model(model_filename)
+
+    perc = []
+    for data in dataset:
+        predicted = payload_to_time(model, data)
+        actual = round(data["time"], 2)
+
+        diff = abs(actual - predicted)
+        max_val = max(actual, predicted)
+        percentage_accuracy = (1 - diff / max_val) * 100
+
+        perc.append(percentage_accuracy)
+        # Print the data if very inaccurate prediction
+        if percentage_accuracy < 60:
+            print(data)
+        print(f"{predicted} predicated, {actual} actual ({round(percentage_accuracy, 1)}%)")
+
+    avg_perc = round(sum(perc) / len(perc), 1)
+    print(f"Average accuracy = {avg_perc}")
+
+
+class SimpleNeuralNetwork(nn.Module):
+    def __init__(self, input_size, output_size, hidden_layers):
+        super(SimpleNeuralNetwork, self).__init__()
+        self.stack = self.create_sequential_model(hidden_layers, input_size, output_size)
+
+    def create_sequential_model(self, layer_sizes, input_size=39, output_size=1):
+        # Define the layer sizes
+        layer_sizes = [input_size] + layer_sizes + [output_size]
+
+        # Create the layers and activation functions
+        layers = []
+        for i in range(len(layer_sizes) - 1):
+            layers.append(nn.Linear(layer_sizes[i], layer_sizes[i + 1]))
+            if i < len(layer_sizes) - 2:
+                layers.append(nn.ReLU())  # Use ReLU activation for all layers except the last one
+
+        # Create the nn.Sequential model
+        model = nn.Sequential(*layers)
+
+        return model
+
+    def forward(self, x):
+        return self.stack(x)
+
+
+class TrainingDataset(Dataset):
+    def __init__(self, filename):
+        self.data = []
+        self.labels = []
+        with open(filename) as infile:
+            while line := infile.readline().strip():
+                line = json.loads(line)
+                self.data.append(TrainingDataset.payload_to_tensor(line)[0])
+                self.labels.append(line["time"])
+
+        self.labels = torch.tensor(self.labels).float()
+        self.mixed_data = torch.stack(self.data)
+
+    @classmethod
+    def payload_to_tensor(cls, payload):
+        data = []
+        data_samplers = []
+        data_control_types = []
+        data_source_processing_types = []
+        data_post_processors = []
+        data.append(
+            [
+                payload["height"] / 1024,
+                payload["width"] / 1024,
+                payload["ddim_steps"] / 100,
+                payload["cfg_scale"] / 30,
+                payload.get("denoising_strength", 1.0),
+                payload.get("control_strength", payload.get("denoising_strength", 1.0)),
+                1.0 if payload["karras"] else 0.0,
+                1.0 if payload.get("hires_fix", False) else 0.0,
+                1.0 if payload.get("source_image", False) else 0.0,
+                1.0 if payload.get("source_mask", False) else 0.0,
+            ]
+        )
+        data_samplers.append(payload["sampler_name"] if payload["sampler_name"] in KNOWN_SAMPLERS else "k_euler")
+        data_control_types.append(payload.get("control_type", "None"))
+        data_source_processing_types.append(payload.get("source_processing", "txt2img"))
+        data_post_processors = payload.get("post_processing", [])[:]
+
+        _data_floats = torch.tensor(data).float()
+        _data_samplers = cls.one_hot_encode(data_samplers, KNOWN_SAMPLERS)
+        _data_control_types = cls.one_hot_encode(data_control_types, KNOWN_CONTROL_TYPES)
+        _data_source_processing_types = cls.one_hot_encode(data_source_processing_types, KNOWN_SOURCE_PROCESSING)
+        _data_post_processors = cls.one_hot_encode_combined(data_post_processors, KNOWN_POST_PROCESSORS)
+        return torch.cat(
+            (_data_floats, _data_samplers, _data_control_types, _data_source_processing_types, _data_post_processors),
+            dim=1,
+        )
+
+    @classmethod
+    def one_hot_encode(cls, strings, unique_strings):
+        one_hot = torch.zeros(len(strings), len(unique_strings))
+        for i, string in enumerate(strings):
+            one_hot[i, unique_strings.index(string)] = 1
+        return one_hot
+
+    @classmethod
+    def one_hot_encode_combined(cls, strings, unique_strings):
+        one_hot = torch.zeros(len(strings), len(unique_strings))
+        for i, string in enumerate(strings):
+            one_hot[i, unique_strings.index(string)] = 1
+
+        combined_row = torch.sum(one_hot, dim=0, keepdim=True)
+        return combined_row
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        return self.mixed_data[idx], self.labels[idx]
+
+
+def objective(trial):
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    trial.set_user_attr("name", "predict_kudos")
+
+    # Network topology
+    input_size = len(TrainingDataset.payload_to_tensor(PAYLOAD_EXAMPLE)[0])
+    num_hidden_layers = trial.suggest_int("hidden_layers", 1, 4)
+    layers = []
+    for i in range(num_hidden_layers):
+        layers.append(trial.suggest_int(f"hidden_layer_{i}_size", 8, 512))
+    output_size = 1  # we want just the predicated time in seconds
+
+    # Create the network
+    model = SimpleNeuralNetwork(input_size, output_size, layers).to(device)
+
+    # Optimiser
+    optimizer_name = trial.suggest_categorical("optimizer", ["Adam", "RMSprop", "SGD"])
+    lr = trial.suggest_loguniform("lr", 1e-5, 1e-2)
+    weight_decay = trial.suggest_loguniform("weight_decay", 1e-5, 1e-2)
+
+    if optimizer_name == "Adam":
+        optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+    elif optimizer_name == "RMSprop":
+        optimizer = optim.RMSprop(model.parameters(), lr=lr, weight_decay=weight_decay)
+    elif optimizer_name == "SGD":
+        optimizer = optim.SGD(model.parameters(), lr=lr, weight_decay=weight_decay)
+
+    # Load training dataset
+    train_dataset = TrainingDataset(TRAINING_DATA_FILENAME)
+    batch = trial.suggest_int("batch_size", 16, 256)
+    train_loader = DataLoader(train_dataset, batch_size=batch, shuffle=True)
+
+    # Load the validation dataset
+    validate_dataset = TrainingDataset(VALIDATION_DATA_FILENAME)
+    validate_loader = DataLoader(validate_dataset, batch_size=64, shuffle=False)
+
+    # Loss function
+    criterion = nn.MSELoss()
+
+    num_epochs = trial.suggest_int("num_epochs", 50, 500)
+    for epoch in range(num_epochs):
+
+        # Train the model
+        model.train()
+        for data, labels in train_loader:
+            data = data.to(device)
+            labels = labels.to(device)
+            labels = labels.unsqueeze(1)
+            outputs = model(data)
+            optimizer.zero_grad()
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+
+        model.eval()
+        total_loss = 0
+        with torch.no_grad():
+            for data, labels in validate_loader:
+                data = data.to(device)
+                labels = labels.to(device)
+                outputs = model(data)
+                labels = labels.unsqueeze(1)
+                loss = criterion(outputs, labels)
+                total_loss += loss
+
+        total_loss /= len(validate_loader)
+        total_loss = round(float(total_loss), 2)
+
+    # Pickle it as we'll forget the model architecture
+    filename = f"kudos_models/kudos-{trial.number}.ckpt"
+    with open(filename, "wb") as outfile:
+        pickle.dump(model.to("cpu"), outfile)
+
+    return total_loss
+
+
+if __name__ == "__main__":
+
+    # Make our model output dir
+    os.makedirs("kudos_models", exist_ok=True)
+
+    if len(sys.argv) > 1:
+        test_one_by_one(sys.argv[1])
+        exit(0)
+
+    study = optuna.create_study(
+        direction="minimize",
+        study_name=f"kudos_model_{STUDY_VERSION}",
+        storage="mysql://root:root@localhost/optuna",
+        load_if_exists=True,
+    )
+    study.optimize(objective, n_trials=NUMBER_OF_STUDY_TRIALS)
+
+    # Print the best hyperparameters
+    print("Best trial:")
+    trial = study.best_trial
+    print("Value: ", trial.value)
+    print("Params: ")
+    for key, value in trial.params.items():
+        print(f"{key}: {value}")
+
+    # Calculate the accuracy of the best model
+    best_filename = f"kudos_models/kudos-{trial.number}.ckpt"
+    model = test_one_by_one(best_filename)
+    print(f"Best model file is: {best_filename}")
