@@ -21,6 +21,7 @@
 #
 # This is a quick hack to assist with kudos calculation.
 import os
+import math
 import random
 import sys
 
@@ -58,7 +59,7 @@ VALIDATION_DATA_FILENAME = "f:/ai/dev/AI-Horde-Worker/inference-time-data-valida
 NUMBER_OF_STUDY_TRIALS = 200
 
 # The version number of our study. Bump for different model versions.
-STUDY_VERSION = "v13"
+STUDY_VERSION = "v15"
 
 # Hyper parameter search bounds
 MIN_NUMBER_OF_EPOCHS = 50
@@ -74,8 +75,8 @@ MIN_DATA_BATCH_SIZE = 32
 MAX_DATA_BATCH_SIZE = 512
 
 # The study sampler to use
-# OPTUNA_SAMPLER = optuna.samplers.TPESampler()  # default
-OPTUNA_SAMPLER = optuna.samplers.NSGAIISampler()  # genetic algorithm
+OPTUNA_SAMPLER = optuna.samplers.TPESampler()  # default
+# OPTUNA_SAMPLER = optuna.samplers.NSGAIISampler()  # genetic algorithm
 
 # We have the following 14 inputs to our kudos calculation, for example:
 PAYLOAD_EXAMPLE = {
@@ -290,7 +291,10 @@ if ENABLE_TRAINING:
 
         # Load training dataset
         train_dataset = KudosDataset(TRAINING_DATA_FILENAME)
-        batch = trial.suggest_int("batch_size", MIN_DATA_BATCH_SIZE, MAX_DATA_BATCH_SIZE)
+        batch_start = int(math.ceil(math.log2(MIN_DATA_BATCH_SIZE)))
+        batch_end = int(math.floor(math.log2(MAX_DATA_BATCH_SIZE)))
+        batch_sizes = [2**i for i in range(batch_start, batch_end + 1)]
+        batch = trial.suggest_categorical("batch_size", batch_sizes)
         train_loader = DataLoader(train_dataset, batch_size=batch, shuffle=True)
 
         # Load the validation dataset
