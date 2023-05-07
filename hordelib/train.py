@@ -279,8 +279,8 @@ if ENABLE_TRAINING:
 
         # Optimiser
         optimizer_name = trial.suggest_categorical("optimizer", ["Adam", "RMSprop", "SGD"])
-        lr = trial.suggest_loguniform("lr", MIN_LEARNING_RATE, MAX_LEARNING_RATE)
-        weight_decay = trial.suggest_loguniform("weight_decay", MIN_WEIGHT_DECAY, MAX_WEIGHT_DECAY)
+        lr = trial.suggest_float("lr", MIN_LEARNING_RATE, MAX_LEARNING_RATE, log=True)
+        weight_decay = trial.suggest_float("weight_decay", MIN_WEIGHT_DECAY, MAX_WEIGHT_DECAY, log=True)
 
         if optimizer_name == "Adam":
             optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
