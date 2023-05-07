@@ -59,7 +59,7 @@ VALIDATION_DATA_FILENAME = "f:/ai/dev/AI-Horde-Worker/inference-time-data-valida
 NUMBER_OF_STUDY_TRIALS = 200
 
 # The version number of our study. Bump for different model versions.
-STUDY_VERSION = "v16"
+STUDY_VERSION = "v18"
 
 # Hyper parameter search bounds
 MIN_NUMBER_OF_EPOCHS = 50
@@ -68,7 +68,7 @@ MAX_HIDDEN_LAYERS = 10
 MIN_NODES_IN_LAYER = 4
 MAX_NODES_IN_LAYER = 64
 MIN_LEARNING_RATE = 1e-5
-MAX_LEARNING_RATE = 1e-2
+MAX_LEARNING_RATE = 1e-1
 MIN_WEIGHT_DECAY = 1e-5
 MAX_WEIGHT_DECAY = 1e-2
 MIN_DATA_BATCH_SIZE = 32
@@ -162,31 +162,6 @@ def test_one_by_one(model_filename):
     print(f"Average accuracy = {avg_perc}")
 
 
-class SimpleNeuralNetwork(nn.Module):
-    def __init__(self, input_size, output_size, hidden_layers):
-        super(SimpleNeuralNetwork, self).__init__()
-        self.stack = self.create_sequential_model(hidden_layers, input_size, output_size)
-
-    def create_sequential_model(self, layer_sizes, input_size=39, output_size=1):
-        # Define the layer sizes
-        layer_sizes = [input_size] + layer_sizes + [output_size]
-
-        # Create the layers and activation functions
-        layers = []
-        for i in range(len(layer_sizes) - 1):
-            layers.append(nn.Linear(layer_sizes[i], layer_sizes[i + 1]))
-            if i < len(layer_sizes) - 2:
-                layers.append(nn.ReLU())  # Use ReLU activation for all layers except the last one
-
-        # Create the nn.Sequential model
-        model = nn.Sequential(*layers)
-
-        return model
-
-    def forward(self, x):
-        return self.stack(x)
-
-
 class KudosDataset(Dataset):
     def __init__(self, filename):
         self.data = []
@@ -261,6 +236,26 @@ class KudosDataset(Dataset):
 
 if ENABLE_TRAINING:
 
+
+    def create_sequential_model(trial, layer_sizes, input_size, output_size=1):
+        # Define the layer sizes
+        layer_sizes = [input_size] + layer_sizes + [output_size]
+
+        # Create the layers and activation functions
+        layers = []
+        for i in range(len(layer_sizes) - 1):
+            layers.append(nn.Linear(layer_sizes[i], layer_sizes[i + 1]))
+            if i < len(layer_sizes) - 2:
+                layers.append(nn.ReLU())  # Use ReLU activation for all layers except the last one
+                # Add a dropout layer
+                if i > 0:
+                    drop = trial.suggest_float("dropout_l{}".format(i), 0.05, 0.2, log=True)
+                    layers.append(nn.Dropout(drop))
+
+        # Create the nn.Sequential model
+        return nn.Sequential(*layers)
+
+
     def objective(trial):
 
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -275,7 +270,7 @@ if ENABLE_TRAINING:
         output_size = 1  # we want just the predicted time in seconds
 
         # Create the network
-        model = SimpleNeuralNetwork(input_size, output_size, layers).to(device)
+        model = create_sequential_model(trial, layers, input_size, output_size).to(device)
 
         # Optimiser
         optimizer_name = trial.suggest_categorical("optimizer", ["Adam", "RMSprop", "SGD"])
@@ -312,9 +307,9 @@ if ENABLE_TRAINING:
             for data, labels in train_loader:
                 data = data.to(device)
                 labels = labels.to(device)
+                optimizer.zero_grad()
                 labels = labels.unsqueeze(1)
                 outputs = model(data)
-                optimizer.zero_grad()
                 loss = criterion(outputs, labels)
                 loss.backward()
                 optimizer.step()
