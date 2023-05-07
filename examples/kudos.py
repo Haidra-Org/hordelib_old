@@ -34,7 +34,6 @@ class KudosModel():
         "hires_fix": False,
         "source_image": False,
         "source_mask": False,
-        "long_prompt": False,
         "source_processing": "txt2img",
         "sampler_name": "k_euler",
         "control_type": "None",
@@ -173,7 +172,6 @@ class KudosModel():
                 1.0 if payload.get("hires_fix", False) else 0.0,
                 1.0 if payload.get("source_image", False) else 0.0,
                 1.0 if payload.get("source_mask", False) else 0.0,
-                1.0 if payload.get("long_prompt", False) else 0.0,
             ]
         )
         data_samplers.append(payload["sampler_name"] if payload["sampler_name"] in KudosModel.KNOWN_SAMPLERS else "k_euler")
