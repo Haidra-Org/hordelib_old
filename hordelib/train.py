@@ -55,10 +55,27 @@ VALIDATION_DATA_FILENAME = "f:/ai/dev/AI-Horde-Worker/inference-time-data-valida
 
 # Number of trials to run.
 # Each trial generates a new neural network topology with new hyper parameters and trains it.
-NUMBER_OF_STUDY_TRIALS = 100
+NUMBER_OF_STUDY_TRIALS = 200
 
 # The version number of our study. Bump for different model versions.
-STUDY_VERSION = "v9"
+STUDY_VERSION = "v13"
+
+# Hyper parameter search bounds
+MIN_NUMBER_OF_EPOCHS = 50
+MAX_NUMBER_OF_EPOCHS = 2000
+MAX_HIDDEN_LAYERS = 10
+MIN_NODES_IN_LAYER = 4
+MAX_NODES_IN_LAYER = 64
+MIN_LEARNING_RATE = 1e-5
+MAX_LEARNING_RATE = 1e-2
+MIN_WEIGHT_DECAY = 1e-5
+MAX_WEIGHT_DECAY = 1e-2
+MIN_DATA_BATCH_SIZE = 32
+MAX_DATA_BATCH_SIZE = 512
+
+# The study sampler to use
+# OPTUNA_SAMPLER = optuna.samplers.TPESampler()  # default
+OPTUNA_SAMPLER = optuna.samplers.NSGAIISampler()  # genetic algorithm
 
 # We have the following 14 inputs to our kudos calculation, for example:
 PAYLOAD_EXAMPLE = {
@@ -252,10 +269,10 @@ if ENABLE_TRAINING:
 
         # Network topology
         input_size = len(KudosDataset.payload_to_tensor(PAYLOAD_EXAMPLE)[0])
-        num_hidden_layers = trial.suggest_int("hidden_layers", 1, 6)
+        num_hidden_layers = trial.suggest_int("hidden_layers", 1, MAX_HIDDEN_LAYERS)
         layers = []
         for i in range(num_hidden_layers):
-            layers.append(trial.suggest_int(f"hidden_layer_{i}_size", 8, 512))
+            layers.append(trial.suggest_int(f"hidden_layer_{i}_size", MIN_NODES_IN_LAYER, MAX_NODES_IN_LAYER))
         output_size = 1  # we want just the predicted time in seconds
 
         # Create the network
@@ -263,8 +280,8 @@ if ENABLE_TRAINING:
 
         # Optimiser
         optimizer_name = trial.suggest_categorical("optimizer", ["Adam", "RMSprop", "SGD"])
-        lr = trial.suggest_loguniform("lr", 1e-5, 1e-2)
-        weight_decay = trial.suggest_loguniform("weight_decay", 1e-5, 1e-2)
+        lr = trial.suggest_loguniform("lr", MIN_LEARNING_RATE, MAX_LEARNING_RATE)
+        weight_decay = trial.suggest_loguniform("weight_decay", MIN_WEIGHT_DECAY, MAX_WEIGHT_DECAY)
 
         if optimizer_name == "Adam":
             optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
@@ -275,7 +292,7 @@ if ENABLE_TRAINING:
 
         # Load training dataset
         train_dataset = KudosDataset(TRAINING_DATA_FILENAME)
-        batch = trial.suggest_int("batch_size", 16, 256)
+        batch = trial.suggest_int("batch_size", MIN_DATA_BATCH_SIZE, MAX_DATA_BATCH_SIZE)
         train_loader = DataLoader(train_dataset, batch_size=batch, shuffle=True)
 
         # Load the validation dataset
@@ -285,7 +302,7 @@ if ENABLE_TRAINING:
         # Loss function
         criterion = nn.MSELoss()
 
-        num_epochs = trial.suggest_int("num_epochs", 50, 1000)
+        num_epochs = trial.suggest_int("num_epochs", MIN_NUMBER_OF_EPOCHS, MAX_NUMBER_OF_EPOCHS)
         for epoch in range(num_epochs):
 
             # Train the model
@@ -339,7 +356,7 @@ if __name__ == "__main__":
         study_name=f"kudos_model_{STUDY_VERSION}",
         storage=DB_CONNECTION_STRING,
         load_if_exists=True,
-        #sampler=optuna.samplers.NSGAIISampler(),
+        sampler=OPTUNA_SAMPLER,
     )
     study.optimize(objective, n_trials=NUMBER_OF_STUDY_TRIALS)
 
