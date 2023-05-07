@@ -59,7 +59,7 @@ VALIDATION_DATA_FILENAME = "f:/ai/dev/AI-Horde-Worker/inference-time-data-valida
 NUMBER_OF_STUDY_TRIALS = 200
 
 # The version number of our study. Bump for different model versions.
-STUDY_VERSION = "v15"
+STUDY_VERSION = "v16"
 
 # Hyper parameter search bounds
 MIN_NUMBER_OF_EPOCHS = 50
@@ -268,10 +268,10 @@ if ENABLE_TRAINING:
 
         # Network topology
         input_size = len(KudosDataset.payload_to_tensor(PAYLOAD_EXAMPLE)[0])
-        num_hidden_layers = trial.suggest_int("hidden_layers", 1, MAX_HIDDEN_LAYERS)
+        num_hidden_layers = trial.suggest_int("hidden_layers", 1, MAX_HIDDEN_LAYERS, log=True)
         layers = []
         for i in range(num_hidden_layers):
-            layers.append(trial.suggest_int(f"hidden_layer_{i}_size", MIN_NODES_IN_LAYER, MAX_NODES_IN_LAYER))
+            layers.append(trial.suggest_int(f"hidden_layer_{i}_size", MIN_NODES_IN_LAYER, MAX_NODES_IN_LAYER, log=True))
         output_size = 1  # we want just the predicted time in seconds
 
         # Create the network
