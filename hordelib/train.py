@@ -13,6 +13,8 @@
 # number of the trial and X is the study version. Once the best trial number is identified
 # simply select the appropriate file.
 #
+# The stand-alone class in examples/kudos.py is the code to actually use the model.
+#
 # Requires also a local mysql database named "optuna" and assumes it can connect
 # with user "root" password "root". Change to your needs.
 #
@@ -24,6 +26,7 @@ import math
 import os
 import random
 import sys
+import time
 
 import torch
 import torch.nn as nn
@@ -59,7 +62,7 @@ VALIDATION_DATA_FILENAME = "f:/ai/dev/AI-Horde-Worker/inference-time-data-valida
 NUMBER_OF_STUDY_TRIALS = 200
 
 # The version number of our study. Bump for different model versions.
-STUDY_VERSION = "v18"
+STUDY_VERSION = "v20"
 
 # Hyper parameter search bounds
 MIN_NUMBER_OF_EPOCHS = 50
@@ -75,8 +78,8 @@ MIN_DATA_BATCH_SIZE = 32
 MAX_DATA_BATCH_SIZE = 512
 
 # The study sampler to use
-OPTUNA_SAMPLER = optuna.samplers.TPESampler()  # default
-# OPTUNA_SAMPLER = optuna.samplers.NSGAIISampler()  # genetic algorithm
+# OPTUNA_SAMPLER = optuna.samplers.TPESampler()  # default
+OPTUNA_SAMPLER = optuna.samplers.NSGAIISampler()  # genetic algorithm
 
 # We have the following 14 inputs to our kudos calculation, for example:
 PAYLOAD_EXAMPLE = {
@@ -145,8 +148,11 @@ def test_one_by_one(model_filename):
 
     perc = []
     total_job_time = 0
+    total_time = 0
     for data in dataset:
+        model_time = time.perf_counter()
         predicted = payload_to_time(model, data)
+        total_time += time.perf_counter() - model_time
         actual = round(data["time"], 2)
         total_job_time += data["time"]
 
@@ -161,6 +167,7 @@ def test_one_by_one(model_filename):
         print(f"{predicted} predicted, {actual} actual ({round(percentage_accuracy, 1)}%)")
 
     avg_perc = round(sum(perc) / len(perc), 1)
+    print(f"Average kudos calculation time {round((total_time*1000000)/len(perc))} micro-seconds")
     print(f"Average actual job time in the dataset {round(total_job_time/len(perc), 2)} seconds")
     print(f"Average accuracy = {avg_perc}%")
 
