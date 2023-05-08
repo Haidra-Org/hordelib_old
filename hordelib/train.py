@@ -42,7 +42,7 @@ import pickle
 
 from hordelib.horde import HordeLib
 
-ENABLE_TRAINING = True
+ENABLE_TRAINING = False
 
 if ENABLE_TRAINING:
     import optuna
