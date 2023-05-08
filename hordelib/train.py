@@ -20,8 +20,8 @@
 #   optuna-dashboard mysql://root:root@localhost/optuna
 #
 # This is a quick hack to assist with kudos calculation.
-import os
 import math
+import os
 import random
 import sys
 
@@ -109,7 +109,7 @@ KNOWN_POST_PROCESSORS = [
     "GFPGAN",
     "CodeFormers",
 ]
-KNOWN_SAMPLERS = sorted(list(set(HordeLib.SAMPLERS_MAP.keys())))
+KNOWN_SAMPLERS = sorted(set(HordeLib.SAMPLERS_MAP.keys()))
 KNOWN_CONTROL_TYPES = list(set(HordeLib.CONTROLNET_IMAGE_PREPROCESSOR_MAP.keys()))
 KNOWN_CONTROL_TYPES.append("None")
 KNOWN_CONTROL_TYPES.sort()
@@ -144,9 +144,11 @@ def test_one_by_one(model_filename):
     model = load_model(model_filename)
 
     perc = []
+    total_job_time = 0
     for data in dataset:
         predicted = payload_to_time(model, data)
         actual = round(data["time"], 2)
+        total_job_time += data["time"]
 
         diff = abs(actual - predicted)
         max_val = max(actual, predicted)
@@ -159,7 +161,8 @@ def test_one_by_one(model_filename):
         print(f"{predicted} predicted, {actual} actual ({round(percentage_accuracy, 1)}%)")
 
     avg_perc = round(sum(perc) / len(perc), 1)
-    print(f"Average accuracy = {avg_perc}")
+    print(f"Average actual job time in the dataset {round(total_job_time/len(perc), 2)} seconds")
+    print(f"Average accuracy = {avg_perc}%")
 
 
 class KudosDataset(Dataset):
@@ -194,7 +197,7 @@ class KudosDataset(Dataset):
                 1.0 if payload.get("hires_fix", False) else 0.0,
                 1.0 if payload.get("source_image", False) else 0.0,
                 1.0 if payload.get("source_mask", False) else 0.0,
-            ]
+            ],
         )
         data_samplers.append(payload["sampler_name"] if payload["sampler_name"] in KNOWN_SAMPLERS else "k_euler")
         data_control_types.append(payload.get("control_type", "None"))
@@ -236,7 +239,6 @@ class KudosDataset(Dataset):
 
 if ENABLE_TRAINING:
 
-
     def create_sequential_model(trial, layer_sizes, input_size, output_size=1):
         # Define the layer sizes
         layer_sizes = [input_size] + layer_sizes + [output_size]
@@ -255,7 +257,6 @@ if ENABLE_TRAINING:
         # Create the nn.Sequential model
         return nn.Sequential(*layers)
 
-
     def objective(trial):
 
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -266,7 +267,9 @@ if ENABLE_TRAINING:
         num_hidden_layers = trial.suggest_int("hidden_layers", 1, MAX_HIDDEN_LAYERS, log=True)
         layers = []
         for i in range(num_hidden_layers):
-            layers.append(trial.suggest_int(f"hidden_layer_{i}_size", MIN_NODES_IN_LAYER, MAX_NODES_IN_LAYER, log=True))
+            layers.append(
+                trial.suggest_int(f"hidden_layer_{i}_size", MIN_NODES_IN_LAYER, MAX_NODES_IN_LAYER, log=True),
+            )
         output_size = 1  # we want just the predicted time in seconds
 
         # Create the network

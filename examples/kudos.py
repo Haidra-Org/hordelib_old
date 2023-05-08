@@ -1,14 +1,13 @@
 import pickle
 import sys
 
-import numpy  # dependency of the pickled model
 import torch
 import torch.nn as nn
 
 
-class KudosModel():
+class KudosModel:
     """Calculate kudos for a given horde job payload. Tiny, lightweight cpu model.
-    
+
     Simple usage example:
 
         # Initial one time setup (filename of the model)
@@ -41,7 +40,7 @@ class KudosModel():
     }
 
     # Don't change of these constants unless the model has been changed and retained beforehand.
-    # Samplers, post processors, etc that are unknown to this code will simply be given somewhat 
+    # Samplers, post processors, etc that are unknown to this code will simply be given somewhat
     # sensible defaults.
     KNOWN_POST_PROCESSORS = [
         "4x_AnimeSharp",
@@ -86,8 +85,8 @@ class KudosModel():
     ]
 
     KNOWN_SOURCE_PROCESSING = [
-        "img2img", 
-        "inpainting", 
+        "img2img",
+        "inpainting",
         "outpainting",
         "txt2img",
     ]
@@ -112,10 +111,10 @@ class KudosModel():
     def calculate_kudos(self, payload, basis_adjustment=0, basis_scale=1):
         if not self.model:
             raise Exception("No kudos model loaded")
-    
+
         if not self.time_basis:
             raise Exception("Kudos model failed to calculate basis time.")
-        
+
         # Get time for this job
         job_time = self.payload_to_time(payload)
 
@@ -150,8 +149,7 @@ class KudosModel():
         for i, string in enumerate(strings):
             one_hot[i, unique_strings.index(string)] = 1
 
-        combined_row = torch.sum(one_hot, dim=0, keepdim=True)
-        return combined_row
+        return torch.sum(one_hot, dim=0, keepdim=True)
 
     @classmethod
     def payload_to_tensor(cls, payload):
@@ -172,9 +170,11 @@ class KudosModel():
                 1.0 if payload.get("hires_fix", False) else 0.0,
                 1.0 if payload.get("source_image", False) else 0.0,
                 1.0 if payload.get("source_mask", False) else 0.0,
-            ]
+            ],
         )
-        data_samplers.append(payload["sampler_name"] if payload["sampler_name"] in KudosModel.KNOWN_SAMPLERS else "k_euler")
+        data_samplers.append(
+            payload["sampler_name"] if payload["sampler_name"] in KudosModel.KNOWN_SAMPLERS else "k_euler",
+        )
         data_control_types.append(payload.get("control_type", "None"))
         data_source_processing_types.append(payload.get("source_processing", "txt2img"))
         data_post_processors = payload.get("post_processing", [])[:]
@@ -182,7 +182,10 @@ class KudosModel():
         _data_floats = torch.tensor(data).float()
         _data_samplers = cls.one_hot_encode(data_samplers, KudosModel.KNOWN_SAMPLERS)
         _data_control_types = cls.one_hot_encode(data_control_types, KudosModel.KNOWN_CONTROL_TYPES)
-        _data_source_processing_types = cls.one_hot_encode(data_source_processing_types, KudosModel.KNOWN_SOURCE_PROCESSING)
+        _data_source_processing_types = cls.one_hot_encode(
+            data_source_processing_types,
+            KudosModel.KNOWN_SOURCE_PROCESSING,
+        )
         _data_post_processors = cls.one_hot_encode_combined(data_post_processors, KudosModel.KNOWN_POST_PROCESSORS)
         return torch.cat(
             (_data_floats, _data_samplers, _data_control_types, _data_source_processing_types, _data_post_processors),
@@ -201,35 +204,10 @@ class KudosModel():
         with torch.no_grad():
             output = self.model(inputs)
         return round(float(output.item()), 2)
-    
+
     # Determine how long the basic job that costs KUDOS_BASIS kudos takes to run
     def calculate_basis_time(self):
         self.time_basis = self.payload_to_time(self.BASIS_PAYLOAD)
-
-
-class SimpleNeuralNetwork(nn.Module):
-    def __init__(self, input_size, output_size, hidden_layers):
-        super(SimpleNeuralNetwork, self).__init__()
-        self.stack = self.create_sequential_model(hidden_layers, input_size, output_size)
-
-    def create_sequential_model(self, layer_sizes, input_size=39, output_size=1):
-        # Define the layer sizes
-        layer_sizes = [input_size] + layer_sizes + [output_size]
-
-        # Create the layers and activation functions
-        layers = []
-        for i in range(len(layer_sizes) - 1):
-            layers.append(nn.Linear(layer_sizes[i], layer_sizes[i + 1]))
-            if i < len(layer_sizes) - 2:
-                layers.append(nn.ReLU())  # Use ReLU activation for all layers except the last one
-
-        # Create the nn.Sequential model
-        model = nn.Sequential(*layers)
-
-        return model
-
-    def forward(self, x):
-        return self.stack(x)
 
 
 if __name__ == "__main__":
@@ -244,16 +222,12 @@ if __name__ == "__main__":
 
     # Test the basis job
     job_kudos = kudos_model.calculate_kudos(KudosModel.BASIS_PAYLOAD)
-    print(f"The basis job worth {job_kudos} kudos, "
-          f"expected {KudosModel.KUDOS_BASIS} kudos")
+    print(f"The basis job worth {job_kudos} kudos, " f"expected {KudosModel.KUDOS_BASIS} kudos")
 
     # Test fixed kudos basis adjustment
     job_kudos = kudos_model.calculate_kudos(KudosModel.BASIS_PAYLOAD, 5)
-    print(f"Adjusting a job by +5 worth {job_kudos}, "
-          f"expected {KudosModel.KUDOS_BASIS+5} kudos")
-          
+    print(f"Adjusting a job by +5 worth {job_kudos}, " f"expected {KudosModel.KUDOS_BASIS+5} kudos")
+
     # Test fixed kudos basis adjustment and percentage scaling
     job_kudos = kudos_model.calculate_kudos(KudosModel.BASIS_PAYLOAD, 5, 1.25)
-    print(f"Adjusting a job by +5 and +25% worth {job_kudos}, "
-          f"expected {(KudosModel.KUDOS_BASIS+5)*1.25} kudos")
-    
+    print(f"Adjusting a job by +5 and +25% worth {job_kudos}, " f"expected {(KudosModel.KUDOS_BASIS+5)*1.25} kudos")
