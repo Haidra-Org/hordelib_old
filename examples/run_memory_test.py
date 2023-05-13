@@ -26,7 +26,7 @@ UserSettings.disable_disk_cache.activate()
 
 # Do inference with all cached models
 VALIDATE_ALL_CACHED_MODELS = False
-
+BACKGROUND_THREAD = False
 
 def get_ram():
     virtual_memory = psutil.virtual_memory()
