@@ -98,6 +98,10 @@ def get_torch_free_vram_mb():
 
 def unload_model_from_gpu(model):
     _comfy_model_manager.load_model_gpu(model)
+    garbage_collect()
+
+
+def garbage_collect():
     gc.collect()
     if not torch.cuda.is_available():
         return None
@@ -207,6 +211,9 @@ class Comfy_Horde:
         "latent_upscale.height": (64, 8192),
     }
 
+    # Approximate number of seconds to force garbage collection
+    GC_TIME = 30
+
     _property_mutex = threading.Lock()
 
     # We maintain one "client_id" per thread
@@ -227,6 +234,7 @@ class Comfy_Horde:
         self.pipelines = {}
         self._exit_time = 0
         self._callers = 0
+        self._gc_timer = time.time()
         self._counter_mutex = threading.Lock()
         # Set custom node path
         _comfy_folder_paths["custom_nodes"] = ([os.path.join(get_hordelib_path(), "nodes")], [])
@@ -503,6 +511,9 @@ class Comfy_Horde:
 
         # Check if there are any resource to clean up
         cleanup()
+        if time.time() - self._gc_timer > Comfy_Horde.GC_TIME:
+            self._gc_timer = time.time()
+            garbage_collect()
 
         return inference.outputs
 
