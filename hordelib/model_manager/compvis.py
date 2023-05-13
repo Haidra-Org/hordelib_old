@@ -54,6 +54,10 @@ class CompVisModelManager(BaseModelManager):
             return False
         return True
 
+    def can_auto_unload(self):
+        # Allow compvis models to be auto unloaded
+        return True
+
     def get_model_cache_filename(self, model_name):
         cache_dir = os.getenv("AIWORKER_TEMP_DIR", "./tmp")
         # Create cache directory if it doesn't already exist

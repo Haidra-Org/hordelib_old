@@ -32,6 +32,7 @@ from comfy.sd import load_checkpoint_guess_config as __comfy_load_checkpoint_gue
 from comfy.sd import load_controlnet as __comfy_load_controlnet
 from comfy.model_management import model_manager as _comfy_model_manager
 from comfy.model_management import get_torch_device as __comfy_get_torch_device
+from comfy.model_management import get_free_memory as __comfy_get_free_memory
 from comfy.utils import load_torch_file as __comfy_load_torch_file
 from comfy_extras.chainner_models import model_loading as _comfy_model_loading
 
@@ -91,14 +92,27 @@ def get_torch_device():
     return __comfy_get_torch_device()
 
 
+def get_torch_free_vram_mb():
+    return round(__comfy_get_free_memory() / (1024 * 1024))
+
+
 def unload_model_from_gpu(model):
-    _comfy_model_manager.unload_model(model)
+    _comfy_model_manager.load_model_gpu(model)
     gc.collect()
     if not torch.cuda.is_available():
         return None
     if torch.version.cuda:
         torch.cuda.empty_cache()
         torch.cuda.ipc_collect()
+
+
+def load_model_to_gpu(model):
+    # Don't bother if there isn't any space
+    if not _comfy_model_manager.have_free_vram():
+        return
+    # Load the model to the GPU. This would normally be done just before
+    # the model is used for sampling, the caller must want more free ram.
+    return _comfy_model_manager.load_model_gpu(model)
 
 
 def is_model_in_use(model):

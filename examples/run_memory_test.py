@@ -22,7 +22,7 @@ from hordelib.utils.gpuinfo import GPUInfo
 # Set this to where you want the model cache to go
 os.environ["AIWORKER_TEMP_DIR"] = "d:/temp/ray"
 # Disable the disk cache
-# UserSettings.disable_disk_cache.activate()
+UserSettings.disable_disk_cache.activate()
 
 # Do inference with all cached models
 VALIDATE_ALL_CACHED_MODELS = False
@@ -35,7 +35,7 @@ def get_ram():
     virtual_memory = psutil.virtual_memory()
     total_ram_mb = virtual_memory.total / (1024 * 1024)
     used_ram = virtual_memory.used / (1024 * 1024)
-    free_ram = total_ram_mb - used_ram
+    free_ram = virtual_memory.available / (1024 * 1024)
     return (int(total_ram_mb), int(used_ram), int(free_ram))
 
 
@@ -72,39 +72,24 @@ def do_inference(model_name, iterations=1, suffix=1):
     horde = HordeLib()
     for i in range(iterations):
         data = {
-            "prompt": "In profile bending over plump Vietnamese villager ass while standing leaning against blackboard, in profile Large cleavage pale plump petite Vietnamese villager, petite body, plump face, plump face, 30 years old, exposed forehead, COVID face mask, Vietnamese eyes, tangled frizzy hair, lacy pale white bra, panties, extremely large cleavage, short height, short height, inside room in front of blackboard and homework and toys leaning against toy shelf next to toy shelves in Los Angeles, large breasts, messy parted hair in the middle, frizzy parted hair in the middle, forehead showing, cum drenched cleavage, COVID face mask, in profile bending over ass while standing leaning against blackboard, cum drenched cleavage, cum drenched ass, cum drenched ass, lacy pale white bra, panties, Vietnamese eyes, bending over plump Vietnamese villager ass  ### Cropped, framed",
+            "sampler_name": "k_euler",
+            "cfg_scale": 7.5,
+            "denoising_strength": 1.0,
+            "seed": 123456789,
             "height": 512,
             "width": 512,
-            "ddim_steps": 50,
-            "sampler_name": "k_euler",
-            "cfg_scale": 7.0,
-            "seed": "4254250571",
-            "tiling": False,
             "karras": True,
-            "n_iter": 1,
+            "tiling": False,
             "hires_fix": False,
-            "model": "URPM",
-            "source_processing": "txt2img",
+            "clip_skip": 1,
+            "control_type": None,
+            "image_is_control": False,
+            "return_control_map": False,
+            "prompt": "an ancient llamia monster",
+            "ddim_steps": 50,
+            "n_iter": 1,
+            "model": model_name,
         }
-        # data = {
-        #     "sampler_name": "k_euler",
-        #     "cfg_scale": 7.5,
-        #     "denoising_strength": 1.0,
-        #     "seed": 123456789,
-        #     "height": 512,
-        #     "width": 512,
-        #     "karras": True,
-        #     "tiling": False,
-        #     "hires_fix": False,
-        #     "clip_skip": 1,
-        #     "control_type": None,
-        #     "image_is_control": False,
-        #     "return_control_map": False,
-        #     "prompt": "an ancient llamia monster",
-        #     "ddim_steps": 50,
-        #     "n_iter": 1,
-        #     "model": model_name,
-        # }
         pil_image = horde.basic_inference(data)
         if not pil_image:
             logger.error("Inference is failing to generate images")
@@ -156,37 +141,24 @@ def main():
     UserSettings.set_vram_to_leave_free_mb("50%")
     logger.warning(f"Keep {UserSettings.get_vram_to_leave_free_mb()} MB VRAM free")
 
-    # # Get to our limits by loading models
-    # models = get_available_models()
-    # model_index = 0
-    # while model_index < len(SharedModelManager.manager.get_available_models()):
-    #     # First we fill ram
-    #     logger.warning("RAM available. Filling RAM")
-    #     while get_free_ram() > UserSettings.get_ram_to_leave_free_mb():
-    #         if model_index < len(SharedModelManager.manager.get_available_models()):
-    #             add_model(models[model_index])
-    #             model_index += 1
-    #         else:
-    #             break
-    #     # Move models into VRAM until we reach our limit
-    #     logger.warning("Filled RAM, now filling VRAM by moving from RAM to VRAM")
-    #     index = 0
-    #     while get_free_vram() - 2000 > (UserSettings.get_vram_to_leave_free_mb()):
-    #         # Move to GPU by using the model
-    #         do_inference(SharedModelManager.manager.get_loaded_models_names()[index])
-    #         index += 1
-    #         if index >= len(SharedModelManager.manager.loaded_models):
-    #             # Maybe our vram is larger than our ram
-    #             break
-    #     logger.warning("Filled VRAM")
-    #     report_ram()
-    #     # if (
-    #     #     get_free_ram() <= UserSettings.get_ram_to_leave_free_mb()
-    #     #     and get_free_vram() - 2000 <= UserSettings.get_vram_to_leave_free_mb()
-    #     # ):
-    #     #     logger.warning("Filled RAM and VRAM")
-    #     #     break
-    #     break
+    # Get to our limits by loading models
+    models = get_available_models()
+    model_index = 0
+    while model_index < len(SharedModelManager.manager.get_available_models()):
+
+        # First we fill ram and vram
+        logger.warning("Filling available memory")
+        if model_index < len(SharedModelManager.manager.get_available_models()):
+            add_model(models[model_index])
+            model_index += 1
+        else:
+            break
+
+        if (
+            get_free_vram() < UserSettings.get_vram_to_leave_free_mb()
+            and get_free_ram() < UserSettings.get_ram_to_leave_free_mb()
+        ):
+            break
 
     # From this point, any model loading will push us past our configured resource limits
 
@@ -195,25 +167,19 @@ def main():
         thread = threading.Thread(daemon=True, target=do_background_inference)
         thread.start()
 
-    # # Push us past our limits
-    # if model_index < len(SharedModelManager.manager.get_available_models()):
-    #     add_model(models[model_index])
-    #     model_index += 1
-    # # That would have pushed something to disk, force a memory cleanup
-    # cleanup()
-    # report_ram()
-
-    # # Keep loading models whilst doing inference, ram and vram should remain stable
-    # while model_index < len(SharedModelManager.manager.get_available_models()):
-    #     add_model(models[model_index])
-    #     model_index += 1
+    # Push us past our limits
+    if model_index < len(SharedModelManager.manager.get_available_models()):
+        add_model(models[model_index])
+        model_index += 1
+    # That would have pushed something to disk, force a memory cleanup
+    cleanup()
+    report_ram()
 
     logger.warning("Loaded all models")
 
     random.seed()
     models = SharedModelManager.manager.get_loaded_models_names()
     model = random.choice(models)
-    model = "stable_diffusion"
     count = 1
     while True:
         # Keeping doing inference
@@ -221,6 +187,7 @@ def main():
             time.sleep(60)
             break
         else:
+            model = random.choice(models)
             logger.info(f"Doing inference with model {model} ({len(models)} models loaded)")
             do_inference(model, 1, count)
             count += 1
