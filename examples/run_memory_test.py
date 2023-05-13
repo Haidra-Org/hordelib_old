@@ -28,6 +28,7 @@ UserSettings.disable_disk_cache.activate()
 VALIDATE_ALL_CACHED_MODELS = False
 BACKGROUND_THREAD = False
 
+
 def get_ram():
     virtual_memory = psutil.virtual_memory()
     total_ram_mb = virtual_memory.total / (1024 * 1024)
