@@ -230,7 +230,7 @@ class BaseModelManager(ABC):
                 # Don't try this unless we have 1500MB head room at least
                 if vram_headroom > ram_headroom and vram_headroom > 1500:
                     logger.debug("More free VRAM than RAM, consider RAM->VRAM migration")
-                    if idle_model and load_model_to_gpu(idle_model_data["model"]):
+                    if self.can_move_to_vram() and idle_model and load_model_to_gpu(idle_model_data["model"]):
                         return
                     # We failed to move a model to vram, continue with plan A
 
@@ -266,14 +266,24 @@ class BaseModelManager(ABC):
     def move_from_disk_cache(self, model_name, model, clip, vae):
         pass
 
+    # @abstractmethod # TODO
     def can_cache_on_disk(self):
         """Can this of type model be cached on disk?"""
         return False
 
+    # @abstractmethod # TODO
     def can_auto_unload(self):
         """Can/should we ever auto unload this model to release memory resources.
 
         Not a great idea with something like the safety checker.
+        """
+        return False
+
+    # @abstractmethod # TODO
+    def can_move_to_vram(self):
+        """Can we move this model directly to the GPU to save ram?
+
+        XXX This is realistically only possible with compvis right now
         """
         return False
 
