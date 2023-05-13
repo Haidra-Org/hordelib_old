@@ -27,9 +27,6 @@ UserSettings.disable_disk_cache.activate()
 # Do inference with all cached models
 VALIDATE_ALL_CACHED_MODELS = False
 
-# Do inference in background thread
-BACKGROUND_THREAD = False
-
 
 def get_ram():
     virtual_memory = psutil.virtual_memory()
@@ -67,7 +64,7 @@ def get_available_models():
     return models
 
 
-def do_inference(model_name, iterations=1, suffix=1):
+def do_inference(model_name, iterations=1):
     """Do some work on the GPU"""
     horde = HordeLib()
     for i in range(iterations):
@@ -94,7 +91,7 @@ def do_inference(model_name, iterations=1, suffix=1):
         if not pil_image:
             logger.error("Inference is failing to generate images")
         else:
-            pil_image.save(f"images/stresstest/{model_name}_{suffix}.webp", quality=90)
+            pil_image.save(f"images/stresstest/{model_name}.webp", quality=90)
 
 
 def do_background_inference():
@@ -116,11 +113,11 @@ def main():
 
     report_ram()
 
-    # add_model("Papercut Diffusion")
-    # SharedModelManager.manager.compvis.move_to_disk_cache("Papercut Diffusion")
+    add_model("Papercut Diffusion")
+    SharedModelManager.manager.compvis.move_to_disk_cache("Papercut Diffusion")
 
-    # add_model("Graphic-Art")
-    # SharedModelManager.manager.compvis.move_to_disk_cache("Graphic-Art")
+    add_model("Graphic-Art")
+    SharedModelManager.manager.compvis.move_to_disk_cache("Graphic-Art")
 
     # while True:
     #     SharedModelManager.manager.load("Papercut Diffusion")
@@ -163,9 +160,8 @@ def main():
     # From this point, any model loading will push us past our configured resource limits
 
     # Start doing background inference
-    if BACKGROUND_THREAD:
-        thread = threading.Thread(daemon=True, target=do_background_inference)
-        thread.start()
+    thread = threading.Thread(daemon=True, target=do_background_inference)
+    thread.start()
 
     # Push us past our limits
     if model_index < len(SharedModelManager.manager.get_available_models()):
