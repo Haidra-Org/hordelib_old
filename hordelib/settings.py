@@ -115,5 +115,4 @@ class UserSettings:
     enable_batch_optimisations = Switch(True)
 
 
-
 _UserSettings = UserSettings()

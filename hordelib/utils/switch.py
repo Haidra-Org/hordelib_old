@@ -1,5 +1,4 @@
 class Switch:
-
     def __init__(self, initial_value=False):
         self.active = initial_value
 
