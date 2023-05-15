@@ -283,7 +283,9 @@ class ModelManager:
         return None
 
     def get_loaded_models_names(
-        self, mm_include: list[str] | None = None, mm_exclude: list[str] | None = None,
+        self,
+        mm_include: list[str] | None = None,
+        mm_exclude: list[str] | None = None,
     ) -> list:
         """
         Returns:
