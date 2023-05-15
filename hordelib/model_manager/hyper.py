@@ -367,17 +367,23 @@ class ModelManager:
     def get_mm_pointers(self, mm_types: list[str] | None = None):
         if not mm_types:
             return []
-        # If any value in the list is not a string, we assume it's a mm pointer already
-        if not any(type(mm_type) == str for mm_type in mm_types):
-            return mm_types
+        # If any value in the list is not a string, we assume it's a mm pointer already but we verify
         mm_pointers = []
-        for mm_type in mm_types:
-            try:
-                mm_type = MODEL_MANAGERS_TYPE_LOOKUP[MODEL_CATEGORY_NAMES(mm_type)]
+        if any(type(mm_type) != str for mm_type in mm_types):
+            for mm_type in mm_types:
                 for active_mm in self.active_model_managers:
-                    if type(active_mm) == mm_type:
+                    if active_mm == mm_type:
                         mm_pointers.append(active_mm)
                         break
+        for mm_type in mm_types:
+            if type(mm_type) != str:
+                continue
+            try:
+                mm_type = MODEL_MANAGERS_TYPE_LOOKUP[MODEL_CATEGORY_NAMES(mm_type)]
             except Exception as err:
-                logger.warning(err)
+                logger.warning(f"Exception when looking up model manager '{mm_type}': {err}")
+            for active_mm in self.active_model_managers:
+                if type(active_mm) == mm_type:
+                    mm_pointers.append(active_mm)
+                    break
         return mm_pointers
