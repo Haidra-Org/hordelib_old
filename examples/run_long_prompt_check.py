@@ -1,9 +1,9 @@
 # Here we try to measure the impact, if any, on inference time with long prompts
 import time
 
-import hordelib
 from loguru import logger
 
+import hordelib
 
 metrics = {}
 last_label = ""
@@ -11,7 +11,7 @@ last_label = ""
 
 def start_clock(label):
     global metrics
-    global last_label  
+    global last_label
     metrics[label] = time.time()
     last_label = label
 
@@ -26,8 +26,8 @@ def main():
     hordelib.initialise(setup_logging=False)
 
     from hordelib.horde import HordeLib
-    from hordelib.shared_model_manager import SharedModelManager
     from hordelib.settings import UserSettings
+    from hordelib.shared_model_manager import SharedModelManager
 
     generate = HordeLib()
     SharedModelManager.loadModelManagers(compvis=True)
@@ -80,7 +80,7 @@ def main():
         "model": "Deliberate",
     }
 
-    # Warmup 
+    # Warmup
     generate.basic_inference(basic_data)
 
     i = 1
@@ -89,7 +89,7 @@ def main():
     for _ in range(3):
 
         # let us enable comfyui's default behaviour of batch optimisations
-        UserSettings.enable_batch_optimisations.activate()    
+        UserSettings.enable_batch_optimisations.activate()
         start_clock(f"{i}a. Inference with default comfyui")
         generate.basic_inference(basic_data)
         stop_clock()
@@ -106,7 +106,7 @@ def main():
     for _ in range(3):
 
         # let us enable comfyui's default behaviour of batch optimisations
-        UserSettings.enable_batch_optimisations.activate()    
+        UserSettings.enable_batch_optimisations.activate()
         start_clock(f"{i}a. Long Prompt Inference with default comfyui")
         generate.basic_inference(long_prompt_data)
         stop_clock()
@@ -118,7 +118,6 @@ def main():
         stop_clock()
 
         i += 1
-
 
     # Dump the results
     for k, v in metrics.items():
