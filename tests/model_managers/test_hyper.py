@@ -73,14 +73,14 @@ class TestHyperMM:
 
     def test_get_mm_pointers(self):
         print(SharedModelManager.manager.get_mm_pointers(["compvis"]))
-        assert SharedModelManager.manager.get_mm_pointers(["compvis"]) == [SharedModelManager.manager.compvis]
+        assert SharedModelManager.manager.get_mm_pointers(["compvis"]) == {SharedModelManager.manager.compvis}
         # because gfpgan MM not active
         assert len(SharedModelManager.manager.get_mm_pointers(["compvis", "gfpgan"])) == 1
         assert len(SharedModelManager.manager.get_mm_pointers(["compvis", "gfpgan", "esrgan"])) == 2
         assert len(SharedModelManager.manager.get_mm_pointers(["compvis", "FAKE"])) == 1
-        assert SharedModelManager.manager.get_mm_pointers(None) == []
+        assert SharedModelManager.manager.get_mm_pointers(None) == set()
         # Any value other than a string or a mm pointer is ignored
-        assert SharedModelManager.manager.get_mm_pointers([None]) == []
+        assert SharedModelManager.manager.get_mm_pointers([None]) == set()
         assert SharedModelManager.manager.get_mm_pointers(
-            [None, SharedModelManager.manager.compvis, "FAKE", "esrgan"]
-        ) == [SharedModelManager.manager.compvis, SharedModelManager.manager.esrgan]
+            [None, SharedModelManager.manager.compvis, "FAKE", "esrgan", "compvis"],
+        ) == {SharedModelManager.manager.compvis, SharedModelManager.manager.esrgan}
