@@ -265,7 +265,7 @@ class HordeLib:
                 del params["source_processing"]
 
         # LORAs?
-        params["loras"] = payload["loras"]  # already validated
+        params["loras"] = payload.get("loras", [])
 
         return params
 
