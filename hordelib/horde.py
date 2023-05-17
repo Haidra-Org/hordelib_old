@@ -52,6 +52,7 @@ class HordeLib:
         "image_is_control": None,
         "return_control_map": "return_control_map",
         # "prompt": Handled below
+        # "loras": Handled below
         "ddim_steps": "sampler.steps",
         "n_iter": "empty_latent_image.batch_size",
         "model": "model_loader.model_name",
@@ -133,6 +134,21 @@ class HordeLib:
                     payload["hires_fix_denoising_strength"] = 1.0
             except ValueError:
                 payload["hires_fix_denoising_strength"] = 1.0
+        # Validate loras
+        fixed_loras = []
+        if payload.get("loras"):
+            try:
+                for lora in payload["loras"]:
+                    new_lora = {
+                        "name": lora.get("name", ""),
+                        "model": lora.get("model", 1.0),
+                        "clip": lora.get("clip", 1.0),
+                    }
+                    if new_lora["name"]:
+                        fixed_loras.append(new_lora)
+            except:
+                fixed_loras = []
+        payload["loras"] = fixed_loras
 
     def _parameter_remap(self, payload: dict[str, str | None]) -> dict[str, str | None]:
         params = {}
@@ -248,12 +264,15 @@ class HordeLib:
             if "source_processing" in params:
                 del params["source_processing"]
 
+        # LORAs?
+        params["loras"] = payload["loras"]  # already validated
+
         return params
 
     # Fix any nonsensical requests
-    def _validate_BASIC_INFERENCE_PARAMS(self, payload):
+    def _validate_inference_params(self, payload):
 
-        # Fix width/height not divisable by 65
+        # Fix width/height not divisable by 64
         if payload["width"] % 64 != 0:
             payload["width"] = ((payload["width"] + 63) // 64) * 64
 
@@ -456,7 +475,8 @@ class HordeLib:
         # Check payload types
         self._check_payload(payload)
         # Validate our payload parameters
-        self._validate_BASIC_INFERENCE_PARAMS(payload)
+        self._validate_inference_params(payload)
+        # Resize the source image and mask to actual final width/height requested
         self._resize_sources_to_request(payload)
         # Determine our parameters
         params = self._parameter_remap_basic_inference(payload)
