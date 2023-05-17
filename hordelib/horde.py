@@ -459,7 +459,7 @@ class HordeLib:
             return results
 
     def lock_models(self, models):
-        models = [x.strip() for x in models if x]
+        models = [str(x).strip() for x in models if x]
         # Try to acquire a model lock, if we can't, wait a while as some other thread
         # must have these resources locked
         while not self.generator.lock_models(models):
@@ -484,10 +484,18 @@ class HordeLib:
         pipeline = self._get_appropriate_pipeline(params)
         # Run the pipeline
         try:
-            self.lock_models([payload.get("model"), payload.get("control_type")])
+            # Add prefix to loras to avoid name collisions with other models
+            models = [f"lora-{x['name']}" for x in payload.get("loras", [])]
+            # main model
+            models.append(payload.get("model"))
+            # controlnet model
+            models.append(payload.get("control_type"))
+            # Acquire a lock on all these models
+            self.lock_models(models)
+            # Call the inference pipeline
             images = self.generator.run_image_pipeline(pipeline, params)
         finally:
-            self.unlock_models([payload.get("model"), payload.get("control_type")])
+            self.unlock_models(models)
 
         return self._process_results(images, rawpng)
 
