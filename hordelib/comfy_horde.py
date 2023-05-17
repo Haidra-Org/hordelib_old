@@ -536,6 +536,53 @@ class Comfy_Horde:
                     params["control_type"],
                 )
 
+        # XXX Also shouldn't be here, but I'm noticing the pattern of dynamic pipeline
+        # XXX modification now. Here we dynamically build a lora pipeline
+        if params.get("loras"):
+
+            for lora_index, lora in enumerate(params.get("loras")):
+
+                # Inject a lora node (first lora)
+                if lora_index == 0:
+                    pipeline[f"lora_{lora_index}"] = {
+                        "inputs": {
+                            "model": ["model_loader", 0],
+                            "clip": ["model_loader", 1],
+                            "lora_name": f"{lora['name']}.safetensors",  # FIXME filename
+                            "strength_model": lora["model"],
+                            "strength_clip": lora["clip"],
+                        },
+                        "class_type": "LoraLoader",
+                    }
+                else:
+                    # Subsequent chained loras
+                    pipeline[f"lora_{lora_index}"] = {
+                        "inputs": {
+                            "model": [f"lora_{lora_index-1}", 0],
+                            "clip": [f"lora_{lora_index-1}", 1],
+                            "lora_name": f"{lora['name']}.safetensors",  # FIXME filename
+                            "strength_model": lora["model"],
+                            "strength_clip": lora["clip"],
+                        },
+                        "class_type": "LoraLoader",
+                    }
+
+            for lora_index, lora in enumerate(params.get("loras")):
+
+                # The first LORA always connects to the model loader
+                if lora_index == 0:
+                    self.reconnect_input(pipeline, "lora_0.model", "model_loader")
+                    self.reconnect_input(pipeline, "lora_0.clip", "model_loader")
+                else:
+                    # Other loras connect to the previous lora
+                    self.reconnect_input(pipeline, f"lora_{lora_index}.model", f"lora_{lora_index-1}.model")
+                    self.reconnect_input(pipeline, f"lora_{lora_index}.clip", f"lora_{lora_index-1}.clip")
+
+                # The last LORA always connects to the sampler and clip text encoders
+                if lora_index == len(params.get("loras")) - 1:
+                    self.reconnect_input(pipeline, "sampler.model", f"lora_{lora_index}")
+                    self.reconnect_input(pipeline, "clip_skip.clip", f"lora_{lora_index}")
+
         # Enforce our parameter bounds
         self._assert_parameter_bounds(params)
 
@@ -549,7 +596,7 @@ class Comfy_Horde:
         # developing and debugging new pipelines. A badly structured pipeline
         # file just results in a cryptic error from comfy
         pretty_pipeline = pformat(pipeline)
-        if False:  # This isn't here Tazlin :)
+        if True:  # This isn't here Tazlin :)
             logger.error(pretty_pipeline)
 
         # The client_id parameter here is just so we receive comfy callbacks for debugging.
