@@ -299,7 +299,7 @@ class ModelManager:
 
     def get_available_models_by_types(self, mm_include: list[str] | None = None, mm_exclude: list[str] | None = None):
         if not mm_include and not mm_exclude:
-            mm_include = ["ckpt", "diffusers"]
+            mm_include = ["compvis"]
         return self.get_available_models(mm_include, mm_exclude)
 
     def count_available_models_by_types(
