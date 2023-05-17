@@ -146,7 +146,7 @@ class HordeLib:
                     }
                     if new_lora["name"]:
                         fixed_loras.append(new_lora)
-            except:
+            except Exception:
                 fixed_loras = []
         payload["loras"] = fixed_loras
 

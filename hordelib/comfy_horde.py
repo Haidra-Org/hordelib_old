@@ -21,6 +21,7 @@ from loguru import logger
 from hordelib.settings import UserSettings
 from hordelib.utils.ioredirect import OutputCollector
 from hordelib.config_path import get_hordelib_path
+from hordelib.cache import get_cache_directory
 
 # Note these imports are intentionally somewhat obfuscated as a reminder to other modules
 # that they should never call through this module into comfy directly. All calls into
@@ -254,6 +255,12 @@ class Comfy_Horde:
         self._callers = 0
         self._gc_timer = time.time()
         self._counter_mutex = threading.Lock()
+        # FIXME Temporary hack to set the model dir for LORAs
+        _comfy_folder_paths["loras"] = (
+            [os.path.join(get_cache_directory(), "loras")],
+            [".safetensors"],
+        )
+        logger.warning(_comfy_folder_paths["loras"])
         # Set custom node path
         _comfy_folder_paths["custom_nodes"] = ([os.path.join(get_hordelib_path(), "nodes")], [])
         # Load our pipelines
@@ -538,6 +545,7 @@ class Comfy_Horde:
 
         # XXX Also shouldn't be here, but I'm noticing the pattern of dynamic pipeline
         # XXX modification now. Here we dynamically build a lora pipeline
+
         if params.get("loras"):
 
             for lora_index, lora in enumerate(params.get("loras")):
@@ -548,7 +556,7 @@ class Comfy_Horde:
                         "inputs": {
                             "model": ["model_loader", 0],
                             "clip": ["model_loader", 1],
-                            "lora_name": f"{lora['name']}.safetensors",  # FIXME filename
+                            "lora_name": f"{lora['name']}.safetensors",
                             "strength_model": lora["model"],
                             "strength_clip": lora["clip"],
                         },
@@ -560,7 +568,7 @@ class Comfy_Horde:
                         "inputs": {
                             "model": [f"lora_{lora_index-1}", 0],
                             "clip": [f"lora_{lora_index-1}", 1],
-                            "lora_name": f"{lora['name']}.safetensors",  # FIXME filename
+                            "lora_name": f"{lora['name']}.safetensors",
                             "strength_model": lora["model"],
                             "strength_clip": lora["clip"],
                         },
@@ -596,7 +604,7 @@ class Comfy_Horde:
         # developing and debugging new pipelines. A badly structured pipeline
         # file just results in a cryptic error from comfy
         pretty_pipeline = pformat(pipeline)
-        if True:  # This isn't here Tazlin :)
+        if False:  # This isn't here Tazlin :)
             logger.error(pretty_pipeline)
 
         # The client_id parameter here is just so we receive comfy callbacks for debugging.
