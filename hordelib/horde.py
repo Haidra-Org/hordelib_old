@@ -2,6 +2,7 @@
 # Main interface for the horde to this library.
 import random
 import sys
+import time
 
 from loguru import logger
 from PIL import Image, ImageOps, PngImagePlugin, UnidentifiedImageError
@@ -438,6 +439,19 @@ class HordeLib:
         else:
             return results
 
+    def lock_models(self, models):
+        models = [x.strip() for x in models if x]
+        # Try to acquire a model lock, if we can't, wait a while as some other thread
+        # must have these resources locked
+        while not self.generator.lock_models(models):
+            time.sleep(0.1)
+        logger.debug(f"Locked models {','.join(models)}")
+
+    def unlock_models(self, models):
+        models = [x.strip() for x in models if x]
+        self.generator.unlock_models(models)
+        logger.debug(f"Unlocked models {','.join(models)}")
+
     def basic_inference(self, payload: dict[str, str | None], rawpng=False) -> Image.Image | None:
         # Check payload types
         self._check_payload(payload)
@@ -449,7 +463,12 @@ class HordeLib:
         # Determine the correct pipeline
         pipeline = self._get_appropriate_pipeline(params)
         # Run the pipeline
-        images = self.generator.run_image_pipeline(pipeline, params)
+        try:
+            self.lock_models([payload.get("model"), payload.get("control_type")])
+            images = self.generator.run_image_pipeline(pipeline, params)
+        finally:
+            self.unlock_models([payload.get("model"), payload.get("control_type")])
+
         return self._process_results(images, rawpng)
 
     def image_upscale(self, payload: dict[str, str | None], rawpng=False) -> Image.Image | None:
@@ -460,7 +479,11 @@ class HordeLib:
         # Determine the correct pipeline
         pipeline = "image_upscale"
         # Run the pipeline
-        images = self.generator.run_image_pipeline(pipeline, params)
+        try:
+            self.lock_models([payload.get("model")])
+            images = self.generator.run_image_pipeline(pipeline, params)
+        finally:
+            self.unlock_models([payload.get("model")])
         if images is None:
             return None  # XXX Log error and/or raise Exception here
         # Allow arbitrary resizing
@@ -478,5 +501,9 @@ class HordeLib:
         # Determine the correct pipeline
         pipeline = "image_facefix"
         # Run the pipeline
-        images = self.generator.run_image_pipeline(pipeline, params)
+        try:
+            self.lock_models([payload.get("model")])
+            images = self.generator.run_image_pipeline(pipeline, params)
+        finally:
+            self.unlock_models([payload.get("model")])
         return self._process_results(images, rawpng)

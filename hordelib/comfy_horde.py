@@ -248,6 +248,8 @@ class Comfy_Horde:
         self._client_id = {}
         self._images = {}
         self.pipelines = {}
+        self._model_locks = []
+        self._model_lock_mutex = threading.Lock()
         self._exit_time = 0
         self._callers = 0
         self._gc_timer = time.time()
@@ -262,6 +264,33 @@ class Comfy_Horde:
             # Load our custom nodes
             self._load_custom_nodes()
         stdio.replay()
+
+    def lock_models(self, model_names):
+        """Lock the given model, or list of models.
+
+        Return True if the models could be locked, False indicates they are in use already
+        """
+        already_locked = False
+        with self._model_lock_mutex:
+            if isinstance(model_names, str):
+                model_names = [model_names]
+            for model in model_names:
+                if model in self._model_locks:
+                    already_locked = True
+                    break
+            if not already_locked:
+                self._model_locks.extend(model_names)
+
+        return not already_locked
+
+    def unlock_models(self, model_names):
+        """The reverse of _lock_models(). Although this can never fail so returns nothing."""
+        with self._model_lock_mutex:
+            if isinstance(model_names, str):
+                model_names = [model_names]
+            for model in model_names:
+                if model in self._model_locks:
+                    self._model_locks.remove(model)
 
     def _this_dir(self, filename: str, subdir="") -> str:
         target_dir = os.path.dirname(os.path.realpath(__file__))
