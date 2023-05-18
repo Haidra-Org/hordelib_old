@@ -1,13 +1,14 @@
-import os
-import string
 import hashlib
-import requests
-import time
-import threading
 import json
-from collections import deque
-from loguru import logger
+import os
 import re
+import string
+import threading
+import time
+from collections import deque
+
+import requests
+from loguru import logger
 
 
 class LoraDownloader:
@@ -22,7 +23,7 @@ class LoraDownloader:
     x.download()  # returns immediately spawning background download threads
 
     # To check if done
-    if x.done: 
+    if x.done:
         ...
 
     # If you want the model meta data once we're done (also saved to loras.json)
@@ -37,7 +38,7 @@ class LoraDownloader:
                     "dark theme"
                 ],
                 "size_mb": 72
-            },    
+            },
                 ...etc...
 
 
@@ -75,10 +76,10 @@ class LoraDownloader:
                 # Attempt to decode the response to JSON
                 return response.json()
 
-            except (requests.HTTPError, requests.ConnectionError, requests.Timeout, json.JSONDecodeError) as e:
+            except (requests.HTTPError, requests.ConnectionError, requests.Timeout, json.JSONDecodeError):
                 retries += 1
                 if retries <= LoraDownloader.MAX_RETRIES:
-                    time.sleep(LoraDownloader.RETRY_DELAY)  
+                    time.sleep(LoraDownloader.RETRY_DELAY)
                 else:
                     # Max retries exceeded, give up
                     return None
@@ -93,13 +94,13 @@ class LoraDownloader:
             url = LoraDownloader.LORA_API
         else:
             url = self._next_page_url
-        
+
         # This may be the end of the road, unlikely but...
         if not url:
             logger.warning("End of LORA data reached")
             self.done = True
         else:
-            # Get the actual item data 
+            # Get the actual item data
             items = self._get_json(url)
             if items:
                 self._data = items
@@ -113,10 +114,10 @@ class LoraDownloader:
     def _sanitise_filename(self, filename):
         """Don't allow crazy filenames, there are a lot"""
         # First remove exotic unicode characters
-        filename = filename.encode('ascii', 'ignore').decode('ascii')
+        filename = filename.encode("ascii", "ignore").decode("ascii")
         # Now exploit characters
         valid_chars = "-_.() %s%s" % (string.ascii_letters, string.digits)
-        return ''.join(c for c in filename if c in valid_chars)        
+        return "".join(c for c in filename if c in valid_chars)
 
     def _parse_civitai_lora_data(self, item):
         """Return a simplified dictionary with the information we actually need about a lora"""
@@ -156,7 +157,7 @@ class LoraDownloader:
         return lora
 
     def _download_thread(self):
-        # We try to download the LORA. There are tens of thousands of these things, we aren't 
+        # We try to download the LORA. There are tens of thousands of these things, we aren't
         # picky if downloads fail, as they often will if civitai is the host, we just move on to
         # the next one
         while True:
@@ -167,10 +168,10 @@ class LoraDownloader:
                 # Nothing in the queue
                 time.sleep(2)
                 continue
-            
+
             # Download the lora
             retries = 0
-            while retries <= LoraDownloader.MAX_RETRIES:                
+            while retries <= LoraDownloader.MAX_RETRIES:
                 try:
                     # Just before we download this file, check if we already have it
                     filename = os.path.join(self._download_dir, lora["filename"])
@@ -234,9 +235,9 @@ class LoraDownloader:
                 if retries > LoraDownloader.MAX_RETRIES:
                     break  # fail
 
-                time.sleep(LoraDownloader.RETRY_DELAY)  
+                time.sleep(LoraDownloader.RETRY_DELAY)
 
-    def _download_lora(self, lora):            
+    def _download_lora(self, lora):
         with self._mutex:
             # Start download threads if they aren't already started
             while len(self._download_threads) < LoraDownloader.MAX_DOWNLOAD_THREADS:
@@ -254,7 +255,7 @@ class LoraDownloader:
             lora = self._parse_civitai_lora_data(item)
             if lora:
                 self._file_count += 1
-                # Allow a queue of 20% larger than the max disk space as we'll lose some 
+                # Allow a queue of 20% larger than the max disk space as we'll lose some
                 if self._download_queue_mb > self._max_disk * 1.2:
                     return
                 # We have valid lora data, download it
