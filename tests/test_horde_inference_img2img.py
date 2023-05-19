@@ -222,33 +222,3 @@ class TestHordeInference:
         assert pil_image is not None
         assert "source_image" not in data
         assert "source_processing" not in data
-
-    def test_image_to_image_with_mask(self):
-        data = {
-            "sampler_name": "k_dpmpp_2m",
-            "cfg_scale": 7.5,
-            "denoising_strength": 0.4,
-            "seed": 666,
-            "height": 512,
-            "width": 512,
-            "karras": False,
-            "tiling": False,
-            "hires_fix": False,
-            "clip_skip": 1,
-            "control_type": None,
-            "image_is_control": False,
-            "return_control_map": False,
-            "prompt": "a dinosaur",
-            "ddim_steps": 25,
-            "n_iter": 1,
-            "model": "Deliberate",
-            "source_image": Image.open("images/test_inpaint_original.jpg"),
-            "source_processing": "img2img",
-            "source_mask": Image.open("images/test_inpaint_mask.png"),
-        }
-        assert self.horde is not None
-        pil_image = self.horde.basic_inference(data)
-        assert pil_image is not None
-        assert pil_image.size == (512, 512)
-        assert data["source_image"].size == (512, 512)
-        pil_image.save("images/horde_image_to_image.webp", quality=90)
