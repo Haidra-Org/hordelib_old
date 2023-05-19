@@ -97,11 +97,12 @@ class HordeLib:
             self.__class__._initialised = True
 
     def _check_payload(self, payload):
-        # Valid CFG
-        if payload.get("cfg_scale", 8.0) < 0:
-            payload["cfg_scale"] = 0
-        elif payload.get("cfg_scale") > 100:
-            payload["cfg_scale"] = 100
+        # Valid CFG, if it exists
+        if payload.get("cfg_scale"):
+            if payload.get("cfg_scale") < 0:
+                payload["cfg_scale"] = 0
+            elif payload.get("cfg_scale", 8.0) > 100:
+                payload["cfg_scale"] = 100
         # valid width
         if payload.get("width"):
             try:
