@@ -349,9 +349,9 @@ class HordeLib:
         if source_proc == "img2img":
             # FIXME: Probably will have a different name from BASIC_INFERENCE_PARAMS
             if params.get("source_mask"):
-                pipeline = "stable_diffusion_paint"
+                pipeline = "stable_diffusion_img2img_mask"
             elif len(params.get("image_loader.image").split()) == 4:
-                pipeline = "stable_diffusion_paint"
+                pipeline = "stable_diffusion_img2img_mask"
         elif source_proc == "inpainting":
             pipeline = "stable_diffusion_paint"
         elif source_proc == "outpainting":
