@@ -1,12 +1,12 @@
 {
     "3": {
         "inputs": {
-            "seed": 259791942929713,
+            "seed": 1052609051924376,
             "steps": 20,
             "cfg": 8.0,
             "sampler_name": "euler",
             "scheduler": "normal",
-            "denoise": 0.5000000000000001,
+            "denoise": 0.46999999999999953,
             "model": [
                 "4",
                 0
@@ -82,7 +82,7 @@
     },
     "11": {
         "inputs": {
-            "image": "test_inpaint_original.png",
+            "image": "test_inpaint_alpha.png",
             "choose file to upload": "image"
         },
         "class_type": "LoadImage"
@@ -107,8 +107,8 @@
                 0
             ],
             "mask": [
-                "19",
-                0
+                "11",
+                1
             ]
         },
         "class_type": "SetLatentNoiseMask"
@@ -125,13 +125,5 @@
             ]
         },
         "class_type": "VAEEncode"
-    },
-    "19": {
-        "inputs": {
-            "image": "test_inpaint_mask.png",
-            "channel": "red",
-            "choose file to upload": "image"
-        },
-        "class_type": "LoadImageMask"
     }
 }
