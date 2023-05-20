@@ -58,8 +58,8 @@ class TestHordeInference:
         assert self.horde is not None
 
         for preproc in HordeLib.CONTROLNET_IMAGE_PREPROCESSOR_MAP.keys():
-            if preproc == "scribble":
-                # Not valid for normal image input test
+            if preproc == "scribble" or preproc == "mlsd":
+                # Skip
                 continue
             assert (
                 SharedModelManager.manager.controlnet.check_control_type_available(

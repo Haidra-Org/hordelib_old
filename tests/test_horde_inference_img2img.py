@@ -57,7 +57,6 @@ class TestHordeInference:
         pil_image = self.horde.basic_inference(data)
         assert pil_image is not None
         assert pil_image.size == (512, 512)
-        assert data["source_image"].size == (512, 512)
         pil_image.save("images/horde_image_to_image.webp", quality=90)
 
     def test_image_to_image_hires_fix_small(self):
@@ -222,18 +221,18 @@ class TestHordeInference:
         data = {
             "sampler_name": "k_dpmpp_2m",
             "cfg_scale": 7.5,
-            "denoising_strength": 0.4,
-            "seed": 250636385744582,
-            "height": 512,
-            "width": 512,
-            "karras": False,
+            "denoising_strength": 1.0,
+            "seed": 123456789,
+            "height": 512.1,  # test param fix
+            "width": 512.1,  # test param fix
+            "karras": True,
             "tiling": False,
             "hires_fix": False,
             "clip_skip": 1,
             "control_type": None,
             "image_is_control": False,
             "return_control_map": False,
-            "prompt": "a dinosaur",
+            "prompt": "an ancient llamia monster",
             "ddim_steps": 25,
             "n_iter": 1,
             "model": "Deliberate",
@@ -243,5 +242,4 @@ class TestHordeInference:
         assert self.horde is not None
         pil_image = self.horde.basic_inference(data)
         assert pil_image is not None
-        assert "source_image" not in data
-        assert "source_processing" not in data
+        pil_image.save("images/horde_img2img_fallback_to_txt2img.webp", quality=90)

@@ -21,7 +21,7 @@ class TestInference:
         SharedModelManager.manager = None
 
     def test_unknown_pipeline(self):
-        result = self.comfy.run_pipeline("non-existent-pipeline", {})
+        result = self.comfy.run_image_pipeline("non-existent-pipeline", {})
         assert result is None
 
     def test_stable_diffusion_pipeline(self):
@@ -39,6 +39,7 @@ class TestInference:
             "negative_prompt.text": "cat, black and white, deformed",
             "model_loader.model_name": "Deliberate",
             "clip_skip.stop_at_clip_layer": -1,
+            "model_loader.model_manager": SharedModelManager,
         }
         images = self.comfy.run_image_pipeline("stable_diffusion", params)
         assert images is not None
@@ -61,6 +62,7 @@ class TestInference:
             "negative_prompt.text": "cat, black and white, deformed",
             "model_loader.model_name": "Deliberate",
             "clip_skip.stop_at_clip_layer": -2,
+            "model_loader.model_manager": SharedModelManager,
         }
         images = self.comfy.run_image_pipeline("stable_diffusion", params)
         assert images is not None
@@ -86,6 +88,7 @@ class TestInference:
                 "render, cg, drawing, painting, artist, graphics, deformed, black and white, deformed eyes"
             ),
             "model_loader.model_name": "Deliberate",
+            "model_loader.model_manager": SharedModelManager,
             "empty_latent_image.width": 256,
             "empty_latent_image.height": 256,
             "latent_upscale.width": 512,
@@ -124,6 +127,7 @@ class TestInference:
                 "render, cg, drawing, painting, artist, graphics, deformed, black and white, deformed eyes"
             ),
             "model_loader.model_name": "Deliberate",
+            "model_loader.model_manager": SharedModelManager,
             "empty_latent_image.width": 256,
             "empty_latent_image.height": 256,
             "latent_upscale.width": 512,
