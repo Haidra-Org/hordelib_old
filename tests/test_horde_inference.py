@@ -54,7 +54,7 @@ class TestHordeInference:
         assert self.horde is not None
         pil_image = self.horde.basic_inference(data)
         assert pil_image is not None
-        pil_image.save("images/horde_text_to_image.webp", quality=90)
+        pil_image.save("images/text_to_image.webp", quality=90)
 
     def test_text_to_image_small(self):
         data = {
@@ -79,7 +79,7 @@ class TestHordeInference:
         assert self.horde is not None
         pil_image = self.horde.basic_inference(data)
         assert pil_image is not None
-        pil_image.save("images/horde_text_to_image_small.webp", quality=90)
+        pil_image.save("images/text_to_image_small.webp", quality=90)
 
     def test_text_to_image_clip_skip_2(self):
         data = {
@@ -104,7 +104,7 @@ class TestHordeInference:
         assert self.horde is not None
         pil_image = self.horde.basic_inference(data)
         assert pil_image is not None
-        pil_image.save("images/horde_text_to_image_clip_skip_2.webp", quality=90)
+        pil_image.save("images/text_to_image_clip_skip_2.webp", quality=90)
 
     def test_text_to_image_hires_fix(self):
         data = {
@@ -129,4 +129,4 @@ class TestHordeInference:
         assert self.horde is not None
         pil_image = self.horde.basic_inference(data)
         assert pil_image is not None
-        pil_image.save("images/horde_text_to_image_hires_fix.webp", quality=90)
+        pil_image.save("images/text_to_image_hires_fix.webp", quality=90)

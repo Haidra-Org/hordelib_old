@@ -299,8 +299,10 @@ class Comfy_Horde:
         return executor
 
     def get_pipeline_data(self, pipeline_name):
-        logger.info(f"Running pipeline {pipeline_name}")
-        return copy.deepcopy(self.pipelines[pipeline_name])
+        pipeline_data = copy.deepcopy(self.pipelines.get(pipeline_name, {}))
+        if pipeline_data:
+            logger.info(f"Running pipeline {pipeline_name}")
+        return pipeline_data
 
     def _fix_pipeline_types(self, data: dict) -> dict:
         # We have a list of nodes and each node has a class type, which we may want to change
@@ -525,12 +527,14 @@ class Comfy_Horde:
 
         # We may be passed a pipeline name or a pipeline data structure
         if isinstance(pipeline, str):
+            # Grab pipeline data structure
+            pipeline_data = self.get_pipeline_data(pipeline)
             # Sanity
-            if pipeline not in self.pipelines:
+            if not pipeline_data:
                 logger.error(f"Unknown inference pipeline: {pipeline}")
                 return None
-            # Grab pipeline data structure
-            pipeline = self.get_pipeline_data(pipeline)
+        else:
+            pipeline_data = pipeline
 
         # If no callers for a while, announce it
         if self._callers == 0 and self._exit_time:
@@ -542,7 +546,7 @@ class Comfy_Horde:
         with self._counter_mutex:
             self._callers += 1
 
-        result = self._run_pipeline(pipeline, params)
+        result = self._run_pipeline(pipeline_data, params)
 
         # We are being exited
         with self._counter_mutex:

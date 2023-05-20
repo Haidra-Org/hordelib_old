@@ -48,7 +48,7 @@ class TestHordeLora:
         assert self.horde is not None
         pil_image = self.horde.basic_inference(data)
         assert pil_image is not None
-        pil_image.save("images/horde_lora_red.webp", quality=90)
+        pil_image.save("images/lora_red.webp", quality=90)
 
     def test_text_to_image_lora_blue(self):
 
@@ -76,7 +76,7 @@ class TestHordeLora:
         assert self.horde is not None
         pil_image = self.horde.basic_inference(data)
         assert pil_image is not None
-        pil_image.save("images/horde_lora_blue.webp", quality=90)
+        pil_image.save("images/lora_blue.webp", quality=90)
 
     def test_text_to_image_lora_chained(self):
 
@@ -106,4 +106,4 @@ class TestHordeLora:
         assert self.horde is not None
         pil_image = self.horde.basic_inference(data)
         assert pil_image is not None
-        pil_image.save("images/horde_lora_multiple.webp", quality=90)
+        pil_image.save("images/lora_multiple.webp", quality=90)
