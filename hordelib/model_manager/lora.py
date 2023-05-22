@@ -10,6 +10,7 @@ from datetime import datetime
 from enum import Enum
 
 import requests
+from fuzzywuzzy import fuzz
 from loguru import logger
 from typing_extensions import override
 
@@ -35,10 +36,10 @@ class LoraModelManager(BaseModelManager):
 
     def __init__(
         self,
-        download_reference=False,
+        download_reference=True,
         allowed_top_lora_storage=5120,
         allowed_adhoc_lora_storage=1024,
-        download_wait=False,
+        download_wait=True,
     ):
 
         self._max_top_disk = allowed_top_lora_storage
@@ -330,15 +331,17 @@ class LoraModelManager(BaseModelManager):
                 # if rtr > 15:
                 #     raise Exception
 
-    def get_lora_filename(self, lora_name: str):
-        lora_data = self.model_reference.get(Sanitizer.remove_version(lora_name).lower())
-        if not lora_data:
+    def get_lora_filename(self, model_name: str):
+        lora_name = self.fuzzy_find_lora(model_name)
+        if not lora_name:
             return None
-        else:
-            return lora_data["filename"]
+        return self.model_reference[lora_name]["filename"]
 
     def get_model(self, model_name: str):
-        return self.model_reference.get(model_name.lower())
+        lora_name = self.fuzzy_find_lora(model_name)
+        if not lora_name:
+            return None
+        return self.model_reference[lora_name]
 
     def save_cached_reference_to_disk(self):
         with open(self.models_db_path, "wt", encoding="utf-8", errors="ignore") as outfile:
@@ -383,9 +386,21 @@ class LoraModelManager(BaseModelManager):
         del self.model_reference[oldest_lora]
         del self._adhoc_loras[oldest_lora]
 
+    def fuzzy_find_lora(self, lora_name):
+        sname = Sanitizer.remove_version(lora_name).lower()
+        if sname in self.model_reference:
+            return sname
+        for lora in self.model_reference:
+            if sname in lora:
+                return sname
+        for lora in self.model_reference:
+            if fuzz.ratio(lora, self.model_reference) > 90:
+                return sname
+        return None
+
     @override
     def is_local_model(self, model_name):
-        return Sanitizer.remove_version(model_name).lower() in self.model_reference
+        return self.fuzzy_find_lora(model_name) is not None
 
     @override
     def modelToRam(
@@ -394,5 +409,3 @@ class LoraModelManager(BaseModelManager):
         **kwargs,
     ) -> dict[str, typing.Any]:
         pass
-
-    
