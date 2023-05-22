@@ -23,7 +23,7 @@ class TestHordeLora:
         for l in SharedModelManager.manager.lora.model_reference:
             if len(SharedModelManager.manager.lora.model_reference[l]["triggers"]) >= 2:
                 TestHordeLora.lora1 = l
-        if TestHordeLora.lora1 == None:
+        if TestHordeLora.lora1 is None:
             TestHordeLora.lora1 = list(SharedModelManager.manager.lora.model_reference.keys())[0]
         TestHordeLora.trigger11 = SharedModelManager.manager.lora.model_reference[TestHordeLora.lora1]["triggers"][0]
         TestHordeLora.trigger12 = SharedModelManager.manager.lora.model_reference[TestHordeLora.lora1]["triggers"][1]
