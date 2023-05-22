@@ -351,7 +351,7 @@ class HordeLib:
                 # Determine the actual lora filename
                 lora_filename = f"{str(lora['name']).lower()}.safetensors"
                 if lora_filename in all_loras:
-                    lora["name"] = lora_filename  # the fixed up and valided name
+                    lora["name"] = lora_filename  # the fixed up and validated name
                     valid_loras.append(lora)
             payload["loras"] = valid_loras
 
@@ -368,7 +368,7 @@ class HordeLib:
                             "strength_clip": lora["clip"],
                             "model_manager": SharedModelManager,
                         },
-                        "class_type": "LoraLoader",
+                        "class_type": "HordeLoraLoader",
                     }
                 else:
                     # Subsequent chained loras
@@ -381,7 +381,7 @@ class HordeLib:
                             "strength_clip": lora["clip"],
                             "model_manager": SharedModelManager,
                         },
-                        "class_type": "LoraLoader",
+                        "class_type": "HordeLoraLoader",
                     }
 
             for lora_index, lora in enumerate(payload.get("loras")):
