@@ -1,11 +1,12 @@
+import re
+import string
 
 from unidecode import unidecode
-import string
-import re
 
-class Sanitizer():
-        
-    VERSION_REMOVER = re.compile(r'(v[0-9][0-9.]*)$')
+
+class Sanitizer:
+
+    VERSION_REMOVER = re.compile(r"(v[0-9][0-9.]*)$")
 
     @staticmethod
     def sanitise_model_name(name):
@@ -24,4 +25,4 @@ class Sanitizer():
 
     @staticmethod
     def remove_version(string):
-        return Sanitizer.VERSION_REMOVER.sub(r'', string)
+        return Sanitizer.VERSION_REMOVER.sub(r"", string)

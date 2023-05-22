@@ -1,17 +1,15 @@
-import os
 import hashlib
 import json
 import os
 import re
 import threading
 import time
+import typing
 from collections import deque
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
 
 import requests
-
-
 from loguru import logger
 from typing_extensions import override
 
@@ -21,9 +19,10 @@ from hordelib.utils.sanitizer import Sanitizer
 
 
 class DOWNLOAD_SIZE_CHECK(str, Enum):
-    all = "all"
+    everything = "everything"
     top = "top"
     adhoc = "adhoc"
+
 
 class LoraModelManager(BaseModelManager):
 
@@ -37,14 +36,10 @@ class LoraModelManager(BaseModelManager):
     def __init__(
         self,
         download_reference=False,
-        allowed_top_lora_storage = 5120,
-        allowed_adhoc_lora_storage = 1024,
+        allowed_top_lora_storage=5120,
+        allowed_adhoc_lora_storage=1024,
+        download_wait=False,
     ):
-        super().__init__(
-            modelFolder=MODEL_FOLDER_NAMES[MODEL_CATEGORY_NAMES.lora],
-            models_db_name=MODEL_DB_NAMES[MODEL_CATEGORY_NAMES.lora],
-            download_reference=download_reference,
-        )
 
         self._max_top_disk = allowed_top_lora_storage
         self._max_adhoc_disk = allowed_adhoc_lora_storage
@@ -60,13 +55,43 @@ class LoraModelManager(BaseModelManager):
         # Not yet handled, as we need a global reference to search through.
         self._adhoc_loras = set()
         self._adhoc_mutex = {}
+        self._download_wait = download_wait
 
+        super().__init__(
+            modelFolder=MODEL_FOLDER_NAMES[MODEL_CATEGORY_NAMES.lora],
+            models_db_name=MODEL_DB_NAMES[MODEL_CATEGORY_NAMES.lora],
+            download_reference=download_reference,
+        )
+
+    def loadModelDatabase(self, list_models=False):
+        if self.model_reference:
+            logger.info(
+                (
+                    "Model reference was already loaded."
+                    f" Got {len(self.model_reference)} models for {self.models_db_name}."
+                ),
+            )
+            logger.info("Reloading model reference...")
+
+        if self.download_reference:
+            self.download_model_reference()
+            logger.info("Lora reference download begun asynchronously.")
+        else:
+            self.model_reference = json.loads((self.models_db_path).read_text())
+            logger.info(
+                " ".join(
+                    [
+                        "Loaded model reference from disk.",
+                        f"Got {len(self.model_reference)} models for {self.models_db_name}.",
+                    ],
+                ),
+            )
 
     def download_model_reference(self):
         # We have to wipe it, as we are going to be adding it it instead of replacing it
         self.model_reference = {}
         self.download()
-        
+
     def _get_json(self, url):
         retries = 0
         while retries <= self.MAX_RETRIES:
@@ -88,7 +113,6 @@ class LoraModelManager(BaseModelManager):
                 # Failed badly
                 logger.error(f"LORA download failed {e}")
                 return None
-
 
     def _get_more_items(self):
         if not self._data:
@@ -166,6 +190,7 @@ class LoraModelManager(BaseModelManager):
                 continue
 
             # Download the lora
+            os.makedirs(self.modelFolderPath, exist_ok=True)
             retries = 0
             while retries <= self.MAX_RETRIES:
                 try:
@@ -190,8 +215,12 @@ class LoraModelManager(BaseModelManager):
                                     if self.calculate_downloaded_loras(DOWNLOAD_SIZE_CHECK.top) > self._max_top_disk:
                                         self.done = True
                                 else:
-                                    # Normally this should never happen unless the user manually reduced their max size in the meantime
-                                    if self.calculate_downloaded_loras(DOWNLOAD_SIZE_CHECK.adhoc) > self._max_adhoc_disk:
+                                    # Normally this should never happen unless the user manually
+                                    # reduced their max size in the meantime
+                                    if (
+                                        self.calculate_downloaded_loras(DOWNLOAD_SIZE_CHECK.adhoc)
+                                        > self._max_adhoc_disk
+                                    ):
                                         self.delete_oldest_lora()
                                 self.save_cached_reference_to_disk()
                             break
@@ -264,7 +293,15 @@ class LoraModelManager(BaseModelManager):
             if lora:
                 self._file_count += 1
                 # Allow a queue of 20% larger than the max disk space as we'll lose some
-                if self.calculate_download_queue() > self._max_top_disk * 1.2:
+                logger.info(
+                    [
+                        self._max_top_disk,
+                        self.calculate_download_queue() + self.calculate_downloaded_loras(),
+                        self.calculate_download_queue(),
+                        self.calculate_downloaded_loras(),
+                    ],
+                )
+                if self.calculate_download_queue() + self.calculate_downloaded_loras() > self._max_top_disk:
                     return
                 # We have valid lora data, download it
                 self._download_lora(lora)
@@ -282,8 +319,7 @@ class LoraModelManager(BaseModelManager):
             if self._data:
                 self._process_items()
 
-
-    def download(self, wait=False):
+    def download(self):
         """Start up a background thread downloading and return immediately"""
 
         # Don't start if we're already busy doing something
@@ -293,15 +329,14 @@ class LoraModelManager(BaseModelManager):
         # Start processing in a background thread
         self._thread = threading.Thread(target=self._start_processing, daemon=True)
         self._thread.start()
-
         # Wait for completion of our threads if requested
-        if wait:
+        # rtr = 0
+        if self._download_wait:
             while self._thread.is_alive():
                 time.sleep(0.5)
-
-
-    def has_lora(self, lora_name: str):
-        return Sanitizer.remove_version(lora_name).lower() in self.model_reference
+                # rtr += 1
+                # if rtr > 15:
+                #     raise Exception
 
     def get_lora_filename(self, lora_name: str):
         lora_data = self.model_reference.get(Sanitizer.remove_version(lora_name).lower())
@@ -316,13 +351,13 @@ class LoraModelManager(BaseModelManager):
     def save_cached_reference_to_disk(self):
         with open(self.models_db_path, "wt", encoding="utf-8", errors="ignore") as outfile:
             outfile.write(json.dumps(self.model_reference, indent=4))
-    
-    def calculate_downloaded_loras(self, mode=DOWNLOAD_SIZE_CHECK.all):
+
+    def calculate_downloaded_loras(self, mode=DOWNLOAD_SIZE_CHECK.everything):
         total_size = 0
         for lora in self.model_reference.values():
-            if mode == DOWNLOAD_SIZE_CHECK.top and lora in self._ad_hoc_loras:
+            if mode == DOWNLOAD_SIZE_CHECK.top and lora["name"] in self._adhoc_loras:
                 continue
-            if mode == DOWNLOAD_SIZE_CHECK.adhoc and lora not in self._ad_hoc_loras:
+            if mode == DOWNLOAD_SIZE_CHECK.adhoc and lora["name"] not in self._adhoc_loras:
                 continue
             total_size += lora["size_mb"]
         return total_size
@@ -333,12 +368,11 @@ class LoraModelManager(BaseModelManager):
             total_queue += lora["size_mb"]
         return total_queue
 
-
     def find_oldest_adhoc_lora(self):
         oldest_lora: str = None
         oldest_datetime: datetime = None
-        for lora in self._ad_hoc_loras:
-            lora_datetime = datetime.strptime(self.model_reference[lora]["last_used"],"%Y-%m-%d %H:%M:%S")
+        for lora in self._adhoc_loras:
+            lora_datetime = datetime.strptime(self.model_reference[lora]["last_used"], "%Y-%m-%d %H:%M:%S")
             if not oldest_lora:
                 oldest_lora = lora
                 oldest_datetime = lora_datetime
@@ -347,7 +381,7 @@ class LoraModelManager(BaseModelManager):
                 oldest_lora = lora
                 oldest_datetime = lora_datetime
         return oldest_lora
-    
+
     def delete_oldest_lora(self):
         oldest_lora = self.find_oldest_adhoc_lora()
         if not oldest_lora:
@@ -355,4 +389,16 @@ class LoraModelManager(BaseModelManager):
         filename = os.path.join(self.modelFolderPath, self.model_reference[oldest_lora]["filename"])
         os.remove(filename)
         del self.model_reference[oldest_lora]
-        del self._ad_hoc_loras[oldest_lora]
+        del self._adhoc_loras[oldest_lora]
+
+    @override
+    def is_local_model(self, model_name):
+        return Sanitizer.remove_version(model_name).lower() in self.model_reference
+
+    @override
+    def modelToRam(
+        self,
+        model_name: str,
+        **kwargs,
+    ) -> dict[str, typing.Any]:
+        pass

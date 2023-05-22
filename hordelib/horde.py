@@ -17,6 +17,7 @@ from hordelib.utils.dynamicprompt import DynamicPromptParser
 from hordelib.utils.image_utils import ImageUtils
 from hordelib.utils.sanitizer import Sanitizer
 
+
 class HordeLib:
     _instance = None
     _initialised = False
@@ -342,9 +343,9 @@ class HordeLib:
             valid_loras = []
             for lora in payload.get("loras"):
                 # Determine the actual lora filename
-                if SharedModelManager.manager.lora.has_lora(str(lora['name'])):
+                if SharedModelManager.manager.lora.is_local_model(str(lora["name"])):
                     # the fixed up and validated name
-                    lora["name"] = SharedModelManager.manager.lora.get_lora_filename(str(lora['name']))
+                    lora["name"] = SharedModelManager.manager.lora.get_lora_filename(str(lora["name"]))
                     valid_loras.append(lora)
             payload["loras"] = valid_loras
 

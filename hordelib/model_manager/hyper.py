@@ -19,8 +19,8 @@ from hordelib.model_manager.compvis import CompVisModelManager
 from hordelib.model_manager.controlnet import ControlNetModelManager
 from hordelib.model_manager.esrgan import EsrganModelManager
 from hordelib.model_manager.gfpgan import GfpganModelManager
-from hordelib.model_manager.safety_checker import SafetyCheckerModelManager
 from hordelib.model_manager.lora import LoraModelManager
+from hordelib.model_manager.safety_checker import SafetyCheckerModelManager
 
 MODEL_MANAGERS_TYPE_LOOKUP: dict[MODEL_CATEGORY_NAMES, type[BaseModelManager]] = {
     # ModelCategoryNames.aitemplate: AITemplateModelManager,
