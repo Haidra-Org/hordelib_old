@@ -180,10 +180,13 @@ class ModelManager:
             modelmanager = MODEL_MANAGERS_TYPE_LOOKUP[argName]
 
             # at runtime modelmanager() will be CompVisModelManager(), ClipModelManager(), etc
+            download_reference=False
+            if argName == 'lora':
+                download_reference=True
             setattr(
                 self,
                 argName,
-                modelmanager(download_reference=False),
+                modelmanager(download_reference=download_reference),
             )  # XXX # FIXME # HACK
 
     def reload_database(self) -> None:
