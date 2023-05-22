@@ -113,8 +113,9 @@ class LoraModelManager(BaseModelManager):
 
     def download_model_reference(self):
         # We have to wipe it, as we are going to be adding it it instead of replacing it
+        # We're not downloading now, as we need to be able to init without it
         self.model_reference = {}
-        self.download()
+        self.save_cached_reference_to_disk()
 
     def _get_json(self, url):
         retries = 0
@@ -334,7 +335,7 @@ class LoraModelManager(BaseModelManager):
             if self._data:
                 self._process_items()
 
-    def download(self):
+    def download_default_loras(self):
         """Start up a background thread downloading and return immediately"""
 
         # Don't start if we're already busy doing something

@@ -26,5 +26,6 @@ class TestModelManagerLora:
             allowed_top_lora_storage=download_amount,
             download_wait=True,
         )
+        mml.download_default_loras()
         assert mml.calculate_downloaded_loras() > download_amount
         assert mml.calculate_downloaded_loras() < download_amount * 1.4
