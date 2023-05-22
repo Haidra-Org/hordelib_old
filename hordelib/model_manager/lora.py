@@ -54,12 +54,13 @@ class LoraModelManager(BaseModelManager):
         self._file_count = 0
         self._download_threads = []
         self._download_queue = deque()
-        self
         self._thread = None
         self.done = False
         self.model_data = []
+        # Not yet handled, as we need a global reference to search through.
         self._adhoc_loras = set()
         self._adhoc_mutex = {}
+
 
     def download_model_reference(self):
         # We have to wipe it, as we are going to be adding it it instead of replacing it
@@ -254,7 +255,6 @@ class LoraModelManager(BaseModelManager):
                 self._download_threads.append(thread)
 
             # Add this lora to the download queue
-            self._download_queue_mb += lora["size_mb"]
             self._download_queue.append(lora)
 
     def _process_items(self):
@@ -264,7 +264,7 @@ class LoraModelManager(BaseModelManager):
             if lora:
                 self._file_count += 1
                 # Allow a queue of 20% larger than the max disk space as we'll lose some
-                if self._download_queue_mb > self._max_top_disk * 1.2:
+                if self.calculate_download_queue() > self._max_top_disk * 1.2:
                     return
                 # We have valid lora data, download it
                 self._download_lora(lora)
@@ -281,6 +281,7 @@ class LoraModelManager(BaseModelManager):
             # If we have some items to process, process them
             if self._data:
                 self._process_items()
+
 
     def download(self, wait=False):
         """Start up a background thread downloading and return immediately"""
@@ -313,8 +314,7 @@ class LoraModelManager(BaseModelManager):
         return self.model_reference.get(model_name.lower())
 
     def save_cached_reference_to_disk(self):
-        filename = os.path.join(self.modelFolderPath, "cached_lora_references.json")
-        with open(filename, "wt", encoding="utf-8", errors="ignore") as outfile:
+        with open(self.models_db_path, "wt", encoding="utf-8", errors="ignore") as outfile:
             outfile.write(json.dumps(self.model_reference, indent=4))
     
     def calculate_downloaded_loras(self, mode=DOWNLOAD_SIZE_CHECK.all):
@@ -326,6 +326,13 @@ class LoraModelManager(BaseModelManager):
                 continue
             total_size += lora["size_mb"]
         return total_size
+
+    def calculate_download_queue(self):
+        total_queue = 0
+        for lora in self._download_queue:
+            total_queue += lora["size_mb"]
+        return total_queue
+
 
     def find_oldest_adhoc_lora(self):
         oldest_lora: str = None
