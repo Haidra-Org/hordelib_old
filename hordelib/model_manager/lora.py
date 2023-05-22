@@ -75,6 +75,7 @@ class LoraModelManager(BaseModelManager):
             logger.info("Reloading model reference...")
 
         if self.download_reference:
+            os.makedirs(self.modelFolderPath, exist_ok=True)
             self.download_model_reference()
             logger.info("Lora reference download begun asynchronously.")
         else:
@@ -191,7 +192,6 @@ class LoraModelManager(BaseModelManager):
                 continue
 
             # Download the lora
-            os.makedirs(self.modelFolderPath, exist_ok=True)
             retries = 0
             while retries <= self.MAX_RETRIES:
                 try:
