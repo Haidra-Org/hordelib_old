@@ -20,7 +20,7 @@ class TestModelManagerLora:
         del self.horde
 
     def test_downloading_top(self):
-        download_amount = 2048
+        download_amount = 1024
         mml = LoraModelManager(
             download_reference=True,
             allowed_top_lora_storage=download_amount,

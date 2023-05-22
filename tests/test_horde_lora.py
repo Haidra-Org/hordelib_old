@@ -13,6 +13,7 @@ class TestHordeLora:
 
         TestHordeLora.default_model_manager_args = {
             "compvis": True,
+            "lora": True,
         }
         SharedModelManager.loadModelManagers(**self.default_model_manager_args)
         assert SharedModelManager.manager is not None

@@ -6,7 +6,7 @@ from unidecode import unidecode
 
 class Sanitizer:
 
-    VERSION_REMOVER = re.compile(r"(v[0-9][0-9.]*)$")
+    VERSION_REMOVER = re.compile(r"([Vv][0-9][0-9.]*)$")
 
     @staticmethod
     def sanitise_model_name(name):
@@ -21,8 +21,9 @@ class Sanitizer:
         filename = unidecode(filename)
         # Now exploit characters
         valid_chars = "-_.() %s%s" % (string.ascii_letters, string.digits)
-        return "".join(c for c in filename if c in valid_chars)
+        valid_name = "".join(c for c in filename if c in valid_chars)
+        return valid_name.strip()
 
     @staticmethod
     def remove_version(string):
-        return Sanitizer.VERSION_REMOVER.sub(r"", string)
+        return Sanitizer.VERSION_REMOVER.sub("", string)

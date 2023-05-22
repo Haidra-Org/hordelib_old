@@ -142,6 +142,7 @@ class LoraModelManager(BaseModelManager):
             "name": "",
             "sha256": "",
             "filename": "",
+            "id": "",
             "url": "",
             "triggers": [],
             "size_mb": 0,
@@ -156,9 +157,8 @@ class LoraModelManager(BaseModelManager):
         # get first file that is a primary file and a safetensor
         for file in version.get("files", {}):
             if file.get("primary", False) and file.get("name", "").endswith(".safetensors"):
-                lora["filename"] = Sanitizer.sanitise_filename(file.get("name", ""))
-                lora["filename"] = Sanitizer.remove_version(lora["filename"])
-                lora["name"] = Sanitizer.sanitise_model_name(item.get("name", lora["filename"]))
+                lora["name"] = Sanitizer.sanitise_model_name(item.get("name", ""))
+                lora["filename"] = f'{Sanitizer.sanitise_filename(lora["name"])}.safetensors'
                 lora["sha256"] = file.get("hashes", {}).get("SHA256")
                 try:
                     lora["size_mb"] = round(file.get("sizeKB", 0) / 1024)
@@ -293,14 +293,6 @@ class LoraModelManager(BaseModelManager):
             if lora:
                 self._file_count += 1
                 # Allow a queue of 20% larger than the max disk space as we'll lose some
-                logger.info(
-                    [
-                        self._max_top_disk,
-                        self.calculate_download_queue() + self.calculate_downloaded_loras(),
-                        self.calculate_download_queue(),
-                        self.calculate_downloaded_loras(),
-                    ],
-                )
                 if self.calculate_download_queue() + self.calculate_downloaded_loras() > self._max_top_disk:
                     return
                 # We have valid lora data, download it
@@ -402,3 +394,5 @@ class LoraModelManager(BaseModelManager):
         **kwargs,
     ) -> dict[str, typing.Any]:
         pass
+
+    
