@@ -359,6 +359,10 @@ class LoraModelManager(BaseModelManager):
             #     raise Exception
 
     def are_downloads_complete(self):
+        # If we don't have any models in our reference, then we haven't downloaded anything
+        # perhaps faulty civitai?
+        if len(self.model_reference) == 0:
+            return False
         return self.done
 
     def get_lora_filename(self, model_name: str):
