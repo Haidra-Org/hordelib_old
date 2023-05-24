@@ -717,9 +717,11 @@ class BaseModelManager(ABC):
                 # the server didn't support resuming downloads
                 if partial_size and response.status_code != 206:
                     if partial_size == remote_file_size:
-                        pass  # already downloaded 
+                        pass  # already downloaded
                     else:
-                        logger.warning(f"Server did not support resuming download, restarting download {response.status_code}: {partial_size} != {remote_file_size}")
+                        logger.warning(
+                            f"Server did not support resuming download, restarting download {response.status_code}: {partial_size} != {remote_file_size}",
+                        )
                         # try again without resuming, i.e. delete the partial download
                         if os.path.exists(final_pathname):
                             os.remove(final_pathname)
