@@ -67,6 +67,6 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("f1", help="filepath for image 1 to compare")
-    parser.add_argument("f2", help="filepath for image 1 to compare")
+    parser.add_argument("f2", help="filepath for image 2 to compare")
     args = parser.parse_args()
     print(get_image_distance(args.f1, args.f2))
