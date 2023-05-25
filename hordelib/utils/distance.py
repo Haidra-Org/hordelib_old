@@ -44,11 +44,11 @@ def get_image_distance(img1, img2):
         get_hist(img1),
         get_hist(img2),
     )
-    logger.debug(f"The distance between images is : {dist}")
+    logger.info(f"The distance between images is : {dist}")
     return dist
 
 
-def are_images_identical(img1, img2, identical_distance=100):
+def are_images_identical(img1, img2, identical_distance=1000):
     """Compares two images for distance
     If it is above a threshold, they are considered not-identical
     the distance is very sensitive to even things like compression artifacts
