@@ -323,10 +323,8 @@ class BaseModelManager(ABC):
                     model_validated = self.validate_model(model_name)
                     if not model_validated:
                         return False
-                logger.init(f"{model_name}", status="Loading")
-
                 tic = time.time()
-                logger.init(f"{model_name}", status="Loading")
+                logger.init(f"Loading {model_name}", status="Loading")
 
                 try:
                     self.add_loaded_model(
