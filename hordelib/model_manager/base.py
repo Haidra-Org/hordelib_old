@@ -115,6 +115,10 @@ class BaseModelManager(ABC):
         self.loadModelDatabase()
         self.load_disk_cached_models()
 
+    def progress(self, desc="done", current=0, total=0):
+        if self._download_progress_callback:
+            self._download_progress_callback(desc, current, total)
+
     @classmethod
     def set_download_callback(cls, callback):
         """Set a callback function when files are downloaded.
@@ -717,7 +721,7 @@ class BaseModelManager(ABC):
                     remote_file_size = int(response.headers.get("Content-length", 0))
                     if partial_size == remote_file_size:
                         # Successful download, swap the files
-                        self._download_progress_callback("done", None, None)
+                        self.progress()
                         logger.info(f"Successfully downloaded the file {filename}")
                         if os.path.exists(final_pathname):
                             os.remove(final_pathname)
@@ -766,11 +770,10 @@ class BaseModelManager(ABC):
                             downloaded += len(chunk)
                             f.write(chunk)
                             pbar.update(len(chunk))
-                            if self._download_progress_callback:
-                                self._download_progress_callback(filename, downloaded, remote_file_size + partial_size)
+                            self.progress(filename, downloaded, remote_file_size + partial_size)
                 # Successful download, swap the files
-                self._download_progress_callback("done", None, None)
                 logger.info(f"Successfully downloaded the file {filename}")
+                self.progress()
                 if os.path.exists(final_pathname):
                     os.remove(final_pathname)
                 # Move the downloaded data into it's final location
@@ -784,7 +787,7 @@ class BaseModelManager(ABC):
                     logger.info("Attempting download of file again")
                     time.sleep(2)
                 else:
-                    self._download_progress_callback("done", None, None)
+                    self.progress()
                     return False
 
     def download_model(self, model_name: str):
