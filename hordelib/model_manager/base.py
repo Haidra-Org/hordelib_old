@@ -515,7 +515,8 @@ class BaseModelManager(ABC):
             if not skip_checksum and not self.validate_file(file_details):
                 logger.warning(f"File {file_details['path']} has different contents to what we expected.")
                 try:
-                    # The file must have been considered valid once, or we wouldn't have renamed it from the ".part" download.
+                    # The file must have been considered valid once,
+                    # or we wouldn't have renamed it from the ".part" download.
                     # Likely there is an update, or a model database hash problem
                     logger.warning(f"Likely updated, will attempt to re-download {file_details['path']}.")
                 except OSError as e:
@@ -720,7 +721,8 @@ class BaseModelManager(ABC):
                         pass  # already downloaded
                     else:
                         logger.warning(
-                            f"Server did not support resuming download, restarting download {response.status_code}: {partial_size} != {remote_file_size}",
+                            "Server did not support resuming download, restarting download "
+                            f"{response.status_code}: {partial_size} != {remote_file_size}",
                         )
                         # try again without resuming, i.e. delete the partial download
                         if os.path.exists(final_pathname):

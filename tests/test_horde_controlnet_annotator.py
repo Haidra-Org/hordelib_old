@@ -4,6 +4,7 @@ from PIL import Image
 
 from hordelib.horde import HordeLib
 from hordelib.shared_model_manager import SharedModelManager
+from hordelib.utils.distance import are_images_identical
 
 
 class TestHordeInference:
@@ -26,7 +27,7 @@ class TestHordeInference:
         SharedModelManager.loadModelManagers(**self.default_model_manager_args)
         assert SharedModelManager.manager is not None
         for preproc in HordeLib.CONTROLNET_IMAGE_PREPROCESSOR_MAP.keys():
-            SharedModelManager.manager.controlnet.download_control_type(preproc)
+            SharedModelManager.manager.controlnet.download_control_type(preproc, ["stable diffusion 1"])
         assert SharedModelManager.preloadAnnotators()
         self.image = Image.open("images/test_annotator.jpg")
         self.width, self.height = self.image.size
@@ -43,7 +44,7 @@ class TestHordeInference:
             "seed": 123456789,
             "height": 512,
             "width": 512,
-            "karras": True,
+            "karras": False,
             "tiling": False,
             "hires_fix": False,
             "clip_skip": 1,
@@ -73,4 +74,6 @@ class TestHordeInference:
             data["control_type"] = preproc
             pil_image = self.horde.basic_inference(data)
             assert pil_image is not None
-            pil_image.save(f"images/annotator_{preproc}.webp", quality=90)
+            img_filename = f"annotator_{preproc}.png"
+            pil_image.save(f"images/{img_filename}", quality=100)
+            assert are_images_identical(f"images_expected/{img_filename}", pil_image)

@@ -3,6 +3,7 @@ from PIL import Image
 
 from hordelib.horde import HordeLib
 from hordelib.shared_model_manager import SharedModelManager
+from hordelib.utils.distance import are_images_identical
 
 
 class TestHordeInference:
@@ -52,7 +53,9 @@ class TestHordeInference:
         assert self.horde is not None
         pil_image = self.horde.basic_inference(data)
         assert pil_image is not None
-        pil_image.save("images/inpainting_mask_alpha.webp", quality=90)
+        img_filename = "inpainting_mask_alpha.png"
+        pil_image.save(f"images/{img_filename}", quality=100)
+        assert are_images_identical(f"images_expected/{img_filename}", pil_image)
 
     def test_inpainting_separate_mask(self):
         data = {
@@ -80,7 +83,9 @@ class TestHordeInference:
         assert self.horde is not None
         pil_image = self.horde.basic_inference(data)
         assert pil_image is not None
-        pil_image.save("images/inpainting_mask_separate.webp", quality=90)
+        img_filename = "inpainting_mask_separate.png"
+        pil_image.save(f"images/{img_filename}", quality=100)
+        assert are_images_identical(f"images_expected/{img_filename}", pil_image)
 
     def test_inpainting_alpha_mask_mountains(self):
         data = {
@@ -108,7 +113,9 @@ class TestHordeInference:
         pil_image = self.horde.basic_inference(data)
         assert pil_image is not None
         assert pil_image.size == (512, 512)
-        pil_image.save("images/inpainting_mountains.webp", quality=90)
+        img_filename = "inpainting_mountains.png"
+        pil_image.save(f"images/{img_filename}", quality=100)
+        assert are_images_identical(f"images_expected/{img_filename}", pil_image)
 
     def test_outpainting_alpha_mask_mountains(self):
         data = {
@@ -136,4 +143,6 @@ class TestHordeInference:
         pil_image = self.horde.basic_inference(data)
         assert pil_image is not None
         assert pil_image.size == (512, 512)
-        pil_image.save("images/outpainting_mountains.webp", quality=90)
+        img_filename = "outpainting_mountains.png"
+        pil_image.save(f"images/{img_filename}", quality=100)
+        assert are_images_identical(f"images_expected/{img_filename}", pil_image)

@@ -4,6 +4,7 @@ from PIL import Image
 
 from hordelib.horde import HordeLib
 from hordelib.shared_model_manager import SharedModelManager
+from hordelib.utils.distance import are_images_identical
 
 SLOW_SAMPLERS = ["k_dpmpp_2s_a", "k_dpmpp_sde", "k_heun", "k_dpm_2", "k_dpm_2_a"]
 
@@ -29,7 +30,7 @@ class TestHordeSamplers:
             "seed": 3688490319,
             "height": 512,
             "width": 512,
-            "karras": True,
+            "karras": False,
             "tiling": False,
             "hires_fix": False,
             "clip_skip": 1,
@@ -50,7 +51,9 @@ class TestHordeSamplers:
             data["sampler_name"] = sampler.upper()  # force uppercase to ensure case insensitive
             pil_image = self.horde.basic_inference(data)
             assert pil_image is not None
-            pil_image.save(f"images/sampler_30_steps_{sampler}.webp", quality=90)
+            img_filename = f"sampler_30_steps_{sampler}.png"
+            pil_image.save(f"images/{img_filename}", quality=100)
+            assert are_images_identical(f"images_expected/{img_filename}", pil_image)
 
     def test_slow_samplers(self):
         data = {
@@ -60,7 +63,7 @@ class TestHordeSamplers:
             "seed": 3688390309,
             "height": 512,
             "width": 512,
-            "karras": True,
+            "karras": False,
             "tiling": False,
             "hires_fix": False,
             "clip_skip": 1,
@@ -81,4 +84,6 @@ class TestHordeSamplers:
             data["sampler_name"] = sampler
             pil_image = self.horde.basic_inference(data)
             assert pil_image is not None
-            pil_image.save(f"images/sampler_10_steps_{sampler}.webp", quality=90)
+            img_filename = f"sampler_10_steps_{sampler}.png"
+            pil_image.save(f"images/{img_filename}", quality=100)
+            assert are_images_identical(f"images_expected/{img_filename}", pil_image)
