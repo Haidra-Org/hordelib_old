@@ -34,7 +34,6 @@ def parse_image(img):
         return Image.open(img)
     if type(img) in [PngImageFile, ImageType]:
         return img
-    logger.info(type(img))
     raise Exception("Cannot parse provided input image. Comparing accepts only PIL or filenames path strings")
 
 
@@ -45,7 +44,7 @@ def get_image_distance(img1, img2):
         get_hist(img1),
         get_hist(img2),
     )
-    logger.info(f"The distance between images is : {dist}")
+    logger.debug(f"The distance between images is : {dist}")
     return dist
 
 
