@@ -48,7 +48,7 @@ def get_image_distance(img1, img2):
     return dist
 
 
-def are_images_identical(img1, img2, identical_distance=1000):
+def are_images_identical(img1, img2, identical_distance=5000):
     """Compares two images for distance
     If it is above a threshold, they are considered not-identical
     the distance is very sensitive to even things like compression artifacts
