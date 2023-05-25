@@ -122,6 +122,8 @@ class BaseModelManager(ABC):
         Function signature must be (description: str, current: int, total: int)
         and this will be called repeatedly during downloads and passed
         the current download byte count and the total download byte count.
+
+        Called with current and total as None to indicate download has ended.
         """
         if callback:
             cls._download_progress_callback = callback
@@ -715,6 +717,7 @@ class BaseModelManager(ABC):
                     remote_file_size = int(response.headers.get("Content-length", 0))
                     if partial_size == remote_file_size:
                         # Successful download, swap the files
+                        self._download_progress_callback("done", None, None)
                         logger.info(f"Successfully downloaded the file {filename}")
                         if os.path.exists(final_pathname):
                             os.remove(final_pathname)
@@ -766,6 +769,7 @@ class BaseModelManager(ABC):
                             if self._download_progress_callback:
                                 self._download_progress_callback(filename, downloaded, remote_file_size + partial_size)
                 # Successful download, swap the files
+                self._download_progress_callback("done", None, None)
                 logger.info(f"Successfully downloaded the file {filename}")
                 if os.path.exists(final_pathname):
                     os.remove(final_pathname)
@@ -780,6 +784,7 @@ class BaseModelManager(ABC):
                     logger.info("Attempting download of file again")
                     time.sleep(2)
                 else:
+                    self._download_progress_callback("done", None, None)
                     return False
 
     def download_model(self, model_name: str):
