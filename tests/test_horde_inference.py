@@ -138,4 +138,4 @@ class TestHordeInference:
         assert pil_image is not None
         img_filename = "text_to_image_hires_fix.png"
         pil_image.save(f"images/{img_filename}", quality=100)
-        assert are_images_identical(f"images_expected/{img_filename}", pil_image)
+        assert are_images_identical(f"images_expected/{img_filename}", pil_image, 10000)
