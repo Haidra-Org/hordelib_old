@@ -74,7 +74,7 @@ class TestHordeInference:
             # assert get_image_distance(expected_filename, pil_image) < 100
             img_filename = f"controlnet_{preproc}.png"
             pil_image.save(f"images/{img_filename}", quality=100)
-            assert are_images_identical(f"images_expected/{img_filename}", pil_image, 5000)
+            assert are_images_identical(f"images_expected/{img_filename}", pil_image)
 
     def test_controlnet_fake_cn(self):
         data = {
@@ -131,7 +131,7 @@ class TestHordeInference:
             assert pil_image is not None
             img_filename = f"controlnet_strength_{strength}.png"
             pil_image.save(f"images/{img_filename}", quality=100)
-            assert are_images_identical(f"images_expected/{img_filename}", pil_image, 5000)
+            assert are_images_identical(f"images_expected/{img_filename}", pil_image)
 
     def test_controlnet_hires_fix(self):
         data = {
@@ -162,4 +162,4 @@ class TestHordeInference:
             assert pil_image is not None
             img_filename = f"controlnet_hires_fix_denoise_{denoise}.png"
             pil_image.save(f"images/{img_filename}", quality=100)
-            assert are_images_identical(f"images_expected/{img_filename}", pil_image, 5000)
+            assert are_images_identical(f"images_expected/{img_filename}", pil_image)

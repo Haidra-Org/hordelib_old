@@ -76,4 +76,4 @@ class TestHordeInference:
             assert pil_image is not None
             img_filename = f"annotator_{preproc}.png"
             pil_image.save(f"images/{img_filename}", quality=100)
-            assert are_images_identical(f"images_expected/{img_filename}", pil_image, 5000)
+            assert are_images_identical(f"images_expected/{img_filename}", pil_image)
