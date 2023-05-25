@@ -1,4 +1,6 @@
 # test_horde.py
+import os
+
 import pytest
 from PIL import Image
 
@@ -18,6 +20,7 @@ class TestHordeUpscaling:
             TestHordeUpscaling.width,
             TestHordeUpscaling.height,
         ) = TestHordeUpscaling.image.size
+        TestHordeUpscaling.distance_threshold = int(os.getenv("IMAGE_DISTANCE_THRESHOLD", "100000"))
         yield
         del TestHordeUpscaling.horde
 

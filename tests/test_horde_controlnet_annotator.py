@@ -1,4 +1,6 @@
 # test_horde.py
+import os
+
 import pytest
 from PIL import Image
 
@@ -31,6 +33,7 @@ class TestHordeInference:
         assert SharedModelManager.preloadAnnotators()
         self.image = Image.open("images/test_annotator.jpg")
         self.width, self.height = self.image.size
+        TestHordeInference.distance_threshold = int(os.getenv("IMAGE_DISTANCE_THRESHOLD", "100000"))
         yield
         del self.horde
         SharedModelManager._instance = None
@@ -76,4 +79,4 @@ class TestHordeInference:
             assert pil_image is not None
             img_filename = f"annotator_{preproc}.png"
             pil_image.save(f"images/{img_filename}", quality=100)
-            assert are_images_identical(f"images_expected/{img_filename}", pil_image)
+            assert are_images_identical(f"images_expected/{img_filename}", pil_image, self.distance_threshold)

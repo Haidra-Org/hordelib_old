@@ -48,7 +48,7 @@ def get_image_distance(img1, img2):
     return dist
 
 
-def are_images_identical(img1, img2, identical_distance=120000):
+def are_images_identical(img1, img2, identical_distance=10000):
     """Compares two images for distance
     If it is above a threshold, they are considered not-identical
     the distance is very sensitive to even things like compression artifacts
@@ -63,8 +63,10 @@ def are_images_identical(img1, img2, identical_distance=120000):
     # by compression artifacts and format changes
     return img_dist < identical_distance
 
+
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument("f1", help="filepath for image 1 to compare")
     parser.add_argument("f2", help="filepath for image 2 to compare")

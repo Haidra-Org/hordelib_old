@@ -1,4 +1,6 @@
 # test_horde.py
+import os
+
 import pytest
 from PIL import Image
 
@@ -29,6 +31,7 @@ class TestHordeInference:
         SharedModelManager.manager.load("Deliberate")
         for preproc in HordeLib.CONTROLNET_IMAGE_PREPROCESSOR_MAP.keys():
             SharedModelManager.manager.controlnet.download_control_type(preproc, ["stable diffusion 1"])
+        TestHordeInference.distance_threshold = int(os.getenv("IMAGE_DISTANCE_THRESHOLD", "100000"))
         yield
         del self.horde
         SharedModelManager._instance = None
@@ -74,7 +77,7 @@ class TestHordeInference:
             # assert get_image_distance(expected_filename, pil_image) < 100
             img_filename = f"controlnet_{preproc}.png"
             pil_image.save(f"images/{img_filename}", quality=100)
-            assert are_images_identical(f"images_expected/{img_filename}", pil_image)
+            assert are_images_identical(f"images_expected/{img_filename}", pil_image, self.distance_threshold)
 
     def test_controlnet_fake_cn(self):
         data = {
@@ -131,7 +134,7 @@ class TestHordeInference:
             assert pil_image is not None
             img_filename = f"controlnet_strength_{strength}.png"
             pil_image.save(f"images/{img_filename}", quality=100)
-            assert are_images_identical(f"images_expected/{img_filename}", pil_image)
+            assert are_images_identical(f"images_expected/{img_filename}", pil_image, self.distance_threshold)
 
     def test_controlnet_hires_fix(self):
         data = {
@@ -162,4 +165,4 @@ class TestHordeInference:
             assert pil_image is not None
             img_filename = f"controlnet_hires_fix_denoise_{denoise}.png"
             pil_image.save(f"images/{img_filename}", quality=100)
-            assert are_images_identical(f"images_expected/{img_filename}", pil_image)
+            assert are_images_identical(f"images_expected/{img_filename}", pil_image, self.distance_threshold)

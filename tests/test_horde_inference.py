@@ -1,4 +1,6 @@
 # test_horde.py
+import os
+
 import pytest
 from PIL import Image
 
@@ -27,6 +29,7 @@ class TestHordeInference:
         SharedModelManager.loadModelManagers(**self.default_model_manager_args)
         assert SharedModelManager.manager is not None
         SharedModelManager.manager.load("Deliberate")
+        TestHordeInference.distance_threshold = int(os.getenv("IMAGE_DISTANCE_THRESHOLD", "100000"))
         yield
         del TestHordeInference.horde
         SharedModelManager._instance = None
@@ -57,7 +60,7 @@ class TestHordeInference:
         assert pil_image is not None
         img_filename = "text_to_image.png"
         pil_image.save(f"images/{img_filename}", quality=100)
-        assert are_images_identical(f"images_expected/{img_filename}", pil_image)
+        assert are_images_identical(f"images_expected/{img_filename}", pil_image, self.distance_threshold)
 
     def test_text_to_image_small(self):
         data = {
@@ -84,7 +87,7 @@ class TestHordeInference:
         assert pil_image is not None
         img_filename = "text_to_image_small.png"
         pil_image.save(f"images/{img_filename}", quality=100)
-        assert are_images_identical(f"images_expected/{img_filename}", pil_image)
+        assert are_images_identical(f"images_expected/{img_filename}", pil_image, self.distance_threshold)
 
     def test_text_to_image_clip_skip_2(self):
         data = {
@@ -111,7 +114,7 @@ class TestHordeInference:
         assert pil_image is not None
         img_filename = "text_to_image_clip_skip_2.png"
         pil_image.save(f"images/{img_filename}", quality=100)
-        assert are_images_identical(f"images_expected/{img_filename}", pil_image)
+        assert are_images_identical(f"images_expected/{img_filename}", pil_image, self.distance_threshold)
 
     def test_text_to_image_hires_fix(self):
         data = {

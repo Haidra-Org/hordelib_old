@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from PIL import Image
 
@@ -23,6 +25,7 @@ class TestHordeInference:
             )
             is True
         )
+        TestHordeInference.distance_threshold = int(os.getenv("IMAGE_DISTANCE_THRESHOLD", "100000"))
         yield
         del self.horde
         SharedModelManager._instance = None
@@ -55,7 +58,7 @@ class TestHordeInference:
         assert pil_image is not None
         img_filename = "inpainting_mask_alpha.png"
         pil_image.save(f"images/{img_filename}", quality=100)
-        assert are_images_identical(f"images_expected/{img_filename}", pil_image)
+        assert are_images_identical(f"images_expected/{img_filename}", pil_image, self.distance_threshold)
 
     def test_inpainting_separate_mask(self):
         data = {
@@ -85,7 +88,7 @@ class TestHordeInference:
         assert pil_image is not None
         img_filename = "inpainting_mask_separate.png"
         pil_image.save(f"images/{img_filename}", quality=100)
-        assert are_images_identical(f"images_expected/{img_filename}", pil_image)
+        assert are_images_identical(f"images_expected/{img_filename}", pil_image, self.distance_threshold)
 
     def test_inpainting_alpha_mask_mountains(self):
         data = {
@@ -115,7 +118,7 @@ class TestHordeInference:
         assert pil_image.size == (512, 512)
         img_filename = "inpainting_mountains.png"
         pil_image.save(f"images/{img_filename}", quality=100)
-        assert are_images_identical(f"images_expected/{img_filename}", pil_image)
+        assert are_images_identical(f"images_expected/{img_filename}", pil_image, self.distance_threshold)
 
     def test_outpainting_alpha_mask_mountains(self):
         data = {
@@ -145,4 +148,4 @@ class TestHordeInference:
         assert pil_image.size == (512, 512)
         img_filename = "outpainting_mountains.png"
         pil_image.save(f"images/{img_filename}", quality=100)
-        assert are_images_identical(f"images_expected/{img_filename}", pil_image)
+        assert are_images_identical(f"images_expected/{img_filename}", pil_image, self.distance_threshold)
