@@ -1,5 +1,5 @@
 """
-Copyright 2022-2023 hlky. 
+Copyright 2022-2023 hlky.
 Copyright 2023 hlky
 Copyright 2023-2024 Haidra Developers
 
