@@ -1,5 +1,12 @@
 ## hordelib Changelog
 
+## [v1.3.11](https://github.com/Haidra-Org/hordelib/compare/v1.3.10...v1.3.11)
+
+29 May 2023
+
+- fix: tighten up thread safety around the sampler [`#341`](https://github.com/Haidra-Org/hordelib/pull/341) (Jug)
+- fix: don't return results of another job in certain corner cases. [`#339`](https://github.com/Haidra-Org/hordelib/pull/339) (Jug)
+
 ## [v1.3.10](https://github.com/Haidra-Org/hordelib/compare/v1.3.9...v1.3.10)
 
 29 May 2023
