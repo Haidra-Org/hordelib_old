@@ -1,5 +1,11 @@
 ## hordelib Changelog
 
+## [v1.3.10](https://github.com/Haidra-Org/hordelib/compare/v1.3.9...v1.3.10)
+
+29 May 2023
+
+- fix: handles lora name being sent as a string int [`8f871b5`](https://github.com/Haidra-Org/hordelib/commit/8f871b5ecdbddcc6b012709ba48247786b6137b2)  (db0)
+
 ## [v1.3.9](https://github.com/Haidra-Org/hordelib/compare/v1.3.8...v1.3.9)
 
 29 May 2023
