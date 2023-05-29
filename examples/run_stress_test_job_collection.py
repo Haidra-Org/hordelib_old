@@ -1,11 +1,11 @@
 # Call with: python -m test.run_stress_test_job_collection
 # You need all the deps in whatever environment you are running this.
+import copy
 import os
 import random
 import sys
 import threading
 import time
-import copy
 
 from loguru import logger
 from PIL import Image
@@ -52,13 +52,30 @@ out_dir = f"images/stresstest/{os.path.splitext(os.path.basename(sys.argv[0]))[0
 os.makedirs(out_dir, exist_ok=True)
 
 generate = HordeLib()
-SharedModelManager.loadModelManagers(compvis=True, controlnet=True, codeformer=True, esrgan=True, gfpgan=True, lora=True)
+SharedModelManager.loadModelManagers(
+    compvis=True,
+    controlnet=True,
+    codeformer=True,
+    esrgan=True,
+    gfpgan=True,
+    lora=True,
+)
 if DOWNLOAD_LORAS:
     SharedModelManager.manager.lora.download_default_loras()
     SharedModelManager.manager.lora.wait_for_downloads()
 
-models = ["Deliberate", "Anything Diffusion", "Realistic Vision", "URPM", "Abyss OrangeMix", 
-          "Counterfeit", "ChilloutMix", "Epic Diffusion", "Babes", "ICBINP - I Can't Believe It's Not Photography"]
+models = [
+    "Deliberate",
+    "Anything Diffusion",
+    "Realistic Vision",
+    "URPM",
+    "Abyss OrangeMix",
+    "Counterfeit",
+    "ChilloutMix",
+    "Epic Diffusion",
+    "Babes",
+    "ICBINP - I Can't Believe It's Not Photography",
+]
 pp_models = [
     "CodeFormers",
     "GFPGAN",
@@ -108,7 +125,7 @@ THE_JOBS = [
     },
     {
         # Simple txt2img
-        "desc":  "txt2img",
+        "desc": "txt2img",
         "sampler_name": "k_euler",
         "cfg_scale": 7.5,
         "denoising_strength": 1.0,
@@ -131,7 +148,7 @@ THE_JOBS = [
     },
     {
         # Simple img2img
-        "desc":  "img2img",
+        "desc": "img2img",
         "sampler_name": "k_euler",
         "cfg_scale": 7.5,
         "denoising_strength": 0.4,
@@ -153,7 +170,7 @@ THE_JOBS = [
     },
     {
         # Simple LORA 1
-        "desc":  "lora1",
+        "desc": "lora1",
         "sampler_name": "k_euler",
         "cfg_scale": 8.0,
         "denoising_strength": 1.0,
@@ -168,16 +185,14 @@ THE_JOBS = [
         "image_is_control": False,
         "return_control_map": False,
         "prompt": "a dark magical crystal, GlowingRunesAI_paleblue",
-        "loras": [
-            {"name": "glowingrunesai", "model": 1.0, "clip": 1.0}
-        ],
+        "loras": [{"name": "glowingrunesai", "model": 1.0, "clip": 1.0}],
         "ddim_steps": 20,
         "n_iter": 1,
         "model": "Anything Diffusion",
     },
     {
         # Simple LORA 2
-        "desc":  "lora2",
+        "desc": "lora2",
         "sampler_name": "k_euler",
         "cfg_scale": 8.0,
         "denoising_strength": 1.0,
@@ -226,7 +241,7 @@ THE_JOBS = [
     },
     {
         # Simple txt2img
-        "desc":  "txt2img",
+        "desc": "txt2img",
         "sampler_name": "k_euler",
         "cfg_scale": 7.5,
         "denoising_strength": 1.0,
@@ -271,7 +286,7 @@ THE_JOBS = [
     },
     {
         # Simple LORA 1
-        "desc":  "lora1",
+        "desc": "lora1",
         "sampler_name": "k_euler",
         "cfg_scale": 8.0,
         "denoising_strength": 1.0,
@@ -286,16 +301,14 @@ THE_JOBS = [
         "image_is_control": False,
         "return_control_map": False,
         "prompt": "a dark magical crystal, arcane style",
-        "loras": [
-            {"name": "arcane style lora", "model": 1.0, "clip": 1.0}
-        ],
+        "loras": [{"name": "arcane style lora", "model": 1.0, "clip": 1.0}],
         "ddim_steps": 20,
         "n_iter": 1,
         "model": "Babes",
     },
     {
         # Simple LORA 2
-        "desc":  "lora2",
+        "desc": "lora2",
         "sampler_name": "k_euler",
         "cfg_scale": 8.0,
         "denoising_strength": 1.0,
@@ -317,7 +330,7 @@ THE_JOBS = [
         "ddim_steps": 20,
         "n_iter": 1,
         "model": "ICBINP - I Can't Believe It's Not Photography",
-    },    
+    },
 ]
 
 if FILTER_JOBS:
@@ -337,20 +350,28 @@ def inc():
         count += 1
         return count
 
+
 def run_iterations():
     random.seed()
     for i in range(ITERATIONS):
         next_job = inc()
-        job_num = random.randint(0, len(ACTIVE_JOBS)-1)
+        job_num = random.randint(0, len(ACTIVE_JOBS) - 1)
         data = copy.deepcopy(ACTIVE_JOBS[job_num])
         logger.info(f"Starting job {next_job}")
         pil_image = generate.basic_inference(data)
         logger.info(f"Ended job {next_job}")
         if pil_image:
-            pil_image.save(f"{out_dir}/{data['desc']}-group_{job_num}-it_{i}_total_{next_job}-{threading.current_thread().ident}.webp", quality=90)
+            pil_image.save(
+                f"{out_dir}/{data['desc']}-group_{job_num}-it_{i}_total_{next_job}-{threading.current_thread().ident}.webp",
+                quality=90,
+            )
         else:
-            with open(f"{out_dir}/{data['desc']}-group_{job_num}-it_{i}_total_{next_job}-{threading.current_thread().ident}.txt", "wt") as f:
+            with open(
+                f"{out_dir}/{data['desc']}-group_{job_num}-it_{i}_total_{next_job}-{threading.current_thread().ident}.txt",
+                "wt",
+            ) as f:
                 f.write("failed")
+
 
 def main():
     global count
