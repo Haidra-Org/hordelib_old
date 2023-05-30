@@ -145,3 +145,19 @@ class TestModelManagerLora:
         assert len(deleted_loras) > 0
         assert all("last_used" in lora for lora in mml.model_reference.values())
         mml.stop_all()
+
+    def test_adhoc_loras(self):
+        mml = LoraModelManager(
+            allowed_top_lora_storage=1024,
+            download_wait=False,
+            allowed_adhoc_lora_storage=1024,
+        )
+        mml.download_default_loras()
+        mml.wait_for_downloads(600)
+        mml.wait_for_adhoc_reset(15)
+        mml.ensure_lora_deleted(22591)
+        lora_key = mml.fetch_adhoc_lora("22591")
+        print(lora_key)
+        assert lora_key == "GAG - RPG Potions  |  LoRa 2.1".lower()
+        assert mml.is_local_model("GAG")
+        mml.stop_all()

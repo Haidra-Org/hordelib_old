@@ -38,6 +38,7 @@ class LoraModelManager(BaseModelManager):
     RETRY_DELAY = 5  # seconds
     REQUEST_METADATA_TIMEOUT = 30  # seconds
     REQUEST_DOWNLOAD_TIMEOUT = 300  # seconds
+    THREAD_WAIT_TIME = 2
 
     def __init__(
         self,
@@ -49,7 +50,7 @@ class LoraModelManager(BaseModelManager):
 
         self._max_top_disk = allowed_top_lora_storage
 
-        self._max_adhoc_disk = allowed_adhoc_lora_storage
+        self.max_adhoc_disk = allowed_adhoc_lora_storage
         self._data = None
         self._next_page_url = None
         self._mutex = threading.Lock()
@@ -179,7 +180,7 @@ class LoraModelManager(BaseModelManager):
                 self._data = None
                 self._next_page_url = None  # give up
 
-    def _parse_civitai_lora_data(self, item):
+    def _parse_civitai_lora_data(self, item, adhoc=False):
         """Return a simplified dictionary with the information we actually need about a lora"""
         lora = {
             "name": "",
@@ -190,6 +191,7 @@ class LoraModelManager(BaseModelManager):
             "url": "",
             "triggers": [],
             "size_mb": 0,
+            "adhoc": adhoc,
         }
         # get top version
         try:
@@ -238,7 +240,7 @@ class LoraModelManager(BaseModelManager):
             except IndexError:
                 # Nothing in the queue
                 self._download_threads[thread_number]["lora"] = None
-                time.sleep(2)
+                time.sleep(self.THREAD_WAIT_TIME)
                 continue
             # Download the lora
             retries = 0
@@ -362,6 +364,10 @@ class LoraModelManager(BaseModelManager):
 
     def _add_lora_to_reference(self, lora):
         lora_key = lora["name"].lower()
+        if lora.get("adhoc", False):
+            self._adhoc_loras.add(lora_key)
+            # Once added to our set, we don't need to specify it was adhoc anymore
+            del lora["adhoc"]
         self.model_reference[lora_key] = lora
         self._index_ids[lora["id"]] = lora_key
         self._index_orig_names[lora["orig_name"].lower()] = lora_key
@@ -516,7 +522,7 @@ class LoraModelManager(BaseModelManager):
         return self.calculate_default_loras_cache() >= self._max_top_disk
 
     def is_adhoc_cache_full(self):
-        return self.calculate_adhoc_loras_cache() >= self._max_adhoc_disk
+        return self.calculate_adhoc_loras_cache() >= self.max_adhoc_disk
 
     def calculate_download_queue(self):
         total_queue = 0
@@ -542,10 +548,7 @@ class LoraModelManager(BaseModelManager):
         oldest_lora = self.find_oldest_adhoc_lora()
         if not oldest_lora:
             return
-        filename = os.path.join(self.modelFolderPath, self.model_reference[oldest_lora]["filename"])
-        os.remove(filename)
-        del self.model_reference[oldest_lora]
-        del self._adhoc_loras[oldest_lora]
+        self.delete_lora(oldest_lora)
 
     def find_lora_from_filename(self, filename: str):
         for lora in self.model_reference:
@@ -573,15 +576,29 @@ class LoraModelManager(BaseModelManager):
             waited += 0.2
             time.sleep(0.2)
         loras_to_delete = self.find_unused_loras()
-        for ulora in loras_to_delete:
-            filename = os.path.join(self.modelFolderPath, ulora)
-            os.remove(filename)
-            logger.info(f"Deleted unused LoRa file: {filename}")
+        for lora_filename in loras_to_delete:
+            self.delete_lora_files(lora_filename)
         return loras_to_delete
+
+    def delete_lora_files(self, lora_filename: str):
+        filename = os.path.join(self.modelFolderPath, lora_filename)
+        os.remove(filename)
+        logger.info(f"Deleted LoRa file: {filename}")
+
+    def delete_lora(self, lora_name: str):
+        self.delete_lora_files(self.model_reference[lora_name]["filename"])
+        del self.model_reference[lora_name]
+        del self._adhoc_loras[lora_name]
+
+    def ensure_lora_deleted(self, lora_name: str):
+        lora_key = self.fuzzy_find_lora_key(lora_name)
+        if not lora_key:
+            return
+        self.delete_lora(lora_key)
 
     def reset_adhoc_loras(self):
         """Compared the known loras from the previous run to the current one
-        Adds any definitions as adhoc loras, until we have as many Mb as self._max_adhoc_disk"""
+        Adds any definitions as adhoc loras, until we have as many Mb as self.max_adhoc_disk"""
         while not self.are_downloads_complete():
             if self._stop_all_threads:
                 logger.debug("Stopped processing thread")
@@ -637,6 +654,24 @@ class LoraModelManager(BaseModelManager):
         """Returns a dateimte object based on the "last_used" key in a lora entry"""
         lora = self.get_model(lora_name)
         return datetime.strptime(lora["last_used"], "%Y-%m-%d %H:%M:%S")
+
+    def fetch_adhoc_lora(self, lora_name):
+        if type(lora_name) is int or lora_name.isdigit():
+            url = f"https://civitai.com/api/v1/models/{lora_name}"
+        else:
+            url = f"{self.LORA_API}&nsfw={str(self.nsfw).lower()}&query={lora_name}"
+        data = self._get_json(url)
+        if type(data) == list:
+            if not len(data):
+                return None
+            lora = self._parse_civitai_lora_data(data[0], adhoc=True)
+        else:
+            lora = self._parse_civitai_lora_data(data, adhoc=True)
+        self._download_queue.append(lora)
+        # We need to wait a bit to make sure the threads pick up the download
+        time.sleep(self.THREAD_WAIT_TIME)
+        self.wait_for_downloads(15)
+        return lora["name"].lower()
 
     @override
     def is_local_model(self, model_name):
