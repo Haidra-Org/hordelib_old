@@ -1,5 +1,13 @@
 ## hordelib Changelog
 
+## [v1.3.13](https://github.com/Haidra-Org/hordelib/compare/v1.3.12...v1.3.13)
+
+31 May 2023
+
+- working adhoc loras [`f63dd29`](https://github.com/Haidra-Org/hordelib/commit/f63dd29292eac55c3b1df80b042964c487aa24e9)  (db0)
+- fix: Ignore non-existent loras [`4617bc4`](https://github.com/Haidra-Org/hordelib/commit/4617bc4e0a745f1a2c59152cdae4f8fda532dd60)  (db0)
+- fix: avoid crashing when a lora is to be ignored [`8df9f96`](https://github.com/Haidra-Org/hordelib/commit/8df9f96e8956756047f4bac1a2069c3f7dd3ca4a)  (db0)
+
 ## [v1.3.12](https://github.com/Haidra-Org/hordelib/compare/v1.3.11...v1.3.12)
 
 30 May 2023
