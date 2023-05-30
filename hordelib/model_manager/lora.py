@@ -668,6 +668,10 @@ class LoraModelManager(BaseModelManager):
             lora = self._parse_civitai_lora_data(data["items"][0], adhoc=True)
         else:
             lora = self._parse_civitai_lora_data(data, adhoc=True)
+        # For example epi_noiseoffset doesn't have sha256 so we ignore it
+        # This avoid us faulting
+        if not lora:
+            return None
         # We double-check that somehow our search missed it but CivitAI searches differently and found it
         fuzzy_find = self.fuzzy_find_lora_key(lora["name"].lower())
         if fuzzy_find:
