@@ -627,6 +627,10 @@ class LoraModelManager(BaseModelManager):
                     "last_used",
                     now,
                 )
+        # Final assurance that all our loras have a last_used timestamp
+        for lora in self.model_reference.values():
+            if "last_used" not in lora:
+                lora["last_used"] = now
         self._previous_model_reference = {}
         self.save_cached_reference_to_disk()
 
