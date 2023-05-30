@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 from hordelib.horde import HordeLib
@@ -15,11 +17,14 @@ class TestModelManagerLora:
         HordeLog.initialise(True)
         HordeLog.set_logger_verbosity(5)
         HordeLog.quiesce_logger(0)
+        # We don't want to download a ton of loras for tests by mistake
+        assert os.getenv("TESTS_ONGOING") == "1"
 
         yield
         del self.horde
 
     def test_downloading_default_sync(self):
+
         download_amount = 1024
         mml = LoraModelManager(
             allowed_top_lora_storage=download_amount,
@@ -97,9 +102,6 @@ class TestModelManagerLora:
         mml.download_default_loras()
         mml.wait_for_downloads(600)
         assert len(mml.model_reference) > 0
-        import os
-
-        assert os.getenv("TESTS_ONGOING") == "1"
 
     def test_unused_loras(self):
         mml = LoraModelManager(
