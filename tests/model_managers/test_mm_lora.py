@@ -143,6 +143,7 @@ class TestModelManagerLora:
             mml.delete_unused_loras(0)
         deleted_loras = mml.delete_unused_loras(15)
         assert len(deleted_loras) > 0
+        mml.wait_for_adhoc_reset(15)
         assert all("last_used" in lora for lora in mml.model_reference.values())
         mml.stop_all()
 
