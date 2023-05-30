@@ -581,9 +581,13 @@ class LoraModelManager(BaseModelManager):
         logger.info(f"Deleted LoRa file: {filename}")
 
     def delete_lora(self, lora_name: str):
-        self.delete_lora_files(self.model_reference[lora_name]["filename"])
-        del self.model_reference[lora_name]
+        lora_info = self.get_model(lora_name)
+        self.delete_lora_files(lora_info["filename"])
         self._adhoc_loras.remove(lora_name)
+        del self._index_ids[lora_info["id"]]
+        del self._index_orig_names[lora_info["orig_name"].lower()]
+        del self.model_reference[lora_name]
+        self.save_cached_reference_to_disk()
 
     def ensure_lora_deleted(self, lora_name: str):
         lora_key = self.fuzzy_find_lora_key(lora_name)
@@ -613,7 +617,7 @@ class LoraModelManager(BaseModelManager):
             prevlora_key, prevlora_value = sorted_items.pop()
             if prevlora_key in self.model_reference:
                 continue
-            self.model_reference[prevlora_key] = prevlora_value
+            self._add_lora_to_reference(prevlora_value)
             self._adhoc_loras.add(prevlora_key)
         for lora_key in self.model_reference:
             if lora_key in self._previous_model_reference:

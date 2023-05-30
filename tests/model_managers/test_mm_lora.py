@@ -146,7 +146,7 @@ class TestModelManagerLora:
         assert all("last_used" in lora for lora in mml.model_reference.values())
         mml.stop_all()
 
-    def test_adhoc_loras(self):
+    def test_fetch_adhoc_lora(self):
         mml = LoraModelManager(
             allowed_top_lora_storage=1024,
             download_wait=False,
@@ -159,6 +159,7 @@ class TestModelManagerLora:
         lora_key = mml.fetch_adhoc_lora("22591")
         assert lora_key == "GAG - RPG Potions  |  LoRa 2.1".lower()
         assert mml.is_local_model("GAG")
+        assert mml.is_local_model("22591")
         mml.stop_all()
 
     def test_adhoc_non_existing(self):
