@@ -1,5 +1,11 @@
 ## hordelib Changelog
 
+## [v1.3.12](https://github.com/Haidra-Org/hordelib/compare/v1.3.11...v1.3.12)
+
+30 May 2023
+
+- fix: loras don't always have triggers [`5298407`](https://github.com/Haidra-Org/hordelib/commit/52984073c713c0a03bfab7a1b6ff495429d4a793)  (db0)
+
 ## [v1.3.11](https://github.com/Haidra-Org/hordelib/compare/v1.3.10...v1.3.11)
 
 29 May 2023
