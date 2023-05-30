@@ -81,6 +81,7 @@ class LoraModelManager(BaseModelManager):
                 "url": "https://civitai.com/api/download/models/75193?type=Model&format=SafeTensor",
                 "triggers": ["GlowingRunesAIV3_green", "GlowingRunesAI_red", "GlowingRunesAI_paleblue"],
                 "size_mb": 144,
+                "id": 51686,
             },
         )
         self._download_queue.append(
@@ -91,6 +92,7 @@ class LoraModelManager(BaseModelManager):
                 "url": "https://civitai.com/api/download/models/70189?type=Model&format=SafeTensor",
                 "triggers": ["Dr490nSc4leAI"],
                 "size_mb": 144,
+                "id": 55543,
             },
         )
 

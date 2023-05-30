@@ -160,6 +160,7 @@ class TestModelManagerLora:
         assert lora_key == "GAG - RPG Potions  |  LoRa 2.1".lower()
         assert mml.is_local_model("GAG")
         assert mml.is_local_model("22591")
+        assert mml.get_lora_name("22591") == "GAG - RPG Potions  |  LoRa 2.1"
         mml.stop_all()
 
     def test_adhoc_non_existing(self):
