@@ -248,7 +248,8 @@ class TestHordeLora:
             "control_type": None,
             "image_is_control": False,
             "return_control_map": False,
-            "prompt": "pantasa, plant, robot, concept artist, ruins, night, moon, global illumination, depth of field, splash art",
+            "prompt": "pantasa, plant, robot, concept artist, ruins, night, moon, global "
+            "illumination, depth of field, splash art",
             "loras": [{"name": lora_name, "model": 0.75, "clip": 1.0, "inject_trigger": "any"}],
             "ddim_steps": 20,
             "n_iter": 1,

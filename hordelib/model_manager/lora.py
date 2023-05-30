@@ -62,7 +62,6 @@ class LoraModelManager(BaseModelManager):
         # Not yet handled, as we need a global reference to search through.
         self._previous_model_reference = {}
         self._adhoc_loras = set()
-        self._adhoc_mutex = {}
         self._download_wait = download_wait
         # If false, this MM will only download SFW loras
         self.nsfw = True
@@ -294,12 +293,8 @@ class LoraModelManager(BaseModelManager):
                             # We store as lower to allow case-insensitive search
                             lora["last_used"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                             self._add_lora_to_reference(lora)
-                            if len(self._adhoc_mutex) == 0:
-                                if self.is_default_cache_full():
-                                    self.stop_downloading = True
-                            else:
-                                if self.is_adhoc_cache_full():
-                                    self.delete_oldest_lora()
+                            if self.is_adhoc_cache_full():
+                                self.delete_oldest_lora()
                             self.save_cached_reference_to_disk()
                         break
                     else:
@@ -588,7 +583,7 @@ class LoraModelManager(BaseModelManager):
     def delete_lora(self, lora_name: str):
         self.delete_lora_files(self.model_reference[lora_name]["filename"])
         del self.model_reference[lora_name]
-        del self._adhoc_loras[lora_name]
+        self._adhoc_loras.remove(lora_name)
 
     def ensure_lora_deleted(self, lora_name: str):
         lora_key = self.fuzzy_find_lora_key(lora_name)
@@ -661,12 +656,16 @@ class LoraModelManager(BaseModelManager):
         else:
             url = f"{self.LORA_API}&nsfw={str(self.nsfw).lower()}&query={lora_name}"
         data = self._get_json(url)
-        if type(data) == list:
-            if not len(data):
+        if "items" in data:
+            if len(data["items"]) == 0:
                 return None
-            lora = self._parse_civitai_lora_data(data[0], adhoc=True)
+            lora = self._parse_civitai_lora_data(data["items"][0], adhoc=True)
         else:
             lora = self._parse_civitai_lora_data(data, adhoc=True)
+        # We double-check that somehow our search missed it but CivitAI searches differently and found it
+        fuzzy_find = self.fuzzy_find_lora_key(lora["name"].lower())
+        if fuzzy_find:
+            return fuzzy_find
         self._download_queue.append(lora)
         # We need to wait a bit to make sure the threads pick up the download
         time.sleep(self.THREAD_WAIT_TIME)

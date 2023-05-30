@@ -297,7 +297,9 @@ class HordeLib:
             for lora in payload.get("loras"):
                 # Determine the actual lora filename
                 if not SharedModelManager.manager.lora.is_local_model(str(lora["name"])):
-                    SharedModelManager.manager.lora.fetch_adhoc_lora(str(lora["name"]))
+                    adhoc_lora = SharedModelManager.manager.lora.fetch_adhoc_lora(str(lora["name"]))
+                    if not adhoc_lora:
+                        continue
                 # We store the actual lora name to search for the trigger
                 lora_name = SharedModelManager.manager.lora.get_lora_name(str(lora["name"]))
                 if lora_name:
