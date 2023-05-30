@@ -35,6 +35,7 @@ class TestModelManagerLora:
         assert mml.are_downloads_complete() is True
         assert mml.calculate_downloaded_loras() > download_amount
         assert mml.calculate_downloaded_loras() < (download_amount * 2) * 1.5
+        mml.stop_all()
 
     def test_downloading_default_async(self):
         download_amount = 1024
@@ -49,6 +50,7 @@ class TestModelManagerLora:
         assert mml.are_downloads_complete() is True
         assert mml.calculate_downloaded_loras() > download_amount
         assert mml.calculate_downloaded_loras() < (download_amount * 2) * 1.5
+        mml.stop_all()
 
     def test_fuzzy_search(self):
         download_amount = 1024
@@ -67,6 +69,7 @@ class TestModelManagerLora:
         assert mml.fuzzy_find_lora_key(12597) == "mo xin  moxin"
         assert mml.fuzzy_find_lora_key("12597") == "mo xin  moxin"
         assert mml.fuzzy_find_lora_key("墨心") == "mo xin  moxin"
+        mml.stop_all()
 
     def test_lora_search(self):
         download_amount = 1024
@@ -91,6 +94,7 @@ class TestModelManagerLora:
         assert mml.get_lora_name("Dragon Scale AI") is not None
         assert mml.find_lora_trigger("Dra9onScaleAI", "Dr490nSc4leAI") is not None
         assert mml.find_lora_trigger("DragonScale", "DragonScaleAI") is not None
+        mml.stop_all()
 
     def test_lora_reference(self):
         download_amount = 1024
@@ -102,6 +106,7 @@ class TestModelManagerLora:
         mml.download_default_loras()
         mml.wait_for_downloads(600)
         assert len(mml.model_reference) > 0
+        mml.stop_all()
 
     def test_unused_loras(self):
         mml = LoraModelManager(
