@@ -221,7 +221,8 @@ class LoraModelManager(BaseModelManager):
             return
         if not lora.get("filename") or not lora.get("url"):
             return
-        # We don't want to start downloading GBs of a single LoRa. We just ignore anything over 150Mb. Them's the breaks...
+        # We don't want to start downloading GBs of a single LoRa.
+        # We just ignore anything over 150Mb. Them's the breaks...
         if lora["size_mb"] > 150:
             return
         # Fixup A1111 centric triggers

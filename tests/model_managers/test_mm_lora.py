@@ -108,7 +108,6 @@ class TestModelManagerLora:
         assert len(mml.model_reference) > 0
         mml.stop_all()
 
-
     def test_fetch_adhoc_lora(self):
         mml = LoraModelManager(
             allowed_top_lora_storage=1024,
