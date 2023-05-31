@@ -32,6 +32,7 @@ TESTS_ONGOING = os.getenv("TESTS_ONGOING", "0") == "1"
 
 class LoraModelManager(BaseModelManager):
 
+    LORA_DEFAULTS = "https://raw.githubusercontent.com/Haidra-Org/AI-Horde-image-model-reference/main/lora.json"
     LORA_API = "https://civitai.com/api/v1/models?types=LORA&sort=Highest%20Rated&primaryFileOnly=true"
     MAX_RETRIES = 10 if not TESTS_ONGOING else 1
     MAX_DOWNLOAD_THREADS = 3  # max concurrent downloads
@@ -73,28 +74,28 @@ class LoraModelManager(BaseModelManager):
         # Example of how to inject mandatory LORAs, we use these two for our tests
         # We need to ensure their format is the same as after they are returned _parse_civitai_lora_data
         # i.e. without versions in their names.
-        self._download_queue.append(
-            {
-                "name": "GlowingRunesAI",
-                "sha256": "1E7DF5F25B76B3D1B5FCEBB7AEB229FF33D805DC10B2F7CBB56F3A7BA0ED4686",
-                "filename": "GlowingRunesAI.safetensors",
-                "url": "https://civitai.com/api/download/models/75193?type=Model&format=SafeTensor",
-                "triggers": ["GlowingRunesAIV3_green", "GlowingRunesAI_red", "GlowingRunesAI_paleblue"],
-                "size_mb": 144,
-                "id": 51686,
-            },
-        )
-        self._download_queue.append(
-            {
-                "name": "Dra9onScaleAI",
-                "sha256": "E562FC8EE097774E2C6A48AA9F279DB78AE4D1BFE14EF52F6AA76450C188B92B",
-                "filename": "Dra9onScaleAI.safetensors",
-                "url": "https://civitai.com/api/download/models/70189?type=Model&format=SafeTensor",
-                "triggers": ["Dr490nSc4leAI"],
-                "size_mb": 144,
-                "id": 55543,
-            },
-        )
+        # self._download_queue.append(
+        #     {
+        #         "name": "GlowingRunesAI",
+        #         "sha256": "1E7DF5F25B76B3D1B5FCEBB7AEB229FF33D805DC10B2F7CBB56F3A7BA0ED4686",
+        #         "filename": "GlowingRunesAI.safetensors",
+        #         "url": "https://civitai.com/api/download/models/75193?type=Model&format=SafeTensor",
+        #         "triggers": ["GlowingRunesAIV3_green", "GlowingRunesAI_red", "GlowingRunesAI_paleblue"],
+        #         "size_mb": 144,
+        #         "id": 51686,
+        #     },
+        # )
+        # self._download_queue.append(
+        #     {
+        #         "name": "Dra9onScaleAI",
+        #         "sha256": "E562FC8EE097774E2C6A48AA9F279DB78AE4D1BFE14EF52F6AA76450C188B92B",
+        #         "filename": "Dra9onScaleAI.safetensors",
+        #         "url": "https://civitai.com/api/download/models/70189?type=Model&format=SafeTensor",
+        #         "triggers": ["Dr490nSc4leAI"],
+        #         "size_mb": 144,
+        #         "id": 55543,
+        #     },
+        # )
 
         super().__init__(
             modelFolder=MODEL_FOLDER_NAMES[MODEL_CATEGORY_NAMES.lora],
@@ -136,6 +137,30 @@ class LoraModelManager(BaseModelManager):
         self.model_reference = {}
         self.save_cached_reference_to_disk()
 
+    def _get_lora_defaults(self):
+        try:
+            json_ret = self._get_json(self.LORA_DEFAULTS)
+            if not json_ret:
+                logger.error("Could not download default LoRas reference!")
+            for lora_id in json_ret:
+                self._add_lora_id_to_download_queue(lora_id)
+
+        except Exception as err:
+            logger.error(f"_get_lora_defaults() raised {err}")
+            raise err
+
+    def _add_lora_id_to_download_queue(self, lora_id, adhoc=False):
+        url = f"https://civitai.com/api/v1/models/{lora_id}"
+        data = self._get_json(url)
+        if not data:
+            logger.warning(f"metadata for LoRa {lora_id} could not be downloaded!")
+            return
+        lora = self._parse_civitai_lora_data(data, adhoc=adhoc)
+        if not lora:
+            return
+        logger.debug(f"Downloaded metadata for LoRa {lora_id} ('{lora['name']}') and added to download queue")
+        self._download_lora(lora)
+
     def _get_json(self, url):
         retries = 0
         while retries <= self.MAX_RETRIES:
@@ -155,7 +180,7 @@ class LoraModelManager(BaseModelManager):
 
             except Exception as e:
                 # Failed badly
-                logger.error(f"LORA download failed {e}")
+                logger.error(f"url '{url}' download failed {e}")
                 return None
 
     def _get_more_items(self):
@@ -217,7 +242,16 @@ class LoraModelManager(BaseModelManager):
                 lora["triggers"] = triggers
                 break
         # If we don't have everything required, fail
-        if not lora.get("sha256") or not lora.get("filename") or not lora.get("url"):
+        if not lora.get("sha256"):
+            logger.debug(f"Rejecting LoRa {lora.get('name')} because it doesn't have a sha256")
+            return
+        if not lora.get("filename") or not lora.get("url"):
+            logger.debug(f"Rejecting LoRa {lora.get('name')} because it doesn't have a url")
+            return
+        # We don't want to start downloading GBs of a single LoRa.
+        # We just ignore anything over 150Mb. Them's the breaks...
+        if lora["adhoc"] and lora["size_mb"] > 150:
+            logger.debug(f"Rejecting LoRa {lora.get('name')} because its size is over 150Mb")
             return
         # Fixup A1111 centric triggers
         for i, trigger in enumerate(lora["triggers"]):
@@ -265,11 +299,6 @@ class LoraModelManager(BaseModelManager):
                                 self._add_lora_to_reference(lora)
                                 if self.is_default_cache_full():
                                     self.stop_downloading = True
-                                else:
-                                    # Normally this should never happen unless the user manually
-                                    # reduced their max size in the meantime
-                                    if self.is_adhoc_cache_full():
-                                        self.delete_oldest_lora()
                                 self.save_cached_reference_to_disk()
                             break
 
@@ -360,14 +389,15 @@ class LoraModelManager(BaseModelManager):
                 self._process_items()
 
     def _add_lora_to_reference(self, lora):
-        lora_key = lora["name"].lower()
+        lora_key = lora["name"].lower().strip()
         if lora.get("adhoc", False):
             self._adhoc_loras.add(lora_key)
             # Once added to our set, we don't need to specify it was adhoc anymore
             del lora["adhoc"]
         self.model_reference[lora_key] = lora
         self._index_ids[lora["id"]] = lora_key
-        self._index_orig_names[lora["orig_name"].lower()] = lora_key
+        orig_name = lora.get("orig_name", lora["name"]).lower()
+        self._index_orig_names[orig_name] = lora_key
 
     def download_default_loras(self, nsfw=True, timeout=None):
         """Start up a background thread downloading and return immediately"""
@@ -380,7 +410,7 @@ class LoraModelManager(BaseModelManager):
         self.model_reference = {}
         os.makedirs(self.modelFolderPath, exist_ok=True)
         # Start processing in a background thread
-        self._thread = threading.Thread(target=self._start_processing, daemon=True)
+        self._thread = threading.Thread(target=self._get_lora_defaults, daemon=True)
         self._thread.start()
         # Wait for completion of our threads if requested
         if self._download_wait:
@@ -404,6 +434,8 @@ class LoraModelManager(BaseModelManager):
             return False
         if not self.are_download_threads_idle():
             return False
+        if len(self._download_queue) > 0:
+            return False
         return self.stop_downloading
 
     def are_download_threads_idle(self):
@@ -419,7 +451,7 @@ class LoraModelManager(BaseModelManager):
             if int(lora_name) in self._index_ids:
                 return self._index_ids[int(lora_name)]
             return None
-        sname = lora_name.lower()
+        sname = lora_name.lower().strip()
         if sname in self.model_reference:
             return sname
         if sname in self._index_orig_names:
