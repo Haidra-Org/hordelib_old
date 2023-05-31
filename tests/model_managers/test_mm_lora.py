@@ -29,7 +29,7 @@ class TestModelManagerLora:
             download_wait=True,
             allowed_adhoc_lora_storage=1024,
         )
-        mml.download_default_loras()
+        mml.download_default_loras(timeout=600)
         assert mml.are_downloads_complete() is True
         assert mml.calculate_downloaded_loras() > 0
         mml.stop_all()
