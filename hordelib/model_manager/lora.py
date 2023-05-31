@@ -679,7 +679,7 @@ class LoraModelManager(BaseModelManager):
         lora = self.get_model(lora_name)
         return datetime.strptime(lora["last_used"], "%Y-%m-%d %H:%M:%S")
 
-    def fetch_adhoc_lora(self, lora_name):
+    def fetch_adhoc_lora(self, lora_name, timeout=30):
         if type(lora_name) is int or lora_name.isdigit():
             url = f"https://civitai.com/api/v1/models/{lora_name}"
         else:
@@ -702,7 +702,7 @@ class LoraModelManager(BaseModelManager):
         self._download_queue.append(lora)
         # We need to wait a bit to make sure the threads pick up the download
         time.sleep(self.THREAD_WAIT_TIME)
-        self.wait_for_downloads(30)
+        self.wait_for_downloads(timeout)
         return lora["name"].lower()
 
     @override
