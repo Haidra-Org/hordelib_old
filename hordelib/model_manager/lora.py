@@ -217,7 +217,12 @@ class LoraModelManager(BaseModelManager):
                 lora["triggers"] = triggers
                 break
         # If we don't have everything required, fail
-        if not lora.get("sha256") or not lora.get("filename") or not lora.get("url"):
+        if not lora.get("sha256"):
+            return
+        if not lora.get("filename") or not lora.get("url"):
+            return
+        # We don't want to start downloading GBs of a single LoRa. We just ignore anything over 150Mb. Them's the breaks...
+        if lora["size_mb"] > 150:
             return
         # Fixup A1111 centric triggers
         for i, trigger in enumerate(lora["triggers"]):
