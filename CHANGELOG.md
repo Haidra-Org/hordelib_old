@@ -1,5 +1,13 @@
 ## hordelib Changelog
 
+## [v1.3.14](https://github.com/Haidra-Org/hordelib/compare/v1.3.13...v1.3.14)
+
+31 May 2023
+
+- feat: switch to curated list [`daa3be9`](https://github.com/Haidra-Org/hordelib/commit/daa3be964874846026ce2cd72ed903f95acf7c8c)  (db0)
+- tests: reorganize lora tests [`1334852`](https://github.com/Haidra-Org/hordelib/commit/1334852eb1dc7af9aea137179aa9d3e195625c75)  (db0)
+- fix: Ignore huge loras [`b83a201`](https://github.com/Haidra-Org/hordelib/commit/b83a20153911db82ec0c2dd6f0886ed9b5c8329e)  (db0)
+
 ## [v1.3.13](https://github.com/Haidra-Org/hordelib/compare/v1.3.12...v1.3.13)
 
 31 May 2023
