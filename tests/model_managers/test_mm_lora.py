@@ -114,6 +114,37 @@ class TestModelManagerLora:
         assert mml.get_lora_name("22591") == "GAG - RPG Potions  |  LoRa 2.1"
         mml.stop_all()
 
+    def test_reject_adhoc_nsfw_lora(self):
+        mml = LoraModelManager(
+            download_wait=False,
+            allowed_adhoc_lora_storage=1024,
+        )
+        lora_id = 9155
+        mml.download_default_loras(nsfw=False)
+        mml.wait_for_downloads(300)
+        mml.wait_for_adhoc_reset(15)
+        mml.ensure_lora_deleted(lora_id)
+        lora_key = mml.fetch_adhoc_lora(lora_id)
+        assert mml.is_local_model(lora_id) is False
+        assert lora_key is None
+        mml.stop_all()
+
+    def test_approve_adhoc_lora(self):
+        mml = LoraModelManager(
+            download_wait=False,
+            allowed_adhoc_lora_storage=1024,
+        )
+        mml.nsfw = False  # Testing that setting like this is ignored
+        lora_id = 9155
+        mml.download_default_loras(nsfw=True)
+        mml.wait_for_downloads(300)
+        mml.wait_for_adhoc_reset(15)
+        mml.ensure_lora_deleted(lora_id)
+        lora_key = mml.fetch_adhoc_lora(lora_id)
+        assert mml.is_local_model(lora_id) is True
+        assert lora_key is not None
+        mml.stop_all()
+
     def test_adhoc_non_existing(self):
         mml = LoraModelManager(
             download_wait=False,

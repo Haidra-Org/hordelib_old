@@ -71,32 +71,6 @@ class LoraModelManager(BaseModelManager):
         self._index_ids = {}
         self._index_orig_names = {}
 
-        # Example of how to inject mandatory LORAs, we use these two for our tests
-        # We need to ensure their format is the same as after they are returned _parse_civitai_lora_data
-        # i.e. without versions in their names.
-        # self._download_queue.append(
-        #     {
-        #         "name": "GlowingRunesAI",
-        #         "sha256": "1E7DF5F25B76B3D1B5FCEBB7AEB229FF33D805DC10B2F7CBB56F3A7BA0ED4686",
-        #         "filename": "GlowingRunesAI.safetensors",
-        #         "url": "https://civitai.com/api/download/models/75193?type=Model&format=SafeTensor",
-        #         "triggers": ["GlowingRunesAIV3_green", "GlowingRunesAI_red", "GlowingRunesAI_paleblue"],
-        #         "size_mb": 144,
-        #         "id": 51686,
-        #     },
-        # )
-        # self._download_queue.append(
-        #     {
-        #         "name": "Dra9onScaleAI",
-        #         "sha256": "E562FC8EE097774E2C6A48AA9F279DB78AE4D1BFE14EF52F6AA76450C188B92B",
-        #         "filename": "Dra9onScaleAI.safetensors",
-        #         "url": "https://civitai.com/api/download/models/70189?type=Model&format=SafeTensor",
-        #         "triggers": ["Dr490nSc4leAI"],
-        #         "size_mb": 144,
-        #         "id": 55543,
-        #     },
-        # )
-
         super().__init__(
             modelFolder=MODEL_FOLDER_NAMES[MODEL_CATEGORY_NAMES.lora],
             models_db_name=MODEL_DB_NAMES[MODEL_CATEGORY_NAMES.lora],
@@ -218,6 +192,7 @@ class LoraModelManager(BaseModelManager):
             "triggers": [],
             "size_mb": 0,
             "adhoc": adhoc,
+            "nsfw": False,
         }
         # get top version
         try:
@@ -240,9 +215,10 @@ class LoraModelManager(BaseModelManager):
                     lora["size_mb"] = 144  # guess common case of 144MB, it's not critical here
                 lora["url"] = file.get("downloadUrl", "")
                 lora["triggers"] = triggers
+                lora["nsfw"] = item.get("nsfw", True)
                 break
         # If we don't have everything required, fail
-        if not lora.get("sha256"):
+        if lora["adhoc"] and not lora.get("sha256"):
             logger.debug(f"Rejecting LoRa {lora.get('name')} because it doesn't have a sha256")
             return
         if not lora.get("filename") or not lora.get("url"):
@@ -251,7 +227,10 @@ class LoraModelManager(BaseModelManager):
         # We don't want to start downloading GBs of a single LoRa.
         # We just ignore anything over 150Mb. Them's the breaks...
         if lora["adhoc"] and lora["size_mb"] > 150:
-            logger.debug(f"Rejecting LoRa {lora.get('name')} because its size is over 150Mb")
+            logger.debug(f"Rejecting LoRa {lora.get('name')} because its size is over 150Mb.")
+            return
+        if lora["adhoc"] and lora["nsfw"] and not self.nsfw:
+            logger.debug(f"Rejecting LoRa {lora.get('name')} because worker is SFW.")
             return
         # Fixup A1111 centric triggers
         for i, trigger in enumerate(lora["triggers"]):
@@ -291,9 +270,17 @@ class LoraModelManager(BaseModelManager):
                                 hashdata = infile.read().split()[0]
                             except (IndexError, OSError, IOError, PermissionError):
                                 hashdata = ""
-                        if hashdata.lower() == lora["sha256"].lower():
+                        if not lora.get("sha256") or hashdata.lower() == lora["sha256"].lower():
                             # we already have this lora, consider it downloaded
-                            logger.debug(f"Already have LORA {lora['filename']}")
+                            # the SHA256 might not exist when the lora has been selected in the curation list
+                            # Where we allow them to skip it
+                            if not lora.get("sha256"):
+                                logger.debug(
+                                    f"Already have LORA {lora['filename']}. "
+                                    "Bypassing SHA256 check as there's none stored",
+                                )
+                            else:
+                                logger.debug(f"Already have LORA {lora['filename']}")
                             with self._mutex:
                                 # We store as lower to allow case-insensitive search
                                 self._add_lora_to_reference(lora)
@@ -309,7 +296,7 @@ class LoraModelManager(BaseModelManager):
                     hash_object = hashlib.sha256()
                     hash_object.update(response.content)
                     sha256 = hash_object.hexdigest()
-                    if sha256.lower() == lora["sha256"].lower():
+                    if not lora.get("sha256") or sha256.lower() == lora["sha256"].lower():
                         # wow, we actually got a valid file, save it
                         with open(filename, "wb") as outfile:
                             outfile.write(response.content)
