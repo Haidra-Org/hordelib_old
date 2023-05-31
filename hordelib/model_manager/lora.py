@@ -396,7 +396,8 @@ class LoraModelManager(BaseModelManager):
             del lora["adhoc"]
         self.model_reference[lora_key] = lora
         self._index_ids[lora["id"]] = lora_key
-        self._index_orig_names[lora["orig_name"].lower()] = lora_key
+        orig_name = lora.get("orig_name", lora["name"]).lower()
+        self._index_orig_names[orig_name] = lora_key
 
     def download_default_loras(self, nsfw=True, timeout=None):
         """Start up a background thread downloading and return immediately"""
