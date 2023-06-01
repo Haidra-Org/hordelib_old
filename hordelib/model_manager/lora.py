@@ -750,8 +750,6 @@ class LoraModelManager(BaseModelManager):
     def do_baselines_match(self, lora_name, model_details):
         self._check_for_refresh(lora_name)
         lota_details = self.get_model(lora_name)
-        logger.info(lota_details["baseModel"])
-        logger.info(model_details["baseline"])
         if "SD 1.5" in lota_details["baseModel"] and model_details["baseline"] == "stable diffusion 1":
             return True
         if "SD 2.1" in lota_details["baseModel"] and model_details["baseline"] == "stable diffusion 2":
