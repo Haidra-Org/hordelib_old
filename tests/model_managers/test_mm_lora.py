@@ -161,7 +161,6 @@ class TestModelManagerLora:
         assert not mml.is_local_model(lora_name)
         mml.stop_all()
 
-
     ## Disabling this until I can figure out a better way to test these
     # def test_unused_loras(self):
     #     mml = LoraModelManager(
