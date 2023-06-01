@@ -17,8 +17,8 @@ def main():
     HordeLib()
     SharedModelManager.loadModelManagers(lora=True)
     SharedModelManager.manager.lora.download_default_loras()
-    SharedModelManager.manager.lora.wait_for_downloads()
-    logger.info(SharedModelManager.manager.lora.get_available_models_names())
+    SharedModelManager.manager.lora.wait_for_downloads(30)
+    logger.info(SharedModelManager.manager.lora.get_available_models())
 
 
 if __name__ == "__main__":
