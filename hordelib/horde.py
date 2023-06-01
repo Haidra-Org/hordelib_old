@@ -305,6 +305,11 @@ class HordeLib:
                 lora_name = SharedModelManager.manager.lora.get_lora_name(str(lora["name"]))
                 if lora_name:
                     logger.debug(f"Found valid lora {lora_name}")
+                    model_details = SharedModelManager.manager.compvis.get_model(payload["model"])
+                    # If the lora and model do not match baseline, we ignore the lora
+                    if not SharedModelManager.manager.lora.do_baselines_match(lora_name, model_details):
+                        logger.info(f"Skipped lora {lora_name} because its baseline does not match the model's")
+                        continue
                     trigger_inject = lora.get("inject_trigger")
                     trigger = None
                     if trigger_inject == "any":

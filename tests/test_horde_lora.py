@@ -292,3 +292,31 @@ class TestHordeLora:
         assert self.horde is not None
         pil_image = self.horde.basic_inference(data)
         assert pil_image is not None
+
+    def test_sd21_lora_against_sd15_model(self):
+        data = {
+            "sampler_name": "k_euler",
+            "cfg_scale": 8.0,
+            "denoising_strength": 1.0,
+            "seed": 0,
+            "height": 512,
+            "width": 512,
+            "karras": False,
+            "tiling": False,
+            "hires_fix": False,
+            "clip_skip": 1,
+            "control_type": None,
+            "image_is_control": False,
+            "return_control_map": False,
+            "prompt": "pantasa, plant, wooden robot, concept artist, ruins, night, moon, global "
+            "illumination, depth of field, splash art",
+            "loras": [
+                {"name": "35822", "model": 1, "clip": 1.0},
+            ],
+            "ddim_steps": 20,
+            "n_iter": 1,
+            "model": "Deliberate",
+        }
+        assert self.horde is not None
+        pil_image = self.horde.basic_inference(data)
+        assert pil_image is not None

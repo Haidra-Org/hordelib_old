@@ -8,7 +8,7 @@ import threading
 import time
 import typing
 from collections import deque
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum
 
 import requests
@@ -71,32 +71,6 @@ class LoraModelManager(BaseModelManager):
         self._index_ids = {}
         self._index_orig_names = {}
 
-        # Example of how to inject mandatory LORAs, we use these two for our tests
-        # We need to ensure their format is the same as after they are returned _parse_civitai_lora_data
-        # i.e. without versions in their names.
-        # self._download_queue.append(
-        #     {
-        #         "name": "GlowingRunesAI",
-        #         "sha256": "1E7DF5F25B76B3D1B5FCEBB7AEB229FF33D805DC10B2F7CBB56F3A7BA0ED4686",
-        #         "filename": "GlowingRunesAI.safetensors",
-        #         "url": "https://civitai.com/api/download/models/75193?type=Model&format=SafeTensor",
-        #         "triggers": ["GlowingRunesAIV3_green", "GlowingRunesAI_red", "GlowingRunesAI_paleblue"],
-        #         "size_mb": 144,
-        #         "id": 51686,
-        #     },
-        # )
-        # self._download_queue.append(
-        #     {
-        #         "name": "Dra9onScaleAI",
-        #         "sha256": "E562FC8EE097774E2C6A48AA9F279DB78AE4D1BFE14EF52F6AA76450C188B92B",
-        #         "filename": "Dra9onScaleAI.safetensors",
-        #         "url": "https://civitai.com/api/download/models/70189?type=Model&format=SafeTensor",
-        #         "triggers": ["Dr490nSc4leAI"],
-        #         "size_mb": 144,
-        #         "id": 55543,
-        #     },
-        # )
-
         super().__init__(
             modelFolder=MODEL_FOLDER_NAMES[MODEL_CATEGORY_NAMES.lora],
             models_db_name=MODEL_DB_NAMES[MODEL_CATEGORY_NAMES.lora],
@@ -149,14 +123,24 @@ class LoraModelManager(BaseModelManager):
             logger.error(f"_get_lora_defaults() raised {err}")
             raise err
 
-    def _add_lora_id_to_download_queue(self, lora_id, adhoc=False):
+    def _add_lora_id_to_download_queue(self, lora_id, adhoc=False, version_compare=None):
         url = f"https://civitai.com/api/v1/models/{lora_id}"
         data = self._get_json(url)
         if not data:
             logger.warning(f"metadata for LoRa {lora_id} could not be downloaded!")
             return
         lora = self._parse_civitai_lora_data(data, adhoc=adhoc)
+        # If we're comparing versions, then we don't download if the existing lora metadata matches
+        # Instead we just refresh metadata information
         if not lora:
+            return
+        if version_compare and lora["version_id"] == version_compare:
+            logger.debug(
+                f"Downloaded metadata for LoRa {lora_id} "
+                f"('{lora['name']}') and found version match! Refreshing metadata.",
+            )
+            lora["last_checked"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            self._add_lora_to_reference(lora)
             return
         logger.debug(f"Downloaded metadata for LoRa {lora_id} ('{lora['name']}') and added to download queue")
         self._download_lora(lora)
@@ -218,6 +202,7 @@ class LoraModelManager(BaseModelManager):
             "triggers": [],
             "size_mb": 0,
             "adhoc": adhoc,
+            "nsfw": False,
         }
         # get top version
         try:
@@ -240,9 +225,12 @@ class LoraModelManager(BaseModelManager):
                     lora["size_mb"] = 144  # guess common case of 144MB, it's not critical here
                 lora["url"] = file.get("downloadUrl", "")
                 lora["triggers"] = triggers
+                lora["nsfw"] = item.get("nsfw", True)
+                lora["baseModel"] = version.get("baseModel", "SD 1.5")
+                lora["version_id"] = version.get("id", 0)
                 break
         # If we don't have everything required, fail
-        if not lora.get("sha256"):
+        if lora["adhoc"] and not lora.get("sha256"):
             logger.debug(f"Rejecting LoRa {lora.get('name')} because it doesn't have a sha256")
             return
         if not lora.get("filename") or not lora.get("url"):
@@ -250,8 +238,11 @@ class LoraModelManager(BaseModelManager):
             return
         # We don't want to start downloading GBs of a single LoRa.
         # We just ignore anything over 150Mb. Them's the breaks...
-        if lora["adhoc"] and lora["size_mb"] > 150:
-            logger.debug(f"Rejecting LoRa {lora.get('name')} because its size is over 150Mb")
+        if lora["adhoc"] and lora["size_mb"] > 220:
+            logger.debug(f"Rejecting LoRa {lora.get('name')} because its size is over 220Mb.")
+            return
+        if lora["adhoc"] and lora["nsfw"] and not self.nsfw:
+            logger.debug(f"Rejecting LoRa {lora.get('name')} because worker is SFW.")
             return
         # Fixup A1111 centric triggers
         for i, trigger in enumerate(lora["triggers"]):
@@ -291,11 +282,20 @@ class LoraModelManager(BaseModelManager):
                                 hashdata = infile.read().split()[0]
                             except (IndexError, OSError, IOError, PermissionError):
                                 hashdata = ""
-                        if hashdata.lower() == lora["sha256"].lower():
+                        if not lora.get("sha256") or hashdata.lower() == lora["sha256"].lower():
                             # we already have this lora, consider it downloaded
-                            logger.debug(f"Already have LORA {lora['filename']}")
+                            # the SHA256 might not exist when the lora has been selected in the curation list
+                            # Where we allow them to skip it
+                            if not lora.get("sha256"):
+                                logger.debug(
+                                    f"Already have LORA {lora['filename']}. "
+                                    "Bypassing SHA256 check as there's none stored",
+                                )
+                            else:
+                                logger.debug(f"Already have LORA {lora['filename']}")
                             with self._mutex:
                                 # We store as lower to allow case-insensitive search
+                                lora["last_checked"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                                 self._add_lora_to_reference(lora)
                                 if self.is_default_cache_full():
                                     self.stop_downloading = True
@@ -309,7 +309,7 @@ class LoraModelManager(BaseModelManager):
                     hash_object = hashlib.sha256()
                     hash_object.update(response.content)
                     sha256 = hash_object.hexdigest()
-                    if sha256.lower() == lora["sha256"].lower():
+                    if not lora.get("sha256") or sha256.lower() == lora["sha256"].lower():
                         # wow, we actually got a valid file, save it
                         with open(filename, "wb") as outfile:
                             outfile.write(response.content)
@@ -323,6 +323,7 @@ class LoraModelManager(BaseModelManager):
                         with self._mutex:
                             # We store as lower to allow case-insensitive search
                             lora["last_used"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                            lora["last_checked"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                             self._add_lora_to_reference(lora)
                             if self.is_adhoc_cache_full():
                                 self.delete_oldest_lora()
@@ -651,7 +652,9 @@ class LoraModelManager(BaseModelManager):
             prevlora_key, prevlora_value = sorted_items.pop()
             if prevlora_key in self.model_reference:
                 continue
-            self._add_lora_to_reference(prevlora_value)
+            # If False, it will initiates a redownload and call _add_lora_to_reference() later
+            if not self._check_for_refresh(prevlora_key):
+                self._add_lora_to_reference(prevlora_value)
             self._adhoc_loras.add(prevlora_key)
         for lora_key in self.model_reference:
             if lora_key in self._previous_model_reference:
@@ -665,6 +668,29 @@ class LoraModelManager(BaseModelManager):
                 lora["last_used"] = now
         self._previous_model_reference = {}
         self.save_cached_reference_to_disk()
+
+    def _check_for_refresh(self, lora_name: str):
+        """Returns True if a refresh is needed
+        and also initiates a refresh
+        Else returns False
+        """
+        lora_details = self.get_model(lora_name)
+        refresh = False
+        if "last_checked" not in lora_details:
+            refresh = True
+        elif "baseModel" not in lora_details:
+            refresh = True
+        else:
+            lora_datetime = datetime.strptime(lora_details["last_checked"], "%Y-%m-%d %H:%M:%S")
+            if lora_datetime < datetime.now() - timedelta(days=1):
+                refresh = True
+        if refresh:
+            logger.debug(f"Lora {lora_name} found needing refresh. Initiating metadata download...")
+            self._add_lora_id_to_download_queue(lora_details["id"], lora_details.get("version_id", -1))
+            return False
+        return True
+
+    # def check_for_valid
 
     def is_adhoc_reset_complete(self):
         if self._adhoc_reset_thread and self._adhoc_reset_thread.is_alive():
@@ -692,12 +718,15 @@ class LoraModelManager(BaseModelManager):
         lora = self.get_model(lora_name)
         return datetime.strptime(lora["last_used"], "%Y-%m-%d %H:%M:%S")
 
-    def fetch_adhoc_lora(self, lora_name):
+    def fetch_adhoc_lora(self, lora_name, timeout=30):
         if type(lora_name) is int or lora_name.isdigit():
             url = f"https://civitai.com/api/v1/models/{lora_name}"
         else:
             url = f"{self.LORA_API}&nsfw={str(self.nsfw).lower()}&query={lora_name}"
         data = self._get_json(url)
+        # CivitAI down
+        if not data:
+            return None
         if "items" in data:
             if len(data["items"]) == 0:
                 return None
@@ -715,8 +744,19 @@ class LoraModelManager(BaseModelManager):
         self._download_queue.append(lora)
         # We need to wait a bit to make sure the threads pick up the download
         time.sleep(self.THREAD_WAIT_TIME)
-        self.wait_for_downloads(15)
+        self.wait_for_downloads(timeout)
         return lora["name"].lower()
+
+    def do_baselines_match(self, lora_name, model_details):
+        self._check_for_refresh(lora_name)
+        lota_details = self.get_model(lora_name)
+        logger.info(lota_details["baseModel"])
+        logger.info(model_details["baseline"])
+        if "SD 1.5" in lota_details["baseModel"] and model_details["baseline"] == "stable diffusion 1":
+            return True
+        if "SD 2.1" in lota_details["baseModel"] and model_details["baseline"] == "stable diffusion 2":
+            return True
+        return False
 
     @override
     def is_local_model(self, model_name):
