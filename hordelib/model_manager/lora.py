@@ -116,34 +116,35 @@ class LoraModelManager(BaseModelManager):
             json_ret = self._get_json(self.LORA_DEFAULTS)
             if not json_ret:
                 logger.error("Could not download default LoRas reference!")
-            for lora_id in json_ret:
-                self._add_lora_id_to_download_queue(lora_id)
+            self._add_lora_ids_to_download_queue(json_ret)
 
         except Exception as err:
             logger.error(f"_get_lora_defaults() raised {err}")
             raise err
 
-    def _add_lora_id_to_download_queue(self, lora_id, adhoc=False, version_compare=None):
-        url = f"https://civitai.com/api/v1/models/{lora_id}"
+    def _add_lora_ids_to_download_queue(self, lora_ids, adhoc=False, version_compare=None):
+        idsq = '&ids='.join([str(id) for id in lora_ids])
+        url = f"https://civitai.com/api/v1/models?limit=100&ids={idsq}"
         data = self._get_json(url)
         if not data:
-            logger.warning(f"metadata for LoRa {lora_id} could not be downloaded!")
+            logger.warning(f"metadata for LoRa {lora_ids} could not be downloaded!")
             return
-        lora = self._parse_civitai_lora_data(data, adhoc=adhoc)
-        # If we're comparing versions, then we don't download if the existing lora metadata matches
-        # Instead we just refresh metadata information
-        if not lora:
-            return
-        if version_compare and lora["version_id"] == version_compare:
-            logger.debug(
-                f"Downloaded metadata for LoRa {lora_id} "
-                f"('{lora['name']}') and found version match! Refreshing metadata.",
-            )
-            lora["last_checked"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            self._add_lora_to_reference(lora)
-            return
-        logger.debug(f"Downloaded metadata for LoRa {lora_id} ('{lora['name']}') and added to download queue")
-        self._download_lora(lora)
+        for lora_data in data.get("items", []):
+            lora = self._parse_civitai_lora_data(lora_data, adhoc=adhoc)
+            # If we're comparing versions, then we don't download if the existing lora metadata matches
+            # Instead we just refresh metadata information
+            if not lora:
+                continue
+            if version_compare and lora["version_id"] == version_compare:
+                logger.debug(
+                    f"Downloaded metadata for LoRa {lora['name']} "
+                    f"('{lora['name']}') and found version match! Refreshing metadata.",
+                )
+                lora["last_checked"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                self._add_lora_to_reference(lora)
+                continue
+            logger.debug(f"Downloaded metadata for LoRas {lora['id']} ('{lora['name']}') and added to download queue")
+            self._download_lora(lora)
 
     def _get_json(self, url):
         retries = 0
@@ -169,6 +170,9 @@ class LoraModelManager(BaseModelManager):
 
     def _get_more_items(self):
         if not self._data:
+            idsq = '&ids='.join(json_ret)
+            base_url = f"https://civitai.com/api/v1/models?ids={idsq}"
+
             # We need to lowercase the boolean, or CivitAI doesn't understand it >.>
             url = f"{self.LORA_API}&nsfw={str(self.nsfw).lower()}"
         else:
@@ -675,6 +679,8 @@ class LoraModelManager(BaseModelManager):
         Else returns False
         """
         lora_details = self.get_model(lora_name)
+        if not lora_details:
+            return True
         refresh = False
         if "last_checked" not in lora_details:
             refresh = True
@@ -686,7 +692,7 @@ class LoraModelManager(BaseModelManager):
                 refresh = True
         if refresh:
             logger.debug(f"Lora {lora_name} found needing refresh. Initiating metadata download...")
-            self._add_lora_id_to_download_queue(lora_details["id"], lora_details.get("version_id", -1))
+            self._add_lora_ids_to_download_queue([lora_details["id"]], lora_details.get("version_id", -1))
             return False
         return True
 
@@ -767,3 +773,10 @@ class LoraModelManager(BaseModelManager):
         **kwargs,
     ) -> dict[str, typing.Any]:
         pass
+
+
+    def get_available_models(self):
+        """
+        Returns the available model names
+        """
+        return list(self.model_reference.keys())

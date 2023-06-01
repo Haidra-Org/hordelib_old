@@ -403,15 +403,9 @@ class BaseModelManager(ABC):
 
     def get_available_models(self):
         """
-        Returns the available models
-        """
-        return self.available_models
-
-    def get_available_models_names(self):
-        """
         Returns the available model names
         """
-        return self.get_available_models().keys()
+        return self.available_models
 
     def get_available_models_by_types(self, model_types: list[str] | None = None):
         if not model_types:
