@@ -226,8 +226,8 @@ class LoraModelManager(BaseModelManager):
             return
         # We don't want to start downloading GBs of a single LoRa.
         # We just ignore anything over 150Mb. Them's the breaks...
-        if lora["adhoc"] and lora["size_mb"] > 150:
-            logger.debug(f"Rejecting LoRa {lora.get('name')} because its size is over 150Mb.")
+        if lora["adhoc"] and lora["size_mb"] > 220:
+            logger.debug(f"Rejecting LoRa {lora.get('name')} because its size is over 220Mb.")
             return
         if lora["adhoc"] and lora["nsfw"] and not self.nsfw:
             logger.debug(f"Rejecting LoRa {lora.get('name')} because worker is SFW.")
@@ -679,12 +679,15 @@ class LoraModelManager(BaseModelManager):
         lora = self.get_model(lora_name)
         return datetime.strptime(lora["last_used"], "%Y-%m-%d %H:%M:%S")
 
-    def fetch_adhoc_lora(self, lora_name):
+    def fetch_adhoc_lora(self, lora_name, timeout=30):
         if type(lora_name) is int or lora_name.isdigit():
             url = f"https://civitai.com/api/v1/models/{lora_name}"
         else:
             url = f"{self.LORA_API}&nsfw={str(self.nsfw).lower()}&query={lora_name}"
         data = self._get_json(url)
+        # CivitAI down
+        if not data:
+            return None
         if "items" in data:
             if len(data["items"]) == 0:
                 return None
@@ -702,7 +705,7 @@ class LoraModelManager(BaseModelManager):
         self._download_queue.append(lora)
         # We need to wait a bit to make sure the threads pick up the download
         time.sleep(self.THREAD_WAIT_TIME)
-        self.wait_for_downloads(15)
+        self.wait_for_downloads(timeout)
         return lora["name"].lower()
 
     @override
