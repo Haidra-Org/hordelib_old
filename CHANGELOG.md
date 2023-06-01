@@ -1,5 +1,13 @@
 ## hordelib Changelog
 
+## [v1.3.15](https://github.com/Haidra-Org/hordelib/compare/v1.3.14...v1.3.15)
+
+1 June 2023
+
+- feat: Added model rechecking/refreshing [`2bce317`](https://github.com/Haidra-Org/hordelib/commit/2bce317ca32aee18a63c9948758bd9dc77392658)  (db0)
+- feat: allows SFW workers to ignore nsfw loras [`c30672e`](https://github.com/Haidra-Org/hordelib/commit/c30672ea5cd2f76d3b7ba3e5cfb917aa006f51c4)  (db0)
+- feat: allow larger loras [`843b495`](https://github.com/Haidra-Org/hordelib/commit/843b495e02a8a4d3f20d72878ca1242064c3f984)  (db0)
+
 ## [v1.3.14](https://github.com/Haidra-Org/hordelib/compare/v1.3.13...v1.3.14)
 
 31 May 2023
