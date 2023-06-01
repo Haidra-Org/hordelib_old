@@ -8,7 +8,7 @@ import threading
 import time
 import typing
 from collections import deque
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum
 
 import requests
@@ -123,13 +123,23 @@ class LoraModelManager(BaseModelManager):
             logger.error(f"_get_lora_defaults() raised {err}")
             raise err
 
-    def _add_lora_id_to_download_queue(self, lora_id, adhoc=False):
+    def _add_lora_id_to_download_queue(self, lora_id, adhoc=False, version_compare=None):
         url = f"https://civitai.com/api/v1/models/{lora_id}"
         data = self._get_json(url)
         if not data:
             logger.warning(f"metadata for LoRa {lora_id} could not be downloaded!")
             return
         lora = self._parse_civitai_lora_data(data, adhoc=adhoc)
+        # If we're comparing versions, then we don't download if the existing lora metadata matches
+        # Instead we just refresh metadata information
+        if version_compare and lora["version_id"] == version_compare:
+            logger.debug(
+                f"Downloaded metadata for LoRa {lora_id} "
+                f"('{lora['name']}') and found version match! Refreshing metadata.",
+            )
+            lora["last_checked"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            self._add_lora_to_reference(lora)
+            return
         if not lora:
             return
         logger.debug(f"Downloaded metadata for LoRa {lora_id} ('{lora['name']}') and added to download queue")
@@ -216,6 +226,8 @@ class LoraModelManager(BaseModelManager):
                 lora["url"] = file.get("downloadUrl", "")
                 lora["triggers"] = triggers
                 lora["nsfw"] = item.get("nsfw", True)
+                lora["baseModel"] = version.get("baseModel", "SD 1.5")
+                lora["version_id"] = version.get("id", 0)
                 break
         # If we don't have everything required, fail
         if lora["adhoc"] and not lora.get("sha256"):
@@ -283,6 +295,7 @@ class LoraModelManager(BaseModelManager):
                                 logger.debug(f"Already have LORA {lora['filename']}")
                             with self._mutex:
                                 # We store as lower to allow case-insensitive search
+                                lora["last_checked"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                                 self._add_lora_to_reference(lora)
                                 if self.is_default_cache_full():
                                     self.stop_downloading = True
@@ -310,6 +323,7 @@ class LoraModelManager(BaseModelManager):
                         with self._mutex:
                             # We store as lower to allow case-insensitive search
                             lora["last_used"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                            lora["last_checked"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                             self._add_lora_to_reference(lora)
                             if self.is_adhoc_cache_full():
                                 self.delete_oldest_lora()
@@ -638,7 +652,9 @@ class LoraModelManager(BaseModelManager):
             prevlora_key, prevlora_value = sorted_items.pop()
             if prevlora_key in self.model_reference:
                 continue
-            self._add_lora_to_reference(prevlora_value)
+            # If False, it will initiates a redownload and call _add_lora_to_reference() later
+            if not self._check_for_refresh(prevlora_key):
+                self._add_lora_to_reference(prevlora_value)
             self._adhoc_loras.add(prevlora_key)
         for lora_key in self.model_reference:
             if lora_key in self._previous_model_reference:
@@ -652,6 +668,29 @@ class LoraModelManager(BaseModelManager):
                 lora["last_used"] = now
         self._previous_model_reference = {}
         self.save_cached_reference_to_disk()
+
+    def _check_for_refresh(self, lora_name: str):
+        """Returns True if a refresh is needed
+        and also initiates a refresh
+        Else returns False
+        """
+        lora_details = self.get_model(lora_name)
+        refresh = False
+        if "last_checked" not in lora_details:
+            refresh = True
+        elif "baseModel" not in lora_details:
+            refresh = True
+        else:
+            lora_datetime = datetime.strptime(lora_details["last_checked"], "%Y-%m-%d %H:%M:%S")
+            if lora_datetime < datetime.now() - timedelta(days=1):
+                refresh = True
+        if refresh:
+            logger.debug(f"Lora {lora_name} found needing refresh. Initiating metadata download...")
+            self._add_lora_id_to_download_queue(lora_details["id"], lora_details.get("version_id", -1))
+            return False
+        return True
+
+    # def check_for_valid
 
     def is_adhoc_reset_complete(self):
         if self._adhoc_reset_thread and self._adhoc_reset_thread.is_alive():
@@ -707,6 +746,17 @@ class LoraModelManager(BaseModelManager):
         time.sleep(self.THREAD_WAIT_TIME)
         self.wait_for_downloads(timeout)
         return lora["name"].lower()
+
+    def do_baselines_match(self, lora_name, model_details):
+        self._check_for_refresh(lora_name)
+        lota_details = self.get_model(lora_name)
+        logger.info(lota_details["baseModel"])
+        logger.info(model_details["baseline"])
+        if "SD 1.5" in lota_details["baseModel"] and model_details["baseline"] == "stable diffusion 1":
+            return True
+        if "SD 2.1" in lota_details["baseModel"] and model_details["baseline"] == "stable diffusion 2":
+            return True
+        return False
 
     @override
     def is_local_model(self, model_name):
