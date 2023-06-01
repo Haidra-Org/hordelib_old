@@ -1,5 +1,13 @@
 ## hordelib Changelog
 
+## [v1.3.16](https://github.com/Haidra-Org/hordelib/compare/v1.3.15...v1.3.16)
+
+1 June 2023
+
+- feat: faster way to retrieve curated list [`0c29034`](https://github.com/Haidra-Org/hordelib/commit/0c29034bbde91b0d4b37da6713f4f1cdb402887b)  (db0)
+- lint: fix [`ba8c098`](https://github.com/Haidra-Org/hordelib/commit/ba8c098537cc8bd6f987061a94e1c9d0cd13c98c)  (db0)
+- fix: remove some debug msg [`6699bc5`](https://github.com/Haidra-Org/hordelib/commit/6699bc5f75662e7f093e1aa083156af0faa8589d)  (db0)
+
 ## [v1.3.15](https://github.com/Haidra-Org/hordelib/compare/v1.3.14...v1.3.15)
 
 1 June 2023
