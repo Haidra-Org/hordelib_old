@@ -132,6 +132,8 @@ class LoraModelManager(BaseModelManager):
         lora = self._parse_civitai_lora_data(data, adhoc=adhoc)
         # If we're comparing versions, then we don't download if the existing lora metadata matches
         # Instead we just refresh metadata information
+        if not lora:
+            return
         if version_compare and lora["version_id"] == version_compare:
             logger.debug(
                 f"Downloaded metadata for LoRa {lora_id} "
@@ -139,8 +141,6 @@ class LoraModelManager(BaseModelManager):
             )
             lora["last_checked"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             self._add_lora_to_reference(lora)
-            return
-        if not lora:
             return
         logger.debug(f"Downloaded metadata for LoRa {lora_id} ('{lora['name']}') and added to download queue")
         self._download_lora(lora)
