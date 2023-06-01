@@ -123,7 +123,7 @@ class LoraModelManager(BaseModelManager):
             raise err
 
     def _add_lora_ids_to_download_queue(self, lora_ids, adhoc=False, version_compare=None):
-        idsq = '&ids='.join([str(id) for id in lora_ids])
+        idsq = "&ids=".join([str(id) for id in lora_ids])
         url = f"https://civitai.com/api/v1/models?limit=100&ids={idsq}"
         data = self._get_json(url)
         if not data:
@@ -170,9 +170,6 @@ class LoraModelManager(BaseModelManager):
 
     def _get_more_items(self):
         if not self._data:
-            idsq = '&ids='.join(json_ret)
-            base_url = f"https://civitai.com/api/v1/models?ids={idsq}"
-
             # We need to lowercase the boolean, or CivitAI doesn't understand it >.>
             url = f"{self.LORA_API}&nsfw={str(self.nsfw).lower()}"
         else:
@@ -773,7 +770,6 @@ class LoraModelManager(BaseModelManager):
         **kwargs,
     ) -> dict[str, typing.Any]:
         pass
-
 
     def get_available_models(self):
         """
