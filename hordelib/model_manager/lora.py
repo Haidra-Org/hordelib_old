@@ -685,6 +685,9 @@ class LoraModelManager(BaseModelManager):
         else:
             url = f"{self.LORA_API}&nsfw={str(self.nsfw).lower()}&query={lora_name}"
         data = self._get_json(url)
+        # CivitAI down
+        if not data:
+            return None
         if "items" in data:
             if len(data["items"]) == 0:
                 return None
