@@ -654,7 +654,7 @@ class LoraModelManager(BaseModelManager):
             if prevlora_key in self.model_reference:
                 continue
             # If False, it will initiates a redownload and call _add_lora_to_reference() later
-            if not self._check_for_refresh(prevlora_key):
+            if self._check_for_refresh(prevlora_key):
                 self._add_lora_to_reference(prevlora_value)
             self._adhoc_loras.add(prevlora_key)
         for lora_key in self.model_reference:
