@@ -1,5 +1,11 @@
 ## hordelib Changelog
 
+## [v1.3.17](https://github.com/Haidra-Org/hordelib/compare/v1.3.16...v1.3.17)
+
+2 June 2023
+
+- fix: wrong check _check_for_refresh [`beddc3d`](https://github.com/Haidra-Org/hordelib/commit/beddc3d8042715e84f414ef1e55f62a61b5e9a6b)  (db0)
+
 ## [v1.3.16](https://github.com/Haidra-Org/hordelib/compare/v1.3.15...v1.3.16)
 
 1 June 2023
