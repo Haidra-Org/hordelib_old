@@ -1,3 +1,5 @@
+# Please note this repo is no longer canonical. Please see https://github.com/Haidra-Org/hordelib
+
 # hordelib
 
 [![PyPI Version][pypi-image]][pypi-url]
